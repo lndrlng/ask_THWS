@@ -19,5 +19,10 @@
 
 ```shell
 cd thws_scraper
-scrapy crawl thws -o thws_data.json
+scrapy crawl thws -o thws_data_raw.json
+```
+
+# Preprocess the data
+```shell
+python3 preprocess_and_chunk.py thws_scraper/thws_data_raw.json
 ```

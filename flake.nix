@@ -19,6 +19,9 @@
         pkgs.python313Packages.beautifulsoup4
         pkgs.python313Packages.pymupdf
         # Preprocess
+        pkgs.python313Packages.langdetect
+        pkgs.python313Packages.langchain
+        pkgs.python313Packages.pandas
       ];
     };
   };

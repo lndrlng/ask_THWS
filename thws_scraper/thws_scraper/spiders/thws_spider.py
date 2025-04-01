@@ -1,7 +1,7 @@
 import scrapy
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
-import fitz  # PyMuPDF
+import fitz
 import io
 
 class ThwsSpider(scrapy.Spider):
