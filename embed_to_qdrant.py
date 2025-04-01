@@ -5,6 +5,7 @@ import uuid
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 
 # --- CLI Input ---
 if len(sys.argv) < 2:
@@ -56,6 +57,13 @@ for i, chunk in enumerate(chunks):
     )
 
 # --- Upload ---
-qdrant.upsert(collection_name=COLLECTION_NAME, points=points)
+BATCH_SIZE = 64  # safe size
+
+for i in tqdm(range(0, len(points), BATCH_SIZE), desc="Uploading to Qdrant"):
+    batch = points[i:i + BATCH_SIZE]
+    qdrant.upsert(
+        collection_name=COLLECTION_NAME,
+        points=batch
+    )
 
 print(f"✅ Uploaded {len(points)} chunks to Qdrant collection '{COLLECTION_NAME}'")

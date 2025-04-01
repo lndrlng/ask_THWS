@@ -9,7 +9,10 @@
     ...
   }: let
     system = "x86_64-linux";
-    pkgs = import nixpkgs {inherit system;};
+    pkgs = import nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+    };
   in {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
@@ -25,6 +28,9 @@
         # Embedding
         pkgs.python313Packages.qdrant-client
         pkgs.python313Packages.sentence-transformers
+        pkgs.python313Packages.tqdm
+        # Ollama with CUDA support
+        (pkgs.ollama.override {acceleration = "cuda";})
       ];
     };
   };
