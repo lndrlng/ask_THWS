@@ -8,7 +8,7 @@ from langdetect import detect, DetectorFactory
 DetectorFactory.seed = 42
 
 # --- Config Defaults ---
-DEFAULT_INPUT = "data/thws_raw.json"
+DEFAULT_INPUT = "data/thws_data_raw.json"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 100
 
