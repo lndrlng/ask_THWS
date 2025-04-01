@@ -14,3 +14,10 @@
         - python library
 4. Frontend
     - 
+
+# How to run the scraper
+
+```shell
+cd thws_scraper
+scrapy crawl thws -o thws_data.json
+```

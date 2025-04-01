@@ -14,7 +14,11 @@
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
         pkgs.python313
+        # Scraper
         pkgs.python313Packages.scrapy
+        pkgs.python313Packages.beautifulsoup4
+        pkgs.python313Packages.pymupdf
+        # Preprocess
       ];
     };
   };
