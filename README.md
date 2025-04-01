@@ -19,10 +19,15 @@
 
 ```shell
 cd thws_scraper
-scrapy crawl thws -o thws_data_raw.json
+scrapy crawl thws -o ../data/thws_data_raw.json
 ```
 
 # Preprocess the data
 ```shell
-python3 preprocess_and_chunk.py thws_scraper/thws_data_raw.json
+python3 preprocess_and_chunk.py data/thws_data_raw.json
+```
+
+# Load to Vector db
+```shell
+python3 embed_to_qdrant.py data/thws_data_chunks.json
 ```

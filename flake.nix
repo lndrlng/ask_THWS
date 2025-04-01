@@ -22,6 +22,9 @@
         pkgs.python313Packages.langdetect
         pkgs.python313Packages.langchain
         pkgs.python313Packages.pandas
+        # Embedding
+        pkgs.python313Packages.qdrant-client
+        pkgs.python313Packages.sentence-transformers
       ];
     };
   };
