@@ -35,5 +35,7 @@ python3 embed_to_qdrant.py data/thws_data_chunks.json
 
 # Running
 ```shell
+ollama serve
 ollama run mistral
+python3 query.py "Which prequisities do i need for my bachelors degree?"
 ```

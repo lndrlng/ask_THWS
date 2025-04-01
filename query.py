@@ -25,9 +25,9 @@ query_vec = embedder.encode(query)
 
 # --- Search Qdrant ---
 client = QdrantClient(url=QDRANT_URL)
-search_results = client.search(
+search_results = client.query_points(
     collection_name=COLLECTION_NAME,
-    query_vector=query_vec,
+    query_vector=query_vec.tolist(),
     limit=TOP_K,
     with_payload=True
 )
