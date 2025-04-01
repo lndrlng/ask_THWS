@@ -2,6 +2,7 @@ import json
 import sys
 import os
 import uuid
+import torch
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from sentence_transformers import SentenceTransformer
@@ -13,17 +14,19 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 CHUNKS_PATH = sys.argv[1]
-COLLECTION_NAME = os.path.splitext(os.path.basename(CHUNKS_PATH))[0]  # e.g. "thws_data_chunks"
-EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+COLLECTION_NAME = os.path.splitext(os.path.basename(CHUNKS_PATH))[0]
+EMBED_MODEL_NAME = "BAAI/bge-m3"
+EMBED_DIM = 1024
 QDRANT_URL = "http://localhost:6333"
-EMBED_DIM = 384  # depends on model
 
 # --- Load Chunks ---
 with open(CHUNKS_PATH, "r", encoding="utf-8") as f:
     chunks = json.load(f)
 
-# --- Load Embedding Model ---
-model = SentenceTransformer(EMBED_MODEL_NAME)
+# --- Load Embedding Model with CUDA ---
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"🔥 Using device: {device}")
+model = SentenceTransformer(EMBED_MODEL_NAME, device=device)
 
 # --- Init Qdrant Client ---
 qdrant = QdrantClient(url=QDRANT_URL)
@@ -37,7 +40,7 @@ qdrant.recreate_collection(
 # --- Prepare and Upload Vectors ---
 points = []
 texts = [chunk["text"] for chunk in chunks]
-embeddings = model.encode(texts, show_progress_bar=True)
+embeddings = model.encode(texts, show_progress_bar=True, device=device)
 
 for i, chunk in enumerate(chunks):
     vector = embeddings[i]
@@ -56,14 +59,10 @@ for i, chunk in enumerate(chunks):
         )
     )
 
-# --- Upload ---
-BATCH_SIZE = 64  # safe size
-
+# --- Upload in Batches ---
+BATCH_SIZE = 64
 for i in tqdm(range(0, len(points), BATCH_SIZE), desc="Uploading to Qdrant"):
     batch = points[i:i + BATCH_SIZE]
-    qdrant.upsert(
-        collection_name=COLLECTION_NAME,
-        points=batch
-    )
+    qdrant.upsert(collection_name=COLLECTION_NAME, points=batch)
 
 print(f"✅ Uploaded {len(points)} chunks to Qdrant collection '{COLLECTION_NAME}'")
