@@ -1,0 +1,11 @@
+scrapy
+beautifulsoup4
+PyMuPDF
+itemadapter
+torch
+qdrant-client
+sentence-transformers
+tqdm
+langchain
+langdetect
+requests
