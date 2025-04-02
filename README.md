@@ -15,6 +15,12 @@
 4. Frontend
     - 
 
+# open the rag repository Folder in Terminal
+
+```shell
+pip install -r requirements.txt
+```
+
 # How to run the scraper
 
 ```shell
