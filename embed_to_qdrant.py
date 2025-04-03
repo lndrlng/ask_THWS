@@ -37,10 +37,14 @@ model = SentenceTransformer(EMBED_MODEL_NAME, device=device)
 qdrant = QdrantClient(url=QDRANT_URL)
 
 # --- Create Collection ---
-qdrant.recreate_collection(
+if qdrant.collection_exists(COLLECTION_NAME):
+    qdrant.delete_collection(collection_name=COLLECTION_NAME)
+
+qdrant.create_collection(
     collection_name=COLLECTION_NAME,
-    vectors_config=VectorParams(size=EMBED_DIM, distance=Distance.COSINE)
+    vectors_config=VectorParams(size=EMBED_DIM, distance=Distance.COSINE),
 )
+
 
 # --- Prepare and Upload Vectors ---
 points = []
@@ -54,20 +58,14 @@ for i, chunk in enumerate(chunks):
         "source": chunk["source"],
         "chunk_id": chunk["chunk_id"],
         "type": chunk["type"],
-        "language": chunk["language"]
+        "language": chunk["language"],
     }
-    points.append(
-        PointStruct(
-            id=str(uuid.uuid4()),
-            vector=vector,
-            payload=payload
-        )
-    )
+    points.append(PointStruct(id=str(uuid.uuid4()), vector=vector, payload=payload))
 
 # --- Upload in Batches ---
 BATCH_SIZE = 64
 for i in tqdm(range(0, len(points), BATCH_SIZE), desc="Uploading to Qdrant"):
-    batch = points[i:i + BATCH_SIZE]
+    batch = points[i : i + BATCH_SIZE]
     qdrant.upsert(collection_name=COLLECTION_NAME, points=batch)
 
 print(f"✅ Uploaded {len(points)} chunks to Qdrant collection '{COLLECTION_NAME}'")

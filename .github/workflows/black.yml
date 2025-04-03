@@ -22,3 +22,4 @@ jobs:
           workdir: "." # Optional: Arbeitsverzeichnis
           black_args: "" # Optional: Zusätzliche Argumente für Black
           verbose: "false" # Optional: Ausgabe von Black im Action-Log anzeigen
+          fail_on_error: true
