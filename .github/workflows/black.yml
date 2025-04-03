@@ -3,7 +3,7 @@ on: [pull_request]
 
 jobs:
   black-reviewdog:
-    name: Check Python code with Black and Reviewdog
+    name: Black with Reviewdog Suggestions
     runs-on: ubuntu-latest
 
     steps:
@@ -17,18 +17,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install black
+          pip install black reviewdog
 
-      - name: Run Black with diff
+      - name: Run Black and pipe to Reviewdog
         run: |
-          black --diff --check . > black.diff || true
-
-      - name: Run Reviewdog
-        uses: reviewdog/action-suggester@v1
-        with:
-          tool_name: black
-          fail_on_error: true
-          filter_mode: diff_context
-          suggestions_file: black.diff
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          black --check --diff . | reviewdog -f=diff \
+            -name="black" \
+            -reporter=github-pr-suggest \
+            -filter-mode=diff_context \
+            -fail-level=info
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
