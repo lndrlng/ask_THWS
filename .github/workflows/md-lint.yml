@@ -8,7 +8,7 @@ on:
 
 jobs:
   markdownlint:
-    name: runner / markdownlint
+    name: runner/markdownlint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2

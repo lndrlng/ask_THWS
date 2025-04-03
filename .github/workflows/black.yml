@@ -17,9 +17,9 @@ jobs:
         uses: reviewdog/action-black@v3.22.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-check # Optionen: github-pr-check, github-check
-          level: warning # Optionen: info, warning, error
-          workdir: "." # Optional: Arbeitsverzeichnis
-          black_args: "" # Optional: Zusätzliche Argumente für Black
-          verbose: "false" # Optional: Ausgabe von Black im Action-Log anzeigen
+          reporter:  github-pr-review
+          level: warning
+          workdir: "."
+          black_args: ""
+          verbose: "true"
           fail_on_error: true
