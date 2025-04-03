@@ -1,5 +1,5 @@
 {
-  description = "devShell for the rag tool";
+  description = "devShell for the RAG tool";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
@@ -13,26 +13,35 @@
       inherit system;
       config.allowUnfree = true;
     };
+
+    python = pkgs.python311.override {
+      packageOverrides = pyFinal: pyPrev: {
+        torch = pyPrev.torch.override { cudaSupport = true; };
+      };
+    };
+
+    pythonEnv = python.withPackages (ps:
+      with ps; [
+        # Scraper
+        scrapy
+        beautifulsoup4
+        pymupdf
+        # Preprocess
+        langdetect
+        langchain
+        pandas
+        # Embedding
+        sentence-transformers
+        tqdm
+        qdrant-client
+      ]);
   in {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
-        pkgs.python313
-        # Scraper
-        pkgs.python313Packages.scrapy
-        pkgs.python313Packages.beautifulsoup4
-        pkgs.python313Packages.pymupdf
-        # Preprocess
-        pkgs.python313Packages.langdetect
-        pkgs.python313Packages.langchain
-        pkgs.python313Packages.pandas
-        # Embedding
-        pkgs.python313Packages.qdrant-client
-        pkgs.python313Packages.sentence-transformers
-        pkgs.python313Packages.tqdm
-        pkgs.python313Packages.torch
-        # Ollama with CUDA support
-        # pkgs.ollama-cuda
-        pkgs.ollama
+        pythonEnv
+        pkgs.ollama-cuda
+        pkgs.cz-cli
+        pkgs.black
       ];
     };
   };
