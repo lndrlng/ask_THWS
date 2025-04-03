@@ -1,6 +1,10 @@
 name: black format reviewdog
 on: [pull_request]
 
+permissions:
+  contents: read
+  pull-requests: write
+  
 jobs:
   black-reviewdog:
     name: Black with Reviewdog Suggestions
