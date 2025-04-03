@@ -40,8 +40,9 @@
       buildInputs = [
         pythonEnv
         pkgs.ollama-cuda
-        pkgs.cz-cli
+        pkgs.commitizen
         pkgs.black
+        pkgs.yamllint
       ];
     };
   };
