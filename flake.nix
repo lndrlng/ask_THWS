@@ -42,6 +42,7 @@
         pkgs.ollama-cuda
         pkgs.commitizen
         pkgs.black
+        pkgs.yamllint
       ];
     };
   };
