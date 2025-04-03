@@ -1,4 +1,4 @@
-name: Black Formatter Suggestion
+name: Black Suggestions
 
 on:
   pull_request:
@@ -20,13 +20,7 @@ jobs:
       - name: Install Black
         run: pip install black
 
-      - name: Run Black and create patch
-        run: |
-          black . --diff > suggestions.patch || true
-
-      - name: Post suggestions
-        uses: reviewdog/action-suggester@v1
-        with:
-          tool_name: black
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          patch: suggestions.patch
+      - name: Run Black and pass diff to suggester
+        run: black . --diff | tee /tmp/black.diff | reviewdog -f=diff -name=black -reporter=github-pr-review -level=warning
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
