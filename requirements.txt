@@ -1,21 +1,13 @@
-# Scraping
 scrapy
 beautifulsoup4
-pymupdf
-
-# Preprocessing
-langdetect
-langchain
-pandas
-
-# Embedding & Vector DB
+PyMuPDF
+itemadapter
+torch
+qdrant-client
 sentence-transformers
 tqdm
-qdrant-client
-
-# Optional: Torch mit CUDA
-torch
-
-# Linting & Commit-Regeln
+langchain
+langdetect
+requests
 ruff
 commitizen
