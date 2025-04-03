@@ -1,0 +1,21 @@
+# Scraping
+scrapy
+beautifulsoup4
+pymupdf
+
+# Preprocessing
+langdetect
+langchain
+pandas
+
+# Embedding & Vector DB
+sentence-transformers
+tqdm
+qdrant-client
+
+# Optional: Torch mit CUDA
+torch
+
+# Linting & Commit-Regeln
+ruff
+commitizen
