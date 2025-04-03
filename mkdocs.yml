@@ -1,0 +1,10 @@
+site_name: Rag Tool docs
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Developer Tools:
+      - Black: dev-tools/black.md
+      - Commitizen: dev-tools/commitizen.md
+      - Python: dev-tools/python.md
