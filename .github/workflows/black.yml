@@ -1,0 +1,23 @@
+name: Black Formatter Check
+
+on:
+  pull_request:
+    paths:
+      - '**.py'
+
+jobs:
+  black-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Black with reviewdog
+        uses: reviewdog/action-black@v3.22.4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-check # Optionen: github-pr-check, github-check
+          level: warning # Optionen: info, warning, error
+          workdir: "." # Optional: Arbeitsverzeichnis
+          black_args: "" # Optional: Zusätzliche Argumente für Black
+          verbose: "false" # Optional: Ausgabe von Black im Action-Log anzeigen
