@@ -8,6 +8,7 @@ on:
 jobs:
   ruff-lint:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -18,9 +19,14 @@ jobs:
       - name: Install Ruff
         run: pip install ruff
 
-      - name: Run Ruff via reviewdog
-        uses: reviewdog/action-ruff@v1
+      - name: Set up reviewdog
+        uses: reviewdog/action-setup@v1.3.2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          level: warning
+          reviewdog_version: latest
+      
+      - name: Run Ruff and report via reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ruff check . | reviewdog -f=ruff -name="ruff" -reporter=github-pr-review -level=warning
+

@@ -8,6 +8,7 @@ on:
 jobs:
   markdownlint:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -19,8 +20,12 @@ jobs:
         run: npm install -g markdownlint-cli
 
       - name: Run markdownlint via reviewdog
-        uses: reviewdog/action-markdownlint@v1
+        uses: reviewdog/action-setup@v0.17.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reviewdog_version: latest
           reporter: github-pr-review
-          level: warning
+          tool_name: markdownlint
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          markdownlint "**/*.md" --stdin < /dev/null | reviewdog -efm="%f:%l %m"
