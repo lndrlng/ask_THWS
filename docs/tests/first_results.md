@@ -4,6 +4,7 @@
 # erster Test
 
 Modell: mixtral
+GPU: 2080ti 11GB
 kein cherry picking, first try antworten
 
 ---
