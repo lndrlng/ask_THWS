@@ -24,7 +24,12 @@ with open(CHUNKS_PATH, "r", encoding="utf-8") as f:
     chunks = json.load(f)
 
 # --- Load Embedding Model with CUDA ---
-device = "cuda" if torch.cuda.is_available() else "cpu"
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
+    device = "mps"
+else:
+    device = "cpu"
 print(f"🔥 Using device: {device}")
 model = SentenceTransformer(EMBED_MODEL_NAME, device=device)
 
