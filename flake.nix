@@ -34,6 +34,9 @@
         sentence-transformers
         tqdm
         qdrant-client
+        # Mkdocs
+        mkdocs
+        mkdocs-material
       ]);
   in {
     devShells.${system}.default = pkgs.mkShell {
@@ -42,7 +45,6 @@
         pkgs.ollama-cuda
         pkgs.commitizen
         pkgs.black
-        pkgs.yamllint
       ];
     };
   };
