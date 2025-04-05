@@ -1,4 +1,4 @@
-# Dokumentation: Vektordatenbanken im Projekt
+# Vektordatenbanken im Projekt
 
 ## 1. Einleitung
 
@@ -7,6 +7,10 @@
 
 - **Relevanz:**  
   Klassische relationale Datenbanken stoßen schnell an ihre Grenzen, wenn es um die Suche nach Ähnlichkeiten und Kontexten in unstrukturierten Daten (z. B. Text, Audio, Bilder) geht. Eine Vektordatenbank löst diese Herausforderungen, indem sie Daten in Form von numerischen Vektoren speichert und schnelle Ähnlichkeitssuchen ermöglicht.
+
+---
+
+![INSER/SELCT V-DB](vectordatabase.jpg)
 
 ---
 
