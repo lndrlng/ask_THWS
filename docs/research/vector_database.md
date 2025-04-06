@@ -10,7 +10,7 @@
 
 ---
 
-![INSER/SELCT V-DB](vectordatabase.jpg)
+![INSER/SELCT V-DB](/assets/vectordatabase.jpg)
 
 ---
 

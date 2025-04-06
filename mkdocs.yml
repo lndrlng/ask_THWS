@@ -8,3 +8,5 @@ nav:
       - Black: dev-tools/black.md
       - Commitizen: dev-tools/commitizen.md
       - Python: dev-tools/python.md
+  - Research:
+      - 
