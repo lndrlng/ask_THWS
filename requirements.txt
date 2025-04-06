@@ -9,3 +9,5 @@ tqdm
 langchain
 langdetect
 requests
+black
+commitizen

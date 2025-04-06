@@ -22,14 +22,17 @@ OUTPUT_PATH = os.path.splitext(INPUT_PATH)[0] + "_chunks.json"
 
 # --- Helpers ---
 
+
 def clean_text(text):
     return " ".join(text.split())
+
 
 def detect_language(text):
     try:
         return detect(text)
     except:
         return "unknown"
+
 
 # --- Load raw data ---
 
@@ -39,8 +42,7 @@ with open(INPUT_PATH, "r", encoding="utf-8") as f:
 # --- Set up chunker ---
 
 splitter = RecursiveCharacterTextSplitter(
-    chunk_size=CHUNK_SIZE,
-    chunk_overlap=CHUNK_OVERLAP
+    chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
 )
 
 chunked_docs = []
@@ -57,13 +59,15 @@ for i, doc in enumerate(raw_docs):
     chunks = splitter.split_text(cleaned)
 
     for j, chunk in enumerate(chunks):
-        chunked_docs.append({
-            "text": chunk,
-            "source": doc.get("url"),
-            "chunk_id": j,
-            "type": doc.get("type"),
-            "language": lang
-        })
+        chunked_docs.append(
+            {
+                "text": chunk,
+                "source": doc.get("url"),
+                "chunk_id": j,
+                "type": doc.get("type"),
+                "language": lang,
+            }
+        )
 
 # --- Save output ---
 

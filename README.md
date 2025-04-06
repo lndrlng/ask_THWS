@@ -42,5 +42,5 @@ python3 embed_to_qdrant.py data/thws_data_chunks.json
 # Running
 ```shell
 ollama serve
-python query.py "Welche Voraussetzungen brauche ich für ein Bachelorstudium?"
+python3 query.py "Welche Voraussetzungen brauche ich für ein Bachelorstudium?"
 ```
