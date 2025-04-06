@@ -15,7 +15,13 @@
 4. Frontend
     - 
 
-# open the rag repository Folder in Terminal
+---
+
+# Running the stuff
+
+# Setup
+
+open the rag repository Folder in Terminal and install the python dependencies
 
 ```shell
 pip install -r requirements.txt
@@ -42,5 +48,5 @@ python3 embed_to_qdrant.py data/thws_data_chunks.json
 # Running
 ```shell
 ollama serve
-python3 query.py "Welche Voraussetzungen brauche ich für ein Bachelorstudium?"
+python3 query.py
 ```
