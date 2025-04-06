@@ -1,6 +1,5 @@
 # Testfragen zu verschiedenen Kategorien
 
-
 ## Studierende
 
 ### Praxissemester
@@ -23,7 +22,7 @@
 
 - Wie lautet die Email von Michael Rott?
 
-### erstis
+### Erstis
 
 - Wo befindet sich die Mensa?
 
@@ -47,7 +46,7 @@
 
 ### Anreise
 
-- Welche Buslinien fahren zum Standort SHL? 
+- Welche Buslinien fahren zum Standort SHL?
 
 ### außerordentliche Studienangebote
 
