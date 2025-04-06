@@ -27,6 +27,7 @@
         pymupdf
         # compare_scraping_result
         deepdiff
+        tabulate
         # Preprocess
         langdetect
         langchain
