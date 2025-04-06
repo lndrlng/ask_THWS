@@ -30,9 +30,9 @@ class ThwsSpider(scrapy.Spider):
         """
         Parse the response from the website. Handles HTML, PDF, and iCal responses.
         Skips real and soft 404 pages.
-        Skips this:
-        {"url": "https://fwi.thws.de/en/404", "type": "html", "title": "404 :: Fakultät Wirtschaftsingenieurwesen", "text": "Oooops, this page does not exist (error 404).\nTry the search box at the top right of this page, maybe you'll find what you're looking for. Or go to the\nhome page\nand use the links to find the information you are looking for. Good luck!\nP.S.: Feel free to report broken links to the\nWebmaster\n- Thank you!", "date_scraped": "2025-04-06T12:58:06.865992", "date_updated": null}
 
+        Skips this:
+        {"url": "https://fwi.thws.de/en/404", "type": "html", "title": "404 :: Fakultät Wirtschaftsingenieurwesen", ...}
         """
         url = self.normalize_url(response.url)
 
@@ -46,8 +46,8 @@ class ThwsSpider(scrapy.Spider):
             return
 
         # Extract title early for soft-404 detection
-        title = response.css("title::text").get(default="").strip().lower()
-        if "404" in title or "not found" in title:
+        page_title = response.css("title::text").get(default="").strip().lower()
+        if "404" in page_title or "not found" in page_title:
             self.logger.debug(f"Skipping soft-404 (title): {url}")
             return
 
@@ -70,7 +70,7 @@ class ThwsSpider(scrapy.Spider):
 
         cleaned_text = self.clean_text(raw_text)
 
-        # skip if body looks like a known 404 message
+        # Skip if body looks like a known 404 message
         if (
             "diese seite existiert nicht" in cleaned_text.lower()
             or "this page does not exist" in cleaned_text.lower()
@@ -78,7 +78,27 @@ class ThwsSpider(scrapy.Spider):
             self.logger.debug(f"Skipping soft-404 (body): {url}")
             return
 
-        date = self.extract_date(response)
+        # Prefer headline for title, fallback to <title>
+        headline = response.css("h1::text").get()
+        title = (
+            headline.strip()
+            if headline
+            else response.css("title::text").get(default="").strip()
+        )
+
+        # Try extracting date from .meta
+        raw_meta = response.css("div.meta::text").get()
+        date = None
+        if raw_meta:
+            date_match = re.search(r"\d{2}\.\d{2}\.\d{4}", raw_meta)
+            if date_match:
+                try:
+                    parsed = datetime.strptime(date_match.group(), "%d.%m.%Y")
+                    date = parsed.isoformat()
+                except ValueError:
+                    pass
+        else:
+            date = self.extract_date(response)
 
         self.stats["html"] += 1
         self.stats["total"] += 1
@@ -158,8 +178,8 @@ class ThwsSpider(scrapy.Spider):
 
     def clean_text(self, text: str) -> str:
         """
-        Clean text by stripping, removing empties, and deduplicating.
-        Normalize Unicode to NFKC to avoid ambiguous characters.
+        Clean text by normalizing Unicode and removing excess whitespace,
+        while preserving \n and \n\n to retain paragraph structure for better chunking.
         """
         # Normalize to standard unicode (e.g., fancy quotes → straight quotes)
         # You can also use "NFC" or "NFKD" instead of "NFKC" depending on how aggressive you want to be.
