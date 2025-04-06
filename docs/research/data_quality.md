@@ -5,6 +5,7 @@ Um den Fortschritt und die Datenqualität des Scrapers zu bestimmen, hier versch
 ## 📁 Allgemeine Übersicht
 - Anzahl der Einträge insgesamt
 - Anzahl einzigartiger URLs
+- Anzahl pro Subdomain
 - Anzahl pro `type`: html, pdf, ical
 - Neue vs. entfernte URLs zwischen zwei Runs
 

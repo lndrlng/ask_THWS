@@ -5,6 +5,11 @@ import io
 import re
 from datetime import datetime
 import unicodedata
+from scrapy.exceptions import NotSupported
+from collections import defaultdict
+from rich.console import Console
+from rich.table import Table
+from rich.live import Live
 
 
 class ThwsSpider(scrapy.Spider):
@@ -13,9 +18,6 @@ class ThwsSpider(scrapy.Spider):
     start_urls = ["https://www.thws.de/", "https://fiw.thws.de/"]
 
     def __init__(self, *args, **kwargs) -> None:
-        """
-        Initialize the ThwsSpider with tracking for visited URLs and stats.
-        """
         super().__init__(*args, **kwargs)
         self.visited: set[str] = set()
         self.stats: dict[str, int] = {
@@ -26,15 +28,29 @@ class ThwsSpider(scrapy.Spider):
             "total": 0,
         }
 
-    def parse(self, response: scrapy.http.Response) -> None:
-        """
-        Parse the response from the website. Handles HTML, PDF, and iCal responses.
-        Skips real and soft 404 pages.
+        # Rich UI setup
+        self.subdomain_stats = defaultdict(
+            lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0}
+        )
+        self.table = self._create_rich_table()
+        self.live = Live(self.table, console=Console(), refresh_per_second=4)
+        self.live.__enter__()
 
-        Skips this:
-        {"url": "https://fwi.thws.de/en/404", "type": "html", "title": "404 :: Fakultät Wirtschaftsingenieurwesen", ...}
-        """
+    def update_rich_table(self):
+        table = self._create_rich_table()
+        for domain, counts in sorted(self.subdomain_stats.items()):
+            table.add_row(
+                domain,
+                str(counts["html"]),
+                str(counts["pdf"]),
+                str(counts["ical"]),
+                str(counts["errors"]),
+            )
+        self.live.update(table)
+
+    def parse(self, response: scrapy.http.Response) -> None:
         url = self.normalize_url(response.url)
+        domain = urlparse(url).netloc
 
         if url in self.visited:
             return
@@ -42,76 +58,88 @@ class ThwsSpider(scrapy.Spider):
 
         # Skip hard 404s
         if response.status == 404:
-            self.logger.debug(f"Skipping 404 (status): {url}")
-            return
-
-        # Extract title early for soft-404 detection
-        page_title = response.css("title::text").get(default="").strip().lower()
-        if "404" in page_title or "not found" in page_title:
-            self.logger.debug(f"Skipping soft-404 (title): {url}")
             return
 
         content_type = response.headers.get("Content-Type", b"").decode("utf-8").lower()
 
-        if url.lower().endswith(".pdf") or "application/pdf" in content_type:
-            yield from self.parse_pdf(response)
+        try:
+            # Soft 404 detection by title
+            page_title = response.css("title::text").get(default="").strip().lower()
+            if "404" in page_title or "not found" in page_title:
+                return
+
+            if url.lower().endswith(".pdf") or "application/pdf" in content_type:
+                yield from self.parse_pdf(response)
+                return
+
+            if url.lower().endswith(".ics") or "text/calendar" in content_type:
+                yield from self.parse_ical(response)
+                return
+
+            # Extract text
+            main_selectors = response.css("div#main, main, [role=main]")
+            raw_text = (
+                "\n".join(main_selectors.css("::text").getall())
+                if main_selectors
+                else "\n".join(response.css("body ::text").getall())
+            )
+            cleaned_text = self.clean_text(raw_text)
+
+            # Skip if body looks like a known 404 message
+            if (
+                "diese seite existiert nicht" in cleaned_text.lower()
+                or "this page does not exist" in cleaned_text.lower()
+            ):
+                return
+
+            headline = response.css("h1::text").get()
+            title = (
+                headline.strip()
+                if headline
+                else response.css("title::text").get(default="").strip()
+            )
+
+            # Try extracting date from .meta
+            raw_meta = response.css("div.meta::text").get()
+            date = None
+            if raw_meta:
+                match = re.search(r"\d{2}\.\d{2}\.\d{4}", raw_meta)
+                if match:
+                    try:
+                        date = datetime.strptime(match.group(), "%d.%m.%Y").isoformat()
+                    except ValueError:
+                        pass
+            else:
+                date = self.extract_date(response)
+
+            self.subdomain_stats[domain]["html"] += 1
+            self.stats["html"] += 1
+            self.stats["total"] += 1
+            self.update_rich_table()
+
+            yield {
+                "url": url,
+                "type": "html",
+                "title": title,
+                "text": cleaned_text,
+                "date_scraped": datetime.utcnow().isoformat(),
+                "date_updated": date,
+            }
+
+        except NotSupported:
+            self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+            self.update_rich_table()
+            # Don't raise, just skip
+            return
+        except Exception as e:
+            self.logger.warning(f"Unhandled error in parse for {url}: {e}")
+            self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+            self.update_rich_table()
             return
 
-        if url.lower().endswith(".ics") or "text/calendar" in content_type:
-            yield from self.parse_ical(response)
-            return
-
-        # Extract HTML content
-        main_selectors = response.css("div#main, main, [role=main]")
-        if main_selectors:
-            raw_text = "\n".join(main_selectors.css("::text").getall())
-        else:
-            raw_text = "\n".join(response.css("body ::text").getall())
-
-        cleaned_text = self.clean_text(raw_text)
-
-        # Skip if body looks like a known 404 message
-        if (
-            "diese seite existiert nicht" in cleaned_text.lower()
-            or "this page does not exist" in cleaned_text.lower()
-        ):
-            self.logger.debug(f"Skipping soft-404 (body): {url}")
-            return
-
-        # Prefer headline for title, fallback to <title>
-        headline = response.css("h1::text").get()
-        title = (
-            headline.strip()
-            if headline
-            else response.css("title::text").get(default="").strip()
-        )
-
-        # Try extracting date from .meta
-        raw_meta = response.css("div.meta::text").get()
-        date = None
-        if raw_meta:
-            date_match = re.search(r"\d{2}\.\d{2}\.\d{4}", raw_meta)
-            if date_match:
-                try:
-                    parsed = datetime.strptime(date_match.group(), "%d.%m.%Y")
-                    date = parsed.isoformat()
-                except ValueError:
-                    pass
-        else:
-            date = self.extract_date(response)
-
-        self.stats["html"] += 1
-        self.stats["total"] += 1
-
-        yield {
-            "url": url,
-            "type": "html",
-            "title": title,
-            "text": cleaned_text,
-            "date_scraped": datetime.utcnow().isoformat(),
-            "date_updated": date,
-        }
-
+        # Follow links if successful
         for href in response.css("a::attr(href)").getall():
             next_url = urljoin(url, href)
             parsed = urlparse(next_url)
@@ -125,18 +153,14 @@ class ThwsSpider(scrapy.Spider):
         Parse PDF content from the response and yield scraped data.
         """
         url = self.normalize_url(response.url)
+        domain = urlparse(url).netloc
         try:
             pdf_bytes = response.body
             text = ""
             with fitz.open(stream=io.BytesIO(pdf_bytes), filetype="pdf") as doc:
                 for page in doc:
                     text += page.get_text()
-
             cleaned_text = self.clean_text(text)
-
-            self.stats["pdf"] += 1
-            self.stats["total"] += 1
-
             yield {
                 "url": url,
                 "type": "pdf",
@@ -145,9 +169,14 @@ class ThwsSpider(scrapy.Spider):
                 "date_scraped": datetime.utcnow().isoformat(),
                 "date_updated": None,
             }
-
+            self.subdomain_stats[domain]["pdf"] += 1
+            self.stats["pdf"] += 1
+            self.stats["total"] += 1
+            self.update_rich_table()
         except Exception as e:
             self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+            self.update_rich_table()
             self.logger.warning(f"PDF parsing failed for {url}: {e}")
 
     def parse_ical(self, response: scrapy.http.Response) -> None:
@@ -155,14 +184,11 @@ class ThwsSpider(scrapy.Spider):
         Parse iCal content from the response and yield scraped data.
         """
         url = self.normalize_url(response.url)
+        domain = urlparse(url).netloc
         try:
             text = response.text
             cleaned_text = self.clean_text(text)
             title = self.extract_ical_title(text)
-
-            self.stats["ical"] += 1
-            self.stats["total"] += 1
-
             yield {
                 "url": url,
                 "type": "ical",
@@ -171,9 +197,14 @@ class ThwsSpider(scrapy.Spider):
                 "date_scraped": datetime.utcnow().isoformat(),
                 "date_updated": None,
             }
-
+            self.subdomain_stats[domain]["ical"] += 1
+            self.stats["ical"] += 1
+            self.stats["total"] += 1
+            self.update_rich_table()
         except Exception as e:
             self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+            self.update_rich_table()
             self.logger.warning(f"iCal parsing failed for {url}: {e}")
 
     def clean_text(self, text: str) -> str:
@@ -244,10 +275,17 @@ class ThwsSpider(scrapy.Spider):
         return match.group(1).strip() if match else ""
 
     def closed(self, reason: str) -> None:
-        """
-        Log a summary of the crawling statistics upon spider closure.
-        """
-        self.logger.info("=== CRAWLING SUMMARY ===")
+        self.live.__exit__(None, None, None)
+        self.logger.info("=== FINAL CRAWLING SUMMARY ===")
         for key, value in self.stats.items():
             self.logger.info(f"{key.upper()}: {value}")
         self.logger.info(f"Spider closed because: {reason}")
+
+    def _create_rich_table(self) -> Table:
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Subdomain", style="cyan")
+        table.add_column("HTML", justify="right")
+        table.add_column("PDF", justify="right")
+        table.add_column("iCal", justify="right")
+        table.add_column("Errors", justify="right")
+        return table

@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from statistics import mean, median
 from dateutil.parser import parse as date_parse
 from deepdiff import DeepDiff
+from urllib.parse import urlparse
 import pandas as pd
 from tabulate import tabulate
 
@@ -63,6 +64,17 @@ def analyze_data(data: list) -> tuple[dict, dict]:
         )
 
     return overall_stats, type_stats
+
+
+def count_by_subdomain(data: list) -> dict:
+    subdomain_counter = Counter()
+    for entry in data:
+        url = entry.get("url")
+        if url:
+            parsed = urlparse(url)
+            subdomain = parsed.netloc.lower()
+            subdomain_counter[subdomain] += 1
+    return dict(subdomain_counter)
 
 
 def is_valid_date(value) -> bool:
@@ -124,7 +136,7 @@ def compare_runs(file1: str, file2: str, level: int = 0) -> dict:
     return changed
 
 
-def display_analysis(overall: dict, type_stats: dict):
+def display_analysis(overall: dict, type_stats: dict, subdomains: dict):
     print("\n📊 Overall Statistics:\n")
     df = pd.DataFrame(overall.items(), columns=["Metric", "Value"])
     print(tabulate(df, headers="keys", tablefmt="fancy_grid"))
@@ -135,6 +147,11 @@ def display_analysis(overall: dict, type_stats: dict):
     df_type.index.name = "Metric"
     df_type = df_type.reset_index()
     print(tabulate(df_type, headers="keys", tablefmt="fancy_grid"))
+
+    print("\n🌐 Hits by Subdomain:\n")
+    df_sub = pd.DataFrame(subdomains.items(), columns=["Subdomain", "Count"])
+    df_sub = df_sub.sort_values("Count", ascending=False).reset_index(drop=True)
+    print(tabulate(df_sub, headers="keys", tablefmt="fancy_grid"))
 
 
 def main():
@@ -160,7 +177,8 @@ def main():
         if len(args.inputs) == 1:
             data = load_json(args.inputs[0])
             overall, type_stats = analyze_data(data)
-            display_analysis(overall, type_stats)
+            subdomains = count_by_subdomain(data)
+            display_analysis(overall, type_stats, subdomains)
 
         elif len(args.inputs) == 2:
             data1 = load_json(args.inputs[0])
