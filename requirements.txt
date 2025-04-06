@@ -1,14 +1,19 @@
-scrapy
-PyMuPDF
-itemadapter
-torch
-qdrant-client
-sentence-transformers
-tqdm
-langchain
-langdetect
-requests
-black
-commitizen
-deepdiff
-tabulate
+# scraper
+scrapy==2.12.0
+pymupdf==1.25.5
+# compare_scraping_result
+tabulate==0.9.0
+deepdiff==8.4.2
+# Preprocess
+langdetect==1.0.9
+langchain==0.3.23
+pandas==2.2.3
+# Embedding
+sentence-transformers==4.0.2
+tqdm==4.67.1
+qdrant-client==1.13.3
+# Query
+torch==2.6.0
+# dev tools
+black==25.1.0
+commitizen==4.4.1

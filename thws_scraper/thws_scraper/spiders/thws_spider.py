@@ -28,11 +28,27 @@ class ThwsSpider(scrapy.Spider):
     def parse(self, response: scrapy.http.Response) -> None:
         """
         Parse the response from the website. Handles HTML, PDF, and iCal responses.
+        Skips real and soft 404 pages.
+        Skips this:
+        {"url": "https://fwi.thws.de/en/404", "type": "html", "title": "404 :: Fakultät Wirtschaftsingenieurwesen", "text": "Oooops, this page does not exist (error 404).\nTry the search box at the top right of this page, maybe you'll find what you're looking for. Or go to the\nhome page\nand use the links to find the information you are looking for. Good luck!\nP.S.: Feel free to report broken links to the\nWebmaster\n- Thank you!", "date_scraped": "2025-04-06T12:58:06.865992", "date_updated": null}
+
         """
         url = self.normalize_url(response.url)
+
         if url in self.visited:
             return
         self.visited.add(url)
+
+        # Skip hard 404s
+        if response.status == 404:
+            self.logger.debug(f"Skipping 404 (status): {url}")
+            return
+
+        # Extract title early for soft-404 detection
+        title = response.css("title::text").get(default="").strip().lower()
+        if "404" in title or "not found" in title:
+            self.logger.debug(f"Skipping soft-404 (title): {url}")
+            return
 
         content_type = response.headers.get("Content-Type", b"").decode("utf-8").lower()
 
@@ -44,7 +60,7 @@ class ThwsSpider(scrapy.Spider):
             yield from self.parse_ical(response)
             return
 
-        # Extract HTML content from main selectors or fallback to body text
+        # Extract HTML content
         main_selectors = response.css("div#main, main, [role=main]")
         if main_selectors:
             raw_text = "\n".join(main_selectors.css("::text").getall())
@@ -52,7 +68,15 @@ class ThwsSpider(scrapy.Spider):
             raw_text = "\n".join(response.css("body ::text").getall())
 
         cleaned_text = self.clean_text(raw_text)
-        title = response.css("title::text").get(default="").strip()
+
+        # skip if body looks like a known 404 message
+        if (
+            "diese seite existiert nicht" in cleaned_text.lower()
+            or "this page does not exist" in cleaned_text.lower()
+        ):
+            self.logger.debug(f"Skipping soft-404 (body): {url}")
+            return
+
         date = self.extract_date(response)
 
         self.stats["html"] += 1
@@ -67,7 +91,6 @@ class ThwsSpider(scrapy.Spider):
             "date_updated": date,
         }
 
-        # Follow internal links
         for href in response.css("a::attr(href)").getall():
             next_url = urljoin(url, href)
             parsed = urlparse(next_url)
