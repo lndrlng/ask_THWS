@@ -4,6 +4,7 @@ import fitz
 import io
 import re
 from datetime import datetime
+import unicodedata
 
 
 class ThwsSpider(scrapy.Spider):
@@ -157,9 +158,13 @@ class ThwsSpider(scrapy.Spider):
 
     def clean_text(self, text: str) -> str:
         """
-        Clean text by stripping whitespace from lines, removing empty lines,
-        and deduplicating lines.
+        Clean text by stripping, removing empties, and deduplicating.
+        Normalize Unicode to NFKC to avoid ambiguous characters.
         """
+        # Normalize to standard unicode (e.g., fancy quotes → straight quotes)
+        # You can also use "NFC" or "NFKD" instead of "NFKC" depending on how aggressive you want to be.
+        text = unicodedata.normalize("NFKC", text)
+
         lines = [line.strip() for line in text.splitlines()]
         lines = [line for line in lines if line]
         return self.deduplicate_lines("\n".join(lines))
