@@ -9,4 +9,4 @@ nav:
       - Commitizen: dev-tools/commitizen.md
       - Python: dev-tools/python.md
   - Research:
-      - 
+      - Vectordb: research/vector_database.md
