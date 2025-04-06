@@ -24,8 +24,9 @@
       with ps; [
         # Scraper
         scrapy
-        beautifulsoup4
         pymupdf
+        # compare_scraping_result
+        deepdiff
         # Preprocess
         langdetect
         langchain

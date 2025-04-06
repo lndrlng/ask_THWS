@@ -13,3 +13,4 @@ nav:
       - Erster Test: tests/first_results.md
   - Research:
       - Scraping: research/scraping.md
+      - Data Quality: research/data_quality.md

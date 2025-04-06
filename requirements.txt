@@ -1,5 +1,4 @@
 scrapy
-beautifulsoup4
 PyMuPDF
 itemadapter
 torch
@@ -11,3 +10,4 @@ langdetect
 requests
 black
 commitizen
+deepdiff
