@@ -11,3 +11,5 @@ nav:
   - Tests:
       - Testfragen: tests/fragen.md
       - Erster Test: tests/first_results.md
+  - Research:
+      - Scraping: research/scraping.md
