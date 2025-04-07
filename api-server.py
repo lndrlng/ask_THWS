@@ -103,8 +103,9 @@ Antwort:
         "question": query,
         "answer": answer,
         "sources": list(unique_chunks.keys()),
-        "time_seconds": calc_time
+        "time_seconds": calc_time,
     }
+
 
 # --- Run with: python api_server.py ---
 if __name__ == "__main__":
