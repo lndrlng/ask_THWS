@@ -15,7 +15,7 @@ if len(sys.argv) < 2:
 
 CHUNKS_PATH = sys.argv[1]
 COLLECTION_NAME = os.path.splitext(os.path.basename(CHUNKS_PATH))[0]
-EMBED_MODEL_NAME = "BAAI/bge-m3"
+EMBED_MODEL_NAME = "intfloat/multilingual-e5-large"
 EMBED_DIM = 1024
 QDRANT_URL = "http://localhost:6333"
 
