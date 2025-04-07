@@ -23,6 +23,12 @@ def main():
         print("❌ Usage: python preprocess_and_chunk.py <input_file.json>")
         sys.exit(1)
 
+
+def main():
+    if len(sys.argv) < 2:
+        print("❌ Usage: python preprocess_and_chunk.py <input_file.json>")
+        sys.exit(1)
+
     input_path = sys.argv[1]
     if not os.path.isfile(input_path):
         print(f"❌ File not found: {input_path}")
