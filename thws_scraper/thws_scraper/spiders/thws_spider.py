@@ -41,8 +41,17 @@ class ThwsSpider(scrapy.Spider):
     def update_rich_table(self):
         elapsed = datetime.utcnow() - self.start_time
         elapsed_str = str(elapsed).split(".")[0]
-        sorted_subs = sorted(self.subdomain_stats.items(), reverse=True)
+
+        # Filter out subdomains with <= 1 pages
+        filtered_subs = {
+            domain: counts
+            for domain, counts in self.subdomain_stats.items()
+            if (counts["html"] + counts["pdf"] + counts["ical"]) > 1
+        }
+
+        sorted_subs = sorted(filtered_subs.items(), reverse=True)
         table = Table(show_header=False, expand=True)
+
         for domain, counts in sorted_subs:
             table.add_row(
                 domain,
@@ -51,10 +60,12 @@ class ThwsSpider(scrapy.Spider):
                 str(counts["ical"]),
                 str(counts["errors"]),
             )
+
         table.add_row("─" * 60, "", "", "", "")
         table.add_row(
             "Subdomain", "HTML", "PDF", "iCal", "Errors", style="bold magenta"
         )
+
         table.add_row(
             f"SUMMARY ⏱ {elapsed_str}",
             str(self.stats["html"]),
@@ -63,6 +74,7 @@ class ThwsSpider(scrapy.Spider):
             str(self.stats["errors"]),
             style="bold green",
         )
+
         self.live.update(table)
 
     def parse(self, response: scrapy.http.Response) -> None:
