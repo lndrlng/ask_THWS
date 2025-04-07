@@ -35,6 +35,7 @@ client = QdrantClient(url=QDRANT_URL)
 # --- FastAPI ---
 app = FastAPI()
 
+
 class Question(BaseModel):
     query: str
 
@@ -48,6 +49,7 @@ def get_metadata():
         "commit_hash": commit_hash,
         "device": device,
     }
+
 
 @app.post("/ask")
 def ask_question(data: Question):

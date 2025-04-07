@@ -1,10 +1,12 @@
 import requests
 import time
 
+
 def ask_question(question):
     url = "http://localhost:8000/ask"
     response = requests.post(url, json={"query": question})
     return response.json()
+
 
 if __name__ == "__main__":
     print("🔄 THWS Assistent – API Modus (ENTER zum Beenden)")
