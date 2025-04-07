@@ -55,11 +55,12 @@ for i, chunk in enumerate(chunks):
     vector = embeddings[i]
     payload = {
         "text": chunk["text"],
-        "source": chunk["source"],
+        "source": chunk["metadata"]["source"],
         "chunk_id": chunk["chunk_id"],
-        "type": chunk["type"],
-        "language": chunk["language"],
+        "type": chunk["metadata"].get("type", "unknown"),
+        "language": chunk["metadata"].get("lang", "unknown"),
     }
+
     points.append(PointStruct(id=str(uuid.uuid4()), vector=vector, payload=payload))
 
 # --- Upload in Batches ---

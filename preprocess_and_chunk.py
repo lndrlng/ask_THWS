@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+import uuid
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from tqdm import tqdm
 from langdetect import detect, DetectorFactory
@@ -52,8 +53,14 @@ def main():
             "lang": lang,
         }
 
-        for chunk in splitter.split_text(text):
-            chunks.append({"text": chunk, "metadata": metadata})
+        for chunk_text in splitter.split_text(text):
+            chunks.append(
+                {
+                    "chunk_id": str(uuid.uuid4()),
+                    "text": chunk_text,
+                    "metadata": metadata,
+                }
+            )
 
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False, indent=2)

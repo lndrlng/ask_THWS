@@ -15,10 +15,12 @@ import signal
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # --- Config ---
-COLLECTION_NAME = "thws_data_chunks"
+COLLECTION_NAME = "thws_data2_chunks"
 QDRANT_URL = "http://localhost:6333"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-OLLAMA_MODEL = "zephyr"
+# OLLAMA_MODEL = "gemma:7b"
+# OLLAMA_MODEL = "zephyr"
+OLLAMA_MODEL = "mixtral"
 TOP_K = 5
 
 # --- Load Embedding Model ---
