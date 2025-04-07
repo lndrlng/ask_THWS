@@ -7,6 +7,7 @@ MARKDOWN_FILE = "docs/tests/fragen.md"
 API_URL = "http://localhost:8000/ask"
 METADATA_URL = "http://localhost:8000/metadata"
 
+
 # --- Extract Questions from Markdown ---
 def extract_questions(md_file):
     with open(md_file, "r", encoding="utf-8") as file:
@@ -14,15 +15,18 @@ def extract_questions(md_file):
     questions = re.findall(r"-\s+(.*?)\?", content)
     return [q.strip() + "?" for q in questions]
 
+
 # --- Query the API ---
 def query_api(question):
     response = requests.post(API_URL, json={"query": question})
     return response.json()
 
+
 # --- Get metadata from API ---
 def get_metadata():
     response = requests.get(METADATA_URL)
     return response.json()
+
 
 # --- Main Testing Routine ---
 def run_tests():
@@ -57,6 +61,7 @@ def run_tests():
             f.write("\n---\n")
 
     print(f"\n✅ Test abgeschlossen. Ergebnisse gespeichert in: {result_file}")
+
 
 # --- Run the script ---
 if __name__ == "__main__":
