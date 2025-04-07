@@ -1,4 +1,3 @@
-# api_server.py
 import torch
 import time
 from fastapi import FastAPI
@@ -9,6 +8,9 @@ import requests
 import uvicorn
 import warnings
 import subprocess
+import atexit
+import os
+import signal
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -16,7 +18,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 COLLECTION_NAME = "thws_data_chunks"
 QDRANT_URL = "http://localhost:6333"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-OLLAMA_MODEL = "gemma:7b"
+OLLAMA_MODEL = "zephyr"
 TOP_K = 5
 
 # --- Load Embedding Model ---
@@ -32,8 +34,26 @@ embedder = SentenceTransformer(EMBED_MODEL_NAME, device=device)
 # --- Init Qdrant ---
 client = QdrantClient(url=QDRANT_URL)
 
+# --- Launch Ollama Server ---
+ollama_process = subprocess.Popen(
+    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+)
+
+
+# Ensure Ollama server stops when FastAPI stops
+def shutdown_ollama():
+    print("🛑 Stopping Ollama server...")
+    if os.name == "nt":
+        ollama_process.terminate()
+    else:
+        os.killpg(os.getpgid(ollama_process.pid), signal.SIGTERM)
+
+
+atexit.register(shutdown_ollama)
+
 # --- FastAPI ---
 app = FastAPI()
+
 
 class Question(BaseModel):
     query: str
@@ -44,10 +64,11 @@ def get_metadata():
     commit_hash = subprocess.getoutput("git rev-parse HEAD")
     return {
         "model": OLLAMA_MODEL,
-        "embedding_modell": EMBED_MODEL_NAME,
+        "embedding_model": EMBED_MODEL_NAME,
         "commit_hash": commit_hash,
         "device": device,
     }
+
 
 @app.post("/ask")
 def ask_question(data: Question):
@@ -103,9 +124,10 @@ Antwort:
         "question": query,
         "answer": answer,
         "sources": list(unique_chunks.keys()),
-        "time_seconds": calc_time
+        "time_seconds": calc_time,
     }
+
 
 # --- Run with: python api_server.py ---
 if __name__ == "__main__":
-    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)

@@ -28,6 +28,8 @@ class ThwsSpider(scrapy.Spider):
             "total": 0,
         }
 
+        self.start_time = datetime.utcnow()
+
         # Rich UI setup
         self.subdomain_stats = defaultdict(
             lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0}
@@ -37,8 +39,11 @@ class ThwsSpider(scrapy.Spider):
         self.live.__enter__()
 
     def update_rich_table(self):
-        table = self._create_rich_table()
-        for domain, counts in sorted(self.subdomain_stats.items()):
+        elapsed = datetime.utcnow() - self.start_time
+        elapsed_str = str(elapsed).split(".")[0]
+        sorted_subs = sorted(self.subdomain_stats.items(), reverse=True)
+        table = Table(show_header=False, expand=True)
+        for domain, counts in sorted_subs:
             table.add_row(
                 domain,
                 str(counts["html"]),
@@ -46,6 +51,18 @@ class ThwsSpider(scrapy.Spider):
                 str(counts["ical"]),
                 str(counts["errors"]),
             )
+        table.add_row("─" * 60, "", "", "", "")
+        table.add_row(
+            "Subdomain", "HTML", "PDF", "iCal", "Errors", style="bold magenta"
+        )
+        table.add_row(
+            f"SUMMARY ⏱ {elapsed_str}",
+            str(self.stats["html"]),
+            str(self.stats["pdf"]),
+            str(self.stats["ical"]),
+            str(self.stats["errors"]),
+            style="bold green",
+        )
         self.live.update(table)
 
     def parse(self, response: scrapy.http.Response) -> None:
