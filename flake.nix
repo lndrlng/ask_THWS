@@ -15,6 +15,7 @@
         pkgs.python311
         pkgs.ollama-cuda
         pkgs.commitizen
+        pkgs.git-lfs
         pkgs.black
 
         # System libraries needed by PyMuPDF
