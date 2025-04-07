@@ -38,6 +38,9 @@
         # Mkdocs
         mkdocs
         mkdocs-material
+        # Api server
+        fastapi
+        uvicorn
       ]);
   in {
     devShells.${system}.default = pkgs.mkShell {

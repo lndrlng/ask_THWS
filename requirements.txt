@@ -11,3 +11,5 @@ requests
 black
 commitizen
 deepdiff
+fastapi
+uvicorn
