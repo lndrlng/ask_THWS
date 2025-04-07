@@ -117,7 +117,7 @@ Scrapy ist sehr einfach aufzusetzen mit `scrapy startproject thws-scraper .` und
 | `ROBOTSTXT_OBEY = True`   | Respektiert die `robots.txt` der Seite                                       |
 | `DOWNLOAD_DELAY = 0.5`    | Pausiert 0,5 Sekunden zwischen Requests, um Server zu schonen                |
 | `AUTOTHROTTLE_ENABLED`    | Passt das Crawling automatisch an (z. B. bei langsamen Seiten)               |
-| `CONCURRENT_REQUESTS = 16`| Führt bis zu 16 Requests gleichzeitig aus                                     |
+| `CONCURRENT_REQUESTS = 16`| Führt bis zu 16 Requests gleichzeitig aus                                    |
 | `USER_AGENT`              | Identifiziert den Crawler höflich und transparent                            |
 
 
