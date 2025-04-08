@@ -22,5 +22,5 @@ torchaudio==2.5.1+cu121
 black==25.1.0
 commitizen==4.4.1
 # Api server
-fastapi
-uvicorn
+fastapi==0.115.12
+uvicorn==0.34.0

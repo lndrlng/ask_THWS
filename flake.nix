@@ -17,6 +17,7 @@
         pkgs.commitizen
         pkgs.git-lfs
         pkgs.black
+        pkgs.jq
 
         # System libraries needed by PyMuPDF
         pkgs.mupdf
