@@ -15,7 +15,11 @@ if len(sys.argv) < 2:
 
 CHUNKS_PATH = sys.argv[1]
 COLLECTION_NAME = os.path.splitext(os.path.basename(CHUNKS_PATH))[0]
+<<<<<<< HEAD
 EMBED_MODEL_NAME = "intfloat/multilingual-e5-large"
+=======
+EMBED_MODEL_NAME = "BAAI/bge-m3"
+>>>>>>> origin/main
 EMBED_DIM = 1024
 QDRANT_URL = "http://localhost:6333"
 
@@ -55,12 +59,20 @@ for i, chunk in enumerate(chunks):
     vector = embeddings[i]
     payload = {
         "text": chunk["text"],
+<<<<<<< HEAD
         "source": chunk["metadata"]["source"],
         "chunk_id": chunk["chunk_id"],
         "type": chunk["metadata"].get("type", "unknown"),
         "language": chunk["metadata"].get("lang", "unknown"),
     }
 
+=======
+        "source": chunk["source"],
+        "chunk_id": chunk["chunk_id"],
+        "type": chunk["type"],
+        "language": chunk["language"],
+    }
+>>>>>>> origin/main
     points.append(PointStruct(id=str(uuid.uuid4()), vector=vector, payload=payload))
 
 # --- Upload in Batches ---

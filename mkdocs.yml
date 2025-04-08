@@ -14,3 +14,4 @@ nav:
   - Research:
       - Scraping: research/scraping.md
       - Data Quality: research/data_quality.md
+      - Vectordb: research/vector_database.md
