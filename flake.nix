@@ -1,51 +1,58 @@
 {
-  description = "devShell for the RAG tool";
+  description = "devShell for the RAG tool (using Python venv)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-  outputs = {
-    self,
-    nixpkgs,
-    ...
-  }: let
+  outputs = { self, nixpkgs, ... }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
       config.allowUnfree = true;
     };
-
-    python = pkgs.python311.override {
-      packageOverrides = pyFinal: pyPrev: {
-        torch = pyPrev.torch.override { cudaSupport = true; };
-      };
-    };
-
-    pythonEnv = python.withPackages (ps:
-      with ps; [
-        # Scraper
-        scrapy
-        beautifulsoup4
-        pymupdf
-        # Preprocess
-        langdetect
-        langchain
-        pandas
-        # Embedding
-        sentence-transformers
-        tqdm
-        qdrant-client
-        # Mkdocs
-        mkdocs
-        mkdocs-material
-      ]);
   in {
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = [
-        pythonEnv
+        pkgs.python311
         pkgs.ollama-cuda
         pkgs.commitizen
+        pkgs.git-lfs
         pkgs.black
+        pkgs.jq
+
+        # System libraries needed by PyMuPDF
+        pkgs.mupdf
+        pkgs.swig
+        pkgs.pkg-config
+        pkgs.freetype
+        pkgs.harfbuzz
+        pkgs.libjpeg
+        pkgs.zlib
+        pkgs.jbig2dec
+        pkgs.openjpeg
+        pkgs.stdenv.cc.cc.lib
       ];
+
+      shellHook = ''
+        # Make libstdc++.so.6 available to the Python venv
+        export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH
+
+        # Set up venv once if not already
+        if [ ! -d .venv ]; then
+          echo "🔧 Creating Python venv..."
+          python3 -m venv .venv
+        fi
+
+        # Activate venv
+        source .venv/bin/activate
+
+        # Upgrade pip/tools
+        pip install --upgrade pip setuptools wheel
+
+        # Install required Python packages inside venv
+        pip install --no-cache-dir -r requirements.txt
+
+        echo "✅ Python venv activated with all packages installed (incl. PyMuPDF)"
+      '';
     };
   };
 }
