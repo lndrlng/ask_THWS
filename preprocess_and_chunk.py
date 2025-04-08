@@ -9,6 +9,7 @@ from langdetect import detect, DetectorFactory
 # Make langdetect deterministic
 DetectorFactory.seed = 42
 
+
 def main():
     if len(sys.argv) < 2:
         print("❌ Usage: python preprocess_and_chunk.py <input_file.json>")
@@ -66,6 +67,7 @@ def main():
         json.dump(chunks, f, ensure_ascii=False, indent=2)
 
     print(f"✅ Saved {len(chunks)} chunks → {output_path}")
+
 
 if __name__ == "__main__":
     main()
