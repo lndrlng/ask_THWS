@@ -3,11 +3,7 @@ import json
 # ❌ Junk indicators (UI, navigation, legal, social media)
 BOILERPLATE_PHRASES = [
     "zum inhalt wechseln", "zum hauptmenü wechseln", "zur suche wechseln",
-    "zur sprachauswahl wechseln", "zur servicenavigation wechseln",
-    "quicklinks", "kontakt", "telefon", "e-mail", "öffnungszeiten",
-    "vorlesungsfreie schließtage", "standort", "raum", "gebäude", "mehr information",
-    "zum impressum", "zu unseren weiteren videos", "logo", "weiterlesen", "studiengangsvideos",
-    "veranstaltungen", "weitere termine", "freies arbeiten", "geräteverleih", "ausgabe", "rückgabe"
+    "zur sprachauswahl wechseln", "zur servicenavigation wechseln"
 ]
 
 # ✅ Relevant topic keywords (whitelist if needed)
