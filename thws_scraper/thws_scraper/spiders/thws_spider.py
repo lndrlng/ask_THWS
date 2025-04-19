@@ -105,13 +105,11 @@ class ThwsSpider(scrapy.Spider):
                 yield from self.parse_ical(response)
                 return
 
-            # Extract text
-            main_selectors = response.css("div#main, main, [role=main]")
-            raw_text = (
-                "\n".join(main_selectors.css("::text").getall())
-                if main_selectors
-                else "\n".join(response.css("body ::text").getall())
-            )
+            text_nodes = response.xpath(
+                '//body//*[not(self::header) and not(self::footer) '
+                'and not(contains(@class, "help")) and not(contains(@id, "help"))]//text()'
+            ).getall()
+            raw_text = "\n".join(t.strip() for t in text_nodes if t.strip())
             cleaned_text = self.clean_text(raw_text)
 
             # Skip if body looks like a known 404 message
