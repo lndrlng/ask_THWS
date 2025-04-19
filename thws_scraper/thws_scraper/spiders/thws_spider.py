@@ -1,57 +1,217 @@
-import scrapy
-from urllib.parse import urljoin, urlparse
-import fitz
 import io
 import re
-from datetime import datetime
 import unicodedata
-from scrapy.exceptions import NotSupported
-from collections import defaultdict
+from datetime import datetime
+from urllib.parse import urlparse
+
+import fitz
+import scrapy
+from bs4 import BeautifulSoup
+from readability import Document
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
+from icalendar import Calendar
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
+from collections import defaultdict
 
 
-class ThwsSpider(scrapy.Spider):
+class ThwsSpider(CrawlSpider):
     name = "thws"
     allowed_domains = ["thws.de"]
-    start_urls = ["https://www.thws.de/", "https://fiw.thws.de/"]
+    start_urls = [
+        "https://www.thws.de/",
+        "https://fiw.thws.de/",
+    ]
+    rules = [
+        # follow all links within allowed_domains, handle every response in parse_item
+        Rule(LinkExtractor(allow_domains=allowed_domains), callback="parse_item", follow=True),
+    ]
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.visited: set[str] = set()
-        self.stats: dict[str, int] = {
-            "html": 0,
-            "pdf": 0,
-            "ical": 0,
-            "errors": 0,
-            "total": 0,
-        }
-
+        self.stats = {"html": 0, "pdf": 0, "ical": 0, "total": 0, "errors": 0}
+        self.subdomain_stats = defaultdict(lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0})
         self.start_time = datetime.utcnow()
 
-        # Rich UI setup
-        self.subdomain_stats = defaultdict(
-            lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0}
-        )
         self.table = self._create_rich_table()
         self.live = Live(self.table, console=Console(), refresh_per_second=4)
         self.live.__enter__()
+
+    def parse_item(self, response):
+        url = self.normalize_url(response.url)
+        domain = urlparse(url).netloc
+        status = response.status
+        etag = response.headers.get("ETag", b"").decode("utf-8", errors="ignore")
+        last_modified = response.headers.get("Last-Modified", b"").decode("utf-8", errors="ignore")
+        ctype = response.headers.get("Content-Type", b"").decode("utf-8", errors="ignore").split(";")[0].lower()
+
+        # skip hard 404
+        if status == 404:
+            return
+
+        try:
+            if ctype == "application/pdf":
+                yield from self.parse_pdf(response, url, domain, status, etag, last_modified)
+            elif ctype in ("text/calendar", "text/vcard", "application/ical"):
+                yield from self.parse_ical(response, url, domain, status, etag, last_modified)
+            else:
+                yield from self.parse_html(response, url, domain, status, etag, last_modified)
+        except Exception as e:
+            self.logger.warning(f"Error parsing {url}: {e}")
+            self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+            self.update_rich_table()
+
+    def parse_html(self, response, url, domain, status, etag, last_modified):
+        # extract main content via readability
+        doc = Document(response.text)
+        summary_html = doc.summary()
+        text = BeautifulSoup(summary_html, "lxml").get_text()
+        cleaned = self.clean_text(text)
+
+        # skip soft-404s
+        if any(msg in cleaned.lower() for msg in ["404", "not found", "diese seite existiert nicht"]):
+            return
+
+        # title and date
+        headline = BeautifulSoup(summary_html, "lxml").select_one("h1")
+        title = headline.get_text().strip() if headline else response.css("title::text").get(default="").strip()
+        date_updated = self.extract_date(response)
+
+        item = {
+            "url": url,
+            "type": "html",
+            "title": title,
+            "text": cleaned,
+            "date_scraped": datetime.utcnow().isoformat(),
+            "date_updated": date_updated,
+            "status": status,
+            "etag": etag,
+            "last_modified": last_modified,
+        }
+
+        self.stats["html"] += 1
+        self.subdomain_stats[domain]["html"] += 1
+        self.stats["total"] += 1
+        self.update_rich_table()
+        yield item
+
+    def parse_pdf(self, response, url, domain, status, etag, last_modified):
+        try:
+            with fitz.open(stream=io.BytesIO(response.body), filetype="pdf") as doc:
+                metadata = doc.metadata or {}
+                text = "\n".join(page.get_text() for page in doc)
+        except Exception as e:
+            self.logger.warning(f"PDF parsing failed for {url}: {e}")
+            self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+            self.update_rich_table()
+            return
+
+        cleaned = self.clean_text(text)
+        item = {
+            "url": url,
+            "type": "pdf",
+            "title": metadata.get("title", ""),
+            "author": metadata.get("author", ""),
+            "text": cleaned,
+            "date_scraped": datetime.utcnow().isoformat(),
+            "date_updated": None,
+            "status": status,
+            "etag": etag,
+            "last_modified": last_modified,
+        }
+
+        self.stats["pdf"] += 1
+        self.subdomain_stats[domain]["pdf"] += 1
+        self.stats["total"] += 1
+        self.update_rich_table()
+        yield item
+
+    def parse_ical(self, response, url, domain, status, etag, last_modified):
+        try:
+            cal = Calendar.from_ical(response.body)
+            events = [ev for ev in cal.walk("VEVENT")]
+            for ev in events:
+                summary = ev.get("SUMMARY")
+                dtstart = ev.get("DTSTART").dt.isoformat() if ev.get("DTSTART") else None
+                dtend = ev.get("DTEND").dt.isoformat() if ev.get("DTEND") else None
+                desc = ev.get("DESCRIPTION", "")
+                item = {
+                    "url": url,
+                    "type": "ical-event",
+                    "title": summary,
+                    "text": desc,
+                    "start": dtstart,
+                    "end": dtend,
+                    "date_scraped": datetime.utcnow().isoformat(),
+                    "status": status,
+                    "etag": etag,
+                    "last_modified": last_modified,
+                }
+                yield item
+            # count by event
+            self.stats["ical"] += len(events)
+            self.subdomain_stats[domain]["ical"] += len(events)
+            self.stats["total"] += len(events)
+        except Exception as e:
+            self.logger.warning(f"iCal parsing failed for {url}: {e}")
+            self.stats["errors"] += 1
+            self.subdomain_stats[domain]["errors"] += 1
+        finally:
+            self.update_rich_table()
+
+    def clean_text(self, text: str) -> str:
+        text = unicodedata.normalize("NFKC", text)
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        return self.deduplicate_lines("\n".join(lines))
+
+    def deduplicate_lines(self, text: str) -> str:
+        seen, out = set(), []
+        for line in text.splitlines():
+            if line not in seen:
+                seen.add(line)
+                out.append(line)
+        return "\n".join(out)
+
+    def normalize_url(self, url: str) -> str:
+        p = urlparse(url)
+        return p._replace(query="").geturl().rstrip("/")
+
+    def extract_date(self, response):
+        for sel in ('meta[property="article:published_time"]::attr(content)',
+                    'meta[name="date"]::attr(content)',
+                    "time::text",
+                    ".date::text"):
+            s = response.css(sel).get()
+            if s:
+                s = s.strip()
+                try:
+                    return datetime.fromisoformat(s).isoformat()
+                except ValueError:
+                    return s
+        return None
+
+    def closed(self, reason):
+        self.live.__exit__(None, None, None)
+        self.logger.info("=== FINAL CRAWLING SUMMARY ===")
+        for k, v in self.stats.items():
+            self.logger.info(f"{k.upper()}: {v}")
+        self.logger.info(f"Spider closed because: {reason}")
 
     def update_rich_table(self):
         elapsed = datetime.utcnow() - self.start_time
         elapsed_str = str(elapsed).split(".")[0]
 
-        # Filter out subdomains with <= 1 pages
-        filtered_subs = {
-            domain: counts
-            for domain, counts in self.subdomain_stats.items()
-            if (counts["html"] + counts["pdf"] + counts["ical"]) > 1
+        filtered = {
+            d: c for d, c in self.subdomain_stats.items()
+            if (c["html"] + c["pdf"] + c["ical"]) > 1
         }
+        sorted_subs = sorted(filtered.items(), reverse=True)
 
-        sorted_subs = sorted(filtered_subs.items(), reverse=True)
         table = Table(show_header=False, expand=True)
-
         for domain, counts in sorted_subs:
             table.add_row(
                 domain,
@@ -60,12 +220,8 @@ class ThwsSpider(scrapy.Spider):
                 str(counts["ical"]),
                 str(counts["errors"]),
             )
-
         table.add_row("─" * 60, "", "", "", "")
-        table.add_row(
-            "Subdomain", "HTML", "PDF", "iCal", "Errors", style="bold magenta"
-        )
-
+        table.add_row("Subdomain", "HTML", "PDF", "iCal", "Errors", style="bold magenta")
         table.add_row(
             f"SUMMARY ⏱ {elapsed_str}",
             str(self.stats["html"]),
@@ -77,242 +233,12 @@ class ThwsSpider(scrapy.Spider):
 
         self.live.update(table)
 
-    def parse(self, response: scrapy.http.Response) -> None:
-        url = self.normalize_url(response.url)
-        domain = urlparse(url).netloc
-
-        if url in self.visited:
-            return
-        self.visited.add(url)
-
-        # Skip hard 404s
-        if response.status == 404:
-            return
-
-        content_type = response.headers.get("Content-Type", b"").decode("utf-8").lower()
-
-        try:
-            # Soft 404 detection by title
-            page_title = response.css("title::text").get(default="").strip().lower()
-            if "404" in page_title or "not found" in page_title:
-                return
-
-            if url.lower().endswith(".pdf") or "application/pdf" in content_type:
-                yield from self.parse_pdf(response)
-                return
-
-            if url.lower().endswith(".ics") or "text/calendar" in content_type:
-                yield from self.parse_ical(response)
-                return
-
-            text_nodes = response.xpath(
-                '//body//*[not(self::header) and not(self::footer) '
-                'and not(contains(@class, "help")) and not(contains(@id, "help"))]//text()'
-            ).getall()
-            raw_text = "\n".join(t.strip() for t in text_nodes if t.strip())
-            cleaned_text = self.clean_text(raw_text)
-
-            # Skip if body looks like a known 404 message
-            if (
-                "diese seite existiert nicht" in cleaned_text.lower()
-                or "this page does not exist" in cleaned_text.lower()
-            ):
-                return
-
-            headline = response.css("h1::text").get()
-            title = (
-                headline.strip()
-                if headline
-                else response.css("title::text").get(default="").strip()
-            )
-
-            # Try extracting date from .meta
-            raw_meta = response.css("div.meta::text").get()
-            date = None
-            if raw_meta:
-                match = re.search(r"\d{2}\.\d{2}\.\d{4}", raw_meta)
-                if match:
-                    try:
-                        date = datetime.strptime(match.group(), "%d.%m.%Y").isoformat()
-                    except ValueError:
-                        pass
-            else:
-                date = self.extract_date(response)
-
-            self.subdomain_stats[domain]["html"] += 1
-            self.stats["html"] += 1
-            self.stats["total"] += 1
-            self.update_rich_table()
-
-            yield {
-                "url": url,
-                "type": "html",
-                "title": title,
-                "text": cleaned_text,
-                "date_scraped": datetime.utcnow().isoformat(),
-                "date_updated": date,
-            }
-
-        except NotSupported:
-            self.stats["errors"] += 1
-            self.subdomain_stats[domain]["errors"] += 1
-            self.update_rich_table()
-            # Don't raise, just skip
-            return
-        except Exception as e:
-            self.logger.warning(f"Unhandled error in parse for {url}: {e}")
-            self.stats["errors"] += 1
-            self.subdomain_stats[domain]["errors"] += 1
-            self.update_rich_table()
-            return
-
-        # Follow links if successful
-        for href in response.css("a::attr(href)").getall():
-            next_url = urljoin(url, href)
-            parsed = urlparse(next_url)
-            if parsed.netloc.endswith("thws.de"):
-                normalized_next = self.normalize_url(next_url)
-                if normalized_next not in self.visited:
-                    yield response.follow(next_url, callback=self.parse)
-
-    def parse_pdf(self, response: scrapy.http.Response) -> None:
-        """
-        Parse PDF content from the response and yield scraped data.
-        """
-        url = self.normalize_url(response.url)
-        domain = urlparse(url).netloc
-        try:
-            pdf_bytes = response.body
-            text = ""
-            with fitz.open(stream=io.BytesIO(pdf_bytes), filetype="pdf") as doc:
-                for page in doc:
-                    text += page.get_text()
-            cleaned_text = self.clean_text(text)
-            yield {
-                "url": url,
-                "type": "pdf",
-                "title": "",
-                "text": cleaned_text,
-                "date_scraped": datetime.utcnow().isoformat(),
-                "date_updated": None,
-            }
-            self.subdomain_stats[domain]["pdf"] += 1
-            self.stats["pdf"] += 1
-            self.stats["total"] += 1
-            self.update_rich_table()
-        except Exception as e:
-            self.stats["errors"] += 1
-            self.subdomain_stats[domain]["errors"] += 1
-            self.update_rich_table()
-            self.logger.warning(f"PDF parsing failed for {url}: {e}")
-
-    def parse_ical(self, response: scrapy.http.Response) -> None:
-        """
-        Parse iCal content from the response and yield scraped data.
-        """
-        url = self.normalize_url(response.url)
-        domain = urlparse(url).netloc
-        try:
-            text = response.text
-            cleaned_text = self.clean_text(text)
-            title = self.extract_ical_title(text)
-            yield {
-                "url": url,
-                "type": "ical",
-                "title": title,
-                "text": cleaned_text,
-                "date_scraped": datetime.utcnow().isoformat(),
-                "date_updated": None,
-            }
-            self.subdomain_stats[domain]["ical"] += 1
-            self.stats["ical"] += 1
-            self.stats["total"] += 1
-            self.update_rich_table()
-        except Exception as e:
-            self.stats["errors"] += 1
-            self.subdomain_stats[domain]["errors"] += 1
-            self.update_rich_table()
-            self.logger.warning(f"iCal parsing failed for {url}: {e}")
-
-    def clean_text(self, text: str) -> str:
-        """
-        Clean text by normalizing Unicode and removing excess whitespace,
-        while preserving \n and \n\n to retain paragraph structure for better chunking.
-        """
-        # Normalize to standard unicode (e.g., fancy quotes → straight quotes)
-        # You can also use "NFC" or "NFKD" instead of "NFKC" depending on how aggressive you want to be.
-        text = unicodedata.normalize("NFKC", text)
-
-        lines = [line.strip() for line in text.splitlines()]
-        lines = [line for line in lines if line]
-        return self.deduplicate_lines("\n".join(lines))
-
-    def deduplicate_lines(self, text: str) -> str:
-        """
-        Remove duplicate lines from text while preserving order.
-        """
-        seen: set[str] = set()
-        unique_lines = []
-        for line in text.splitlines():
-            if line not in seen:
-                seen.add(line)
-                unique_lines.append(line)
-        return "\n".join(unique_lines)
-
-    def normalize_url(self, url: str) -> str:
-        """
-        Normalize a URL by removing query parameters and trailing slashes.
-        """
-        parsed = urlparse(url)
-        return parsed._replace(query="").geturl().rstrip("/")
-
-    def extract_date(self, response: scrapy.http.Response) -> str | None:
-        """
-        Extract a date from the response using common meta and text selectors.
-        Attempts to parse and standardize the date format.
-
-        Returns:
-            A standardized ISO date string if parsing succeeds, else the raw date string,
-            or None if no date is found.
-        """
-        selectors = [
-            'meta[property="article:published_time"]::attr(content)',
-            'meta[name="date"]::attr(content)',
-            "time::text",
-            ".date::text",
-        ]
-        for selector in selectors:
-            date_str = response.css(selector).get()
-            if date_str:
-                date_str = date_str.strip()
-                try:
-                    # Attempt to parse to a standardized ISO format
-                    parsed_date = datetime.fromisoformat(date_str)
-                    return parsed_date.isoformat()
-                except ValueError:
-                    # If parsing fails, return the raw string
-                    return date_str
-        return None
-
-    def extract_ical_title(self, text: str) -> str:
-        """
-        Extract the title from iCal content using a regex pattern.
-        """
-        match = re.search(r"SUMMARY:(.+)", text)
-        return match.group(1).strip() if match else ""
-
-    def closed(self, reason: str) -> None:
-        self.live.__exit__(None, None, None)
-        self.logger.info("=== FINAL CRAWLING SUMMARY ===")
-        for key, value in self.stats.items():
-            self.logger.info(f"{key.upper()}: {value}")
-        self.logger.info(f"Spider closed because: {reason}")
-
     def _create_rich_table(self) -> Table:
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Subdomain", style="cyan")
-        table.add_column("HTML", justify="right")
-        table.add_column("PDF", justify="right")
-        table.add_column("iCal", justify="right")
-        table.add_column("Errors", justify="right")
-        return table
+        t = Table(show_header=True, header_style="bold magenta")
+        t.add_column("Subdomain", style="cyan")
+        t.add_column("HTML", justify="right")
+        t.add_column("PDF", justify="right")
+        t.add_column("iCal", justify="right")
+        t.add_column("Errors", justify="right")
+        return t
+```
