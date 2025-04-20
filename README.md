@@ -32,12 +32,10 @@ pip install -r requirements.txt
 ```shell
 cd thws_scraper
 scrapy crawl thws -o ../data/thws_data_raw.json
-scrapy crawl thws -o ../data/thws_data_raw.json
 ```
 
 # Preprocess the data
 ```shell
-python3 preprocess_and_chunk.py data/thws_data_raw.json
 python3 preprocess_and_chunk.py data/thws_data_raw.json
 ```
 

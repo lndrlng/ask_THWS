@@ -241,4 +241,4 @@ class ThwsSpider(CrawlSpider):
         t.add_column("iCal", justify="right")
         t.add_column("Errors", justify="right")
         return t
-```
+        

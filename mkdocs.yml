@@ -8,6 +8,7 @@ nav:
       - Black: dev-tools/black.md
       - Commitizen: dev-tools/commitizen.md
       - Python: dev-tools/python.md
+      - Jq: dev-tools/jq.md
   - Tests:
       - Testfragen: tests/fragen.md
       - Erster Test: tests/first_results.md
