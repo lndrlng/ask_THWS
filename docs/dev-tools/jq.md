@@ -97,3 +97,13 @@ for url in (jq -r '.[] | select(.type=="ical-event") | .url' data/thws_data3_raw
     printf '%s → %s\n' $fn $title
 end
 ```
+
+extract just all results from fiw.thws.de
+```shell
+jq -r '
+  .[] 
+  | select(.url | contains("fiw.thws.de")) 
+  | [.url, .type, .title, .author, .status] 
+  | @csv
+' data/thws_data3_raw.json > fiw_results.csv
+```
