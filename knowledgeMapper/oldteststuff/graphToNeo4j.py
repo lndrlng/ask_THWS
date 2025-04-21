@@ -30,7 +30,7 @@ with driver.session() as session:
     session.execute_write(create_constraints)
 
 # Load processed + labeled triplets
-with open("./../data/KgData/Triplets_labeled_final.json", "r", encoding="utf-8") as f:
+with open("../../data/KgData/Triplets_labeled_final.json", "r", encoding="utf-8") as f:
     triplets = json.load(f)
 
 logging.info(f"Loaded {len(triplets)} labeled triplets for Neo4j upload.")

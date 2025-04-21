@@ -9,7 +9,8 @@ pip install neo4j
 pip install python-Levenshtein
 pip install fuzzywuzzy[levenshtein]
 ```
-
+## Start Visulator
+   streamlit run visualize_triplets_app.py
 ## Neo4J setup using docker
 
 ### may change user and pw

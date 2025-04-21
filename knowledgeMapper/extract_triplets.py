@@ -1,109 +1,166 @@
+# === extract_triplets.py (final refined version) ===
 import os
 import time
-import json
-import requests
 from tqdm import tqdm
-
 from coref import resolve_coreferences
 from triplet_utils import (
-    load_json, save_json,
-    parse_triplets, enrich_with_ner,
-    generate_labeled_triplet_with_metadata
+    load_json, save_json, enrich_with_ner, parse_triplets,
+    generate_labeled_triplet_with_metadata, score_triplet
 )
+import spacy
+from llama_cpp import Llama
 
 # === CONFIG ===
-INPUT_FILE = "./../data/thws_data_filtered.json"
-PROGRESS_FILE = "./../data/studiengaenge_progress.json"
+INPUT_FILE = "./../data/fiw_results_with_ids.json"
 OUTPUT_FILE = "./../data/studiengaenge_triplets.json"
+PROGRESS_FILE = "./../data/studiengaenge_progress.json"
+FILTERED_OUTPUT_FILE = "./../data/studiengaenge_triplets_filtered.json"
+MODEL_PATH = "D:/LLMS/mistral-7b-instruct-v0.2.Q6_K.gguf"
 CHUNK_GROUP_SIZE = 2
 MAX_TOKENS = 1024
-OLLAMA_MODEL = "gemma:7b"
 
-# === Prompt Function ===
-def extract_triplets(text):
-    prompt = f"""Extrahiere relevante Tripel aus dem folgenden Text im Format (Subjekt, Prädikat, Objekt).
-Gib nur Tripel aus. Keine Erklärungen, kein Fließtext.
+print("🚀 Loading models...")
+llm = Llama(
+    model_path=MODEL_PATH,
+    n_ctx=2048,
+    n_gpu_layers=30,
+    n_threads=8,
+    n_batch=128,
+    low_vram=True,
+    main_gpu=0,
+    verbose=False
+)
+nlp = spacy.load("de_core_news_md")
+print("✅ Models loaded.")
 
+# === Rule-based SpaCy Triplet Heuristic ===
+def spacy_extract_triplets(text):
+    doc = nlp(text)
+    triplets = []
+    for sent in doc.sents:
+        subj, pred, obj = None, None, None
+        for token in sent:
+            if token.dep_ in {"nsubj", "nsubjpass"} and subj is None:
+                subj = token.text
+            if token.dep_ == "ROOT" and pred is None:
+                pred = token.lemma_
+            if token.dep_ in {"dobj", "attr", "pobj"} and obj is None:
+                obj = token.text
+        if subj and pred and obj:
+            triplets.append((subj, pred, obj))
+    return triplets
+
+# === LLM Triplet Refinement ===
+def refine_with_llm(text: str, meta: dict):
+    prompt_header = """Extrahiere Tripel im Format (Subjekt, Prädikat, Objekt).
 Beispiel:
-(Das Projekt, untersucht, ethische Fragen)
-(Die THWS, führt durch, Forschungsinitiative)
+Prof. Kiesewetter startet als Stiftungsprofessorin für das TTZ Bad Kissingen.
+(Prof. Kiesewetter, ist, Stiftungsprofessorin)
+(Prof. Kiesewetter, arbeitet an, TTZ Bad Kissingen)
+"""
+    prompt_footer = "\n\nTripel:"
+    max_input_tokens = 2048 - MAX_TOKENS
+    max_input_chars = max_input_tokens * 3
+    title_hint = f"Titel: {meta.get('title', '')}\n" if 'title' in meta else ""
 
-Text:
-{text}
-
-Tripel:"""
+    doc = nlp(text)
+    char_total = 0
+    sents = []
+    for sent in doc.sents:
+        sent_len = len(sent.text)
+        if char_total + sent_len > max_input_chars:
+            break
+        sents.append(sent.text)
+        char_total += sent_len
+    truncated_text = " ".join(sents)
+    final_prompt = f"{prompt_header}{title_hint}{truncated_text}{prompt_footer}"
 
     try:
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": OLLAMA_MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "options": {"num_predict": MAX_TOKENS}
-            },
-            timeout=30
-        )
-        response.raise_for_status()
-        answer = response.json().get("response")
-        return answer.strip() if answer else ""
+        output = llm(final_prompt, max_tokens=MAX_TOKENS, stop=["\n\n", "###"])
+        return output["choices"][0]["text"].strip() if "choices" in output else ""
     except Exception as e:
-        print(f"⚠️ No LLM output returned. Error: {e}")
+        print(f"❌ LLM refinement failed: {e}")
         return ""
 
-# === Load files ===
+# === NER Entity Validation ===
+def is_valid_ner_entity(e: str) -> bool:
+    if len(e) < 3 or len(e) > 100:
+        return False
+    if any(e.lower().startswith(x) for x in ("for example", "please", "known for", "such as", "who", "with whom")):
+        return False
+    if not any(char.isalpha() for char in e):
+        return False
+    return True
+
+# === Pipeline ===
 chunks = load_json(INPUT_FILE)
 processed_ids = set(load_json(PROGRESS_FILE)) if os.path.exists(PROGRESS_FILE) else set()
 triplets_all = load_json(OUTPUT_FILE) if os.path.exists(OUTPUT_FILE) else []
-
 existing_keys = {(t["subject"], t["relation"], t["object"]) for t in triplets_all if isinstance(t, dict)}
 
-print(f"🔁 Resuming... {len(processed_ids)} chunks already processed.")
-
-# === Main Loop ===
-start_time = time.time()
-
+start = time.time()
 for i in tqdm(range(0, len(chunks), CHUNK_GROUP_SIZE), desc="🔍 Extracting", unit="group"):
     group = chunks[i:i + CHUNK_GROUP_SIZE]
-    group_ids = [chunk["chunk_id"] for chunk in group]
+    group_ids = [c["chunk_id"] for c in group]
 
-    if all(cid in processed_ids for cid in group_ids):
+    if all(gid in processed_ids for gid in group_ids):
         continue
 
-    combined_text = "\n\n".join(chunk["text"] for chunk in group)
-    group_meta = group[0].get("metadata", {}) if group else {}
+    meta = group[0]
+    context_title = meta.get("title", "")
+    group_text = "\n".join(f"{context_title}\n{chunk['text']}" for chunk in group)
 
-    try:
-        resolved_text = resolve_coreferences(combined_text)
-        raw_output = extract_triplets(resolved_text)
-        raw_triplets = parse_triplets(raw_output)
+    # === Coreference Resolution ===
+    resolved_text = resolve_coreferences(group_text)
 
-        enriched = []
-        for subj, pred, obj in raw_triplets:
-            triplet = generate_labeled_triplet_with_metadata(subj, pred, obj, group_meta)
-            if triplet["confidence"] >= 0.5:
-                enriched.append(triplet)
+    # === Rule-based Extraction ===
+    rule_based = spacy_extract_triplets(resolved_text)
+    rule_triplets = [
+        generate_labeled_triplet_with_metadata(subj, pred, obj, meta)
+        for subj, pred, obj in rule_based
+    ]
+    for t in rule_triplets:
+        t["origin"] = "spacy"
 
-        named_entities = enrich_with_ner(combined_text)
-        ner_triplets = [generate_labeled_triplet_with_metadata(ent, "ist erwähnt in", "Studientext", group_meta) for ent in named_entities]
+    # === LLM Extraction with Filtering ===
+    llm_raw = refine_with_llm(resolved_text, meta)
+    llm_triplets = [
+        generate_labeled_triplet_with_metadata(subj, pred, obj, meta)
+        for subj, pred, obj in parse_triplets(llm_raw)
+    ]
+    for t in llm_triplets:
+        t["origin"] = "llm"
+        t["confidence"] = score_triplet(t["subject"], t["relation"], t["object"])
+    llm_triplets = [t for t in llm_triplets if t["confidence"] >= 0.6]
 
-        new_triplets = enriched + ner_triplets
-        new_filtered = [
-            t for t in new_triplets
-            if (t["subject"], t["relation"], t["object"]) not in existing_keys
-        ]
+    # === NER Extraction ===
+    ner_triplets = []
+    for e in enrich_with_ner(resolved_text):
+        if not is_valid_ner_entity(e):
+            continue
+        t = generate_labeled_triplet_with_metadata(e, "ist erwähnt in", context_title or "Studientext", meta)
+        t["origin"] = "ner"
+        t["confidence"] = 0.7
+        ner_triplets.append(t)
 
-        for t in new_filtered:
-            existing_keys.add((t["subject"], t["relation"], t["object"]))
-        triplets_all.extend(new_filtered)
+    # === Combine and Deduplicate ===
+    all_triplets = rule_triplets + llm_triplets + ner_triplets
+    unique_new = []
+    for t in all_triplets:
+        key = (t["subject"], t["relation"], t["object"])
+        if key not in existing_keys:
+            existing_keys.add(key)
+            unique_new.append(t)
 
-        save_json(triplets_all, OUTPUT_FILE)
-        processed_ids.update(group_ids)
-        save_json(list(processed_ids), PROGRESS_FILE)
+    triplets_all.extend(unique_new)
+    processed_ids.update(group_ids)
 
-    except Exception as e:
-        print(f"❌ Error in group {group_ids}: {e}")
-        continue
+    save_json(triplets_all, OUTPUT_FILE)
+    save_json(list(processed_ids), PROGRESS_FILE)
 
-duration = time.time() - start_time
-print(f"\n✅ Done. {len(triplets_all)} triplets extracted in {duration:.2f} seconds.")
+# === Optional Filtering Step ===
+triplets_filtered = [t for t in triplets_all if t["confidence"] >= 0.6 and t["origin"] != "ner"]
+save_json(triplets_filtered, FILTERED_OUTPUT_FILE)
+
+end = time.time()
+print(f"\n✅ Done. {len(triplets_all)} triplets saved in {end-start:.2f}s. Filtered: {len(triplets_filtered)}")
