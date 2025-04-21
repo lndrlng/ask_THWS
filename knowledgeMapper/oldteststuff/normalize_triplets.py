@@ -11,8 +11,8 @@ logging.basicConfig(level=logging.INFO)
 nlp = spacy.load("de_core_news_md")
 
 # Paths
-input_path = Path("./../data/KgData/Triplets_finished.json")
-output_path = Path("./../data/KgData/Triplets_labeled_final.json")  # fixed relative path
+input_path = Path("../../data/KgData/Triplets_finished.json")
+output_path = Path("../../data/KgData/Triplets_labeled_final.json")  # fixed relative path
 
 # Ensure output directory exists
 output_path.parent.mkdir(parents=True, exist_ok=True)
