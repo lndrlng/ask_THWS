@@ -1,6 +1,5 @@
 import os
 import time
-import json
 from tqdm import tqdm
 from llama_cpp import Llama
 

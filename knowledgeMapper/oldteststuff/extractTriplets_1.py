@@ -5,9 +5,9 @@ from tqdm import tqdm
 from llama_cpp import Llama
 
 # === CONFIG ===
-INPUT_FILE = "./../data/thws_data2_chunks.json"
-PROGRESS_FILE = "../data/studiengaenge_progress_1.json"
-OUTPUT_FILE = "../data/studiengaenge_triplets_1.json"
+INPUT_FILE = "../../data/thws_data2_chunks.json"
+PROGRESS_FILE = "../../data/studiengaenge_progress_1.json"
+OUTPUT_FILE = "../../data/studiengaenge_triplets_1.json"
 CHUNK_GROUP_SIZE = 2  # Tune based on your VRAM
 MAX_TOKENS = 512
 
