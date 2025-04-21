@@ -7,11 +7,11 @@ jq 'length' data/thws_data3_raw.json
 
 Show count of different types:
 ```shell
- jq -r '
+jq -r '
   group_by(.type)
   | map("\(.[0].type)\t\(length)")
   | .[]
-' data/thws_data3_raw.json | column -t -s $'\t'
+' data/thws_data3_raw.json | column -t -s (echo -e "\t")
 ```
 
 Show all unique subdomains from the json:
@@ -24,12 +24,12 @@ Show results per subdomain:
 
 ```shell
 jq -r '
-  group_by(.url | split("/")[2])
-  | sort_by(length)
-  | .[] 
-  | "\(.[0].url | split("/")[2])\t\(length)"
-' data/thws_data3_raw.json \
-| column -t -s $'\t'
+    group_by(.url | split("/")[2])
+    | sort_by(length)
+    | .[] 
+    | "\(.[0].url | split("/")[2])\t\(length)"
+' data/thws_data3_raw.json | column -t -s (echo -e "\t")
+
 ```
 
 Count how many fields does not have `date_updated`:
@@ -64,20 +64,36 @@ List all PDF filenames:
 jq -r '.[] | select(.type=="pdf") | .url | split("/") | last' data/thws_data3_raw.json
 ```
 
+all pdfs and its title:
+```shell
+jq -r '.[] | select(.type == "pdf") | [.title] | @csv' data/thws_data3_raw.json
+```
+
+all pdfs and its text:
+```shell
+jq -r '.[] | select(.type == "pdf") | [.text] | @csv' data/thws_data3_raw.json
+```
+
+show all status values
+```shell
+jq -r 'group_by(.status) | map("\(.[0].status)\t\(length)") | .[]' data/thws_data3_raw.json | column -t -s (echo -e "\t")
+```
+
+show all etags
+```shell
+jq -r '.[].etag | select(length > 0)' data/thws_data3_raw.json | sort -u
+```
+
 List all iCal filenames:
 ```shell
-jq -r '.[] | select(.type=="ical") | .url | split("/") | last' data/thws_data3_raw.json
+jq -r '.[] | select(.type=="ical-event") | .url | split("/") | last' data/thws_data3_raw.json
 ```
 
 extract each icals summary:
 ```shell
-jq -r '.[] | select(.type=="ical") | .url' data/thws_data3_raw.json \
-| while read url; do
-    fn=$(basename "$url")
-    # fetch the ICS and grab the SUMMARY line
-    title=$(curl -s "$url" \
-             | grep -m1 '^SUMMARY:' \
-             | sed 's/^SUMMARY://')
-    printf '%s → %s\n' "$fn" "$title"
-  done
+for url in (jq -r '.[] | select(.type=="ical-event") | .url' data/thws_data3_raw.json)
+    set fn (basename $url)
+    set title (curl -s $url | grep -m1 '^SUMMARY:' | sed 's/^SUMMARY://')
+    printf '%s → %s\n' $fn $title
+end
 ```
