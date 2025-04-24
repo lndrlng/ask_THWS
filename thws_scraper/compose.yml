@@ -1,0 +1,7 @@
+services:
+  thws_scraper:
+    image: ghcr.io/dav354/scraper:latest
+    container_name: scraper
+    restart: "no"
+    volumes:
+      - ./result:/app/result

@@ -28,7 +28,7 @@ class RawOutputPipeline:
 
     def open_spider(self, spider):
         ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        self.raw_path = f"data_raw_{ts}.jsonl"
+        self.raw_path = f"result/data_raw_{ts}.jsonl"
         spider.logger.info(f"[RawOutput] opening {self.raw_path}")
         self.raw_file = open(self.raw_path, "w", encoding="utf-8")
 
@@ -64,7 +64,7 @@ class ChunkingOutputPipeline:
 
     def open_spider(self, spider):
         ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        self.chunks_path = f"data_chunks_{ts}.jsonl"
+        self.chunks_path = f"result/data_chunks_{ts}.jsonl"
         spider.logger.info(f"[ChunksOutput] opening {self.chunks_path}")
         self.chunks_file = open(self.chunks_path, "w", encoding="utf-8")
 
@@ -79,7 +79,7 @@ class ChunkingOutputPipeline:
 
         text = (item.get("text") or "").strip()
         if not text:
-            raise DropItem(f"Empty text – dropping {item['url']}")
+            raise DropItem(f"Empty text - dropping {item['url']}")
 
         # Determine language: use item.lang if present, otherwise detect on text
         lang = item.get("lang")
