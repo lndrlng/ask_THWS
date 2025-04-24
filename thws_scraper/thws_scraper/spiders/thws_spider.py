@@ -35,7 +35,6 @@ class ThwsSpider(CrawlSpider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Track scraping statistics
         self.stats = {
             "html": 0,
             "pdf": 0,
@@ -43,18 +42,18 @@ class ThwsSpider(CrawlSpider):
             "total": 0,
             "errors": 0,
             "bytes": 0,
+            "skipped_empty": 0,
         }
         self.subdomain_stats = defaultdict(
-            lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0, "bytes": 0}
+            lambda: {
+                "html": 0,
+                "pdf": 0,
+                "ical": 0,
+                "errors": 0,
+                "bytes": 0,
+                "skipped_empty": 0,
+            }
         )
-        self.start_time = datetime.utcnow()
-
-        self.executor = ThreadPoolExecutor(max_workers=4)  # For parallel PDF parsing
-
-        # Initialize Rich table for live statistics
-        self.table = self._create_rich_table()
-        self.live = Live(self.table, console=Console(), refresh_per_second=4)
-        self.live.__enter__()
 
     def start_requests(self):
         """
@@ -127,21 +126,31 @@ class ThwsSpider(CrawlSpider):
         """
         Extract main text from HTML using readability and BeautifulSoup.
         """
+        # Extract via Readability
         doc = Document(response.text)
         soup = BeautifulSoup(doc.summary(), "lxml")
         text = self.clean_text(soup.get_text())
 
+        # Skip empty HTML pages
+        if not text:
+            self.stats["skipped_empty"] += 1
+            self.subdomain_stats[domain]["skipped_empty"] += 1
+            self.logger.info(f"⏭ Skipping empty HTML page: {url}")
+            self.update_rich_table()
+            return
+
         if "404" in text.lower() or "not found" in text.lower():
             return
 
-        title = soup.select_one("h1")
+        title_el = soup.select_one("h1")
         title = (
-            title.get_text(strip=True)
-            if title
+            title_el.get_text(strip=True)
+            if title_el
             else response.css("title::text").get("").strip()
         )
         date_updated = self.extract_date(response)
 
+        # Update stats
         self.stats["html"] += 1
         self.subdomain_stats[domain]["html"] += 1
         self.stats["total"] += 1
@@ -163,7 +172,7 @@ class ThwsSpider(CrawlSpider):
         """
         try:
             with fitz.open(stream=io.BytesIO(response.body), filetype="pdf") as doc:
-                text = "\n".join(page.get_text() for page in doc)
+                raw_text = "\n".join(page.get_text() for page in doc)
                 metadata = doc.metadata or {}
         except Exception as e:
             self.logger.warning(f"PDF parsing failed for {url}: {e}")
@@ -180,8 +189,17 @@ class ThwsSpider(CrawlSpider):
             }
             return
 
-        cleaned_text = self.clean_text(text)
+        text = self.clean_text(raw_text)
 
+        # Skip empty PDFs
+        if not text:
+            self.stats["skipped_empty"] += 1
+            self.subdomain_stats[domain]["skipped_empty"] += 1
+            self.logger.info(f"⏭ Skipping empty PDF: {url}")
+            self.update_rich_table()
+            return
+
+        # Update stats
         self.stats["pdf"] += 1
         self.subdomain_stats[domain]["pdf"] += 1
         self.stats["total"] += 1
@@ -192,7 +210,7 @@ class ThwsSpider(CrawlSpider):
             "type": "pdf",
             "title": metadata.get("title", ""),
             "author": metadata.get("author", ""),
-            "text": cleaned_text,
+            "text": text,
             "date_scraped": datetime.utcnow().isoformat(),
             "status": status,
         }
@@ -268,6 +286,7 @@ class ThwsSpider(CrawlSpider):
                 str(counts["pdf"]),
                 str(counts["ical"]),
                 str(counts["errors"]),
+                str(counts["skipped_empty"]),
                 f"{counts['bytes'] / 1024:.2f} KB",
             )
 
@@ -278,19 +297,21 @@ class ThwsSpider(CrawlSpider):
             str(self.stats["pdf"]),
             str(self.stats["ical"]),
             str(self.stats["errors"]),
+            str(self.stats["skipped_empty"]),
             f"{self.stats['bytes'] / (1024 * 1024):.2f} MB",
             style="bold green",
         )
         self.live.update(table, refresh=True)
 
     def _create_rich_table(self):
-        """Initialize rich table structure."""
+        """Initialize rich table structure, now with a Skipped column."""
         t = Table(show_header=True, header_style="bold magenta")
         t.add_column("Subdomain", style="cyan")
         t.add_column("HTML", justify="right")
         t.add_column("PDF", justify="right")
         t.add_column("iCal", justify="right")
         t.add_column("Errors", justify="right")
+        t.add_column("Skipped", justify="right")
         t.add_column("Bytes", justify="right")
         return t
 
