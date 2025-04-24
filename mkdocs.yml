@@ -10,4 +10,9 @@ nav:
       - Python: dev-tools/python.md
   - Tests:
       - Erster Test: tests/first_results.md
+      - Testfragen: tests/fragen.md
+  - Research:
+      - Scraping: research/scraping.md
+      - Data Quality: research/data_quality.md
+      - Vectordb: research/vector_database.md
       

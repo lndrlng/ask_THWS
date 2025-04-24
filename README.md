@@ -15,7 +15,13 @@
 4. Frontend
     - 
 
-# open the rag repository Folder in Terminal
+---
+
+# Running the stuff
+
+# Setup
+
+open the rag repository Folder in Terminal and install the python dependencies
 
 ```shell
 pip install -r requirements.txt
@@ -26,10 +32,12 @@ pip install -r requirements.txt
 ```shell
 cd thws_scraper
 scrapy crawl thws -o ../data/thws_data_raw.json
+scrapy crawl thws -o ../data/thws_data_raw.json
 ```
 
 # Preprocess the data
 ```shell
+python3 preprocess_and_chunk.py data/thws_data_raw.json
 python3 preprocess_and_chunk.py data/thws_data_raw.json
 ```
 
@@ -42,5 +50,5 @@ python3 embed_to_qdrant.py data/thws_data_chunks.json
 # Running
 ```shell
 ollama serve
-python3 query.py "Welche Voraussetzungen brauche ich für ein Bachelorstudium?"
+python3 query.py
 ```
