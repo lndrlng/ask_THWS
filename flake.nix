@@ -18,6 +18,7 @@
         pkgs.git-lfs
         pkgs.black
         pkgs.jq
+        pkgs.isort
 
         # System libraries needed by PyMuPDF
         pkgs.mupdf

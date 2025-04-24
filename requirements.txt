@@ -25,6 +25,8 @@ torchaudio==2.5.1+cu121
 # dev tools
 black==25.1.0
 commitizen==4.4.1
+isort
+flake8
 # Api server
 fastapi==0.115.12
 uvicorn==0.34.0
