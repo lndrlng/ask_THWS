@@ -23,7 +23,7 @@
 
 - **Containerized scraper with DB backend**  
   
-  Package your crawler in Docker and connect it to a persistent database (e.g. PostgreSQL or MongoDB). Persist raw content, metadata and “seen URL” state to enable fast, incremental re-scrapes; ensure identical environments across dev, staging and production.
+  Package your crawler in Docker and connect it to a persistent database (e.g. PostgreSQL or MongoDB). Persist raw content, metadata and “seen URL” state to enable fast, incremental re-scrapes; ensure identical environments across dev, staging and production. Add Scrapy addon scrapy-deltafetch. It skips already-seen pages based on saved fingerprints, reducing redundant downloads
 ---
 
 # Running the stuff
