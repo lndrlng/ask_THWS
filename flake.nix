@@ -19,6 +19,7 @@
         pkgs.black
         pkgs.jq
         pkgs.isort
+        pkgs.pre-commit
 
         # System libraries needed by PyMuPDF
         pkgs.mupdf

@@ -12,6 +12,7 @@ repos:
     hooks:
       - id: black
         language_version: python3
+        additional_dependencies: [click]
 
   - repo: https://github.com/PyCQA/isort
     rev: 6.0.1

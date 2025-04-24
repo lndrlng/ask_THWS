@@ -88,7 +88,7 @@ ITEM_PIPELINES = {
 # AUTOTHROTTLE_DEBUG = False
 
 # Enable and configure HTTP caching (disabled by default)
-# See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
+# See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings # noqa: E501
 # Enable the HTTP cache
 HTTPCACHE_ENABLED = True
 

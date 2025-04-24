@@ -3,8 +3,11 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+from urllib.parse import urlparse
+
 # useful for handling different item types with a single interface
 from scrapy import signals
+from twisted.internet.error import DNSLookupError
 
 
 class ThwsScraperSpiderMiddleware:
@@ -99,11 +102,6 @@ class ThwsScraperDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
-
-
-from urllib.parse import urlparse
-
-from twisted.internet.error import DNSLookupError
 
 
 class ThwsErrorMiddleware:
