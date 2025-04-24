@@ -2,15 +2,15 @@ from datetime import datetime
 from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
-import scrapy
 from bs4 import BeautifulSoup
 from readability import Document
+from scrapy.http import Response
 
 from ..items import RawPageItem
 from ..utils.text import clean_text
 
 
-def parse_html(response: scrapy.Response) -> Optional[RawPageItem]:
+def parse_html(response: Response) -> Optional[RawPageItem]:
     """
     Extract the main content of an HTML page using Readability+BeautifulSoup.
     Returns a RawPageItem or None if the page is empty or a 404/no-content.

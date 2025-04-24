@@ -1,13 +1,15 @@
+import logging
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from urllib.parse import urlparse
 
-import scrapy
+from itemadapter import ItemAdapter
 from rich.console import Console
 from rich.live import Live
 from scrapy import signals
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
-from scrapy.utils.defer import defer_to_thread
 
 from ..parsers.html_parser import parse_html
 from ..parsers.ical_parser import parse_ical
@@ -29,24 +31,47 @@ class ThwsSpider(CrawlSpider):
 
     @classmethod
     def from_crawler(cls, crawler):
-        spider = super().from_crawler(crawler)
+        spider = cls(settings=crawler.settings)
+        spider.crawler = crawler
         crawler.signals.connect(spider.spider_opened, signal=signals.spider_opened)
         crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
         return spider
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, settings=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.settings = settings
+
         # stats & reporting
         self.reporter = StatsReporter()
         self.start_time = datetime.utcnow()
-        # live table
-        self.console = Console(height=self.settings.getint("RICH_HEIGHT", 200))
-        self.live = Live(
-            self.reporter.get_table(), console=self.console, refresh_per_second=4
+
+        # live rich table
+        self.console = Console(
+            height=self.settings.getint("RICH_HEIGHT", 200), record=True
         )
+        self.live = Live(
+            self.reporter.get_table(self.start_time),
+            console=self.console,
+            refresh_per_second=4,
+        )
+        self._follow_links = True
 
     def spider_opened(self):
         self.live.__enter__()
+
+        # ── extra file handler just for WARNING and up
+        Path("logs").mkdir(parents=True, exist_ok=True)
+        fh = RotatingFileHandler(
+            "logs/thws_warnings.log",
+            maxBytes=10_000_000,
+            backupCount=3,
+            encoding="utf-8",
+        )
+        fh.setLevel(logging.WARNING)
+        fh.setFormatter(
+            logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+        )
+        logging.getLogger().addHandler(fh)
 
     def spider_closed(self, reason):
         """
@@ -70,38 +95,32 @@ class ThwsSpider(CrawlSpider):
         self.logger.info(f"Wrote stats table to {path}")
         self.logger.info(f"Spider closed: {reason}")
 
-    def parse_item(self, response) -> scrapy.Request:
+    def parse_item(self, response):
         """
-        Dispatch to the right parser in a thread if needed.
+        Dispatch to the correct parser (HTML, PDF, iCal), and yield parsed items.
         """
         domain = urlparse(response.url).netloc
         self.reporter.bump("bytes", domain, len(response.body))
         ctype = response.headers.get("Content-Type", b"").decode().split(";")[0].lower()
 
-        # PDF
+        # Choose parser based on content type or URL
         if response.url.lower().endswith(".pdf") or "pdf" in ctype:
-            d = defer_to_thread(parse_pdf, response)
-            d.addBoth(lambda items: self._handle_result(items, domain))
-            return d
-
-        # iCal
-        if ctype in ("text/calendar", "application/ical"):
+            items = parse_pdf(response)
+        elif ctype in ("text/calendar", "application/ical"):
             items = parse_ical(response)
-            return self._handle_result(items, domain)
+        else:
+            items = parse_html(response)
 
-        # HTML
-        items = parse_html(response)
-        return self._handle_result(items, domain)
-
-    def _handle_result(self, items, domain):
-        """
-        Common: bump stats, update table, yield items.
-        """
         if not items:
             self.reporter.bump("skipped_empty", domain)
-        else:
-            for it in items if isinstance(items, list) else [items]:
-                self.reporter.bump(it["type"], domain)
-                self.reporter.bump("total")
-                yield it
-        self.live.update(self.reporter.get_table())
+            return []
+
+        for item in items if isinstance(items, list) else [items]:
+            adapter = ItemAdapter(item)
+            item_type = adapter.get("type", "unknown")
+
+            self.reporter.bump(item_type, domain)
+            self.reporter.bump("total")
+            yield item
+
+        self.live.update(self.reporter.get_table(self.start_time))

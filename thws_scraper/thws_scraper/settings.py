@@ -7,6 +7,8 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+RICH_HEIGHT = 200
+
 # Identifier for your bot. Used in logs, the default User-Agent header, etc.
 BOT_NAME = "thws_scraper"
 
@@ -118,7 +120,7 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 # How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOG_LEVEL = "WARNING"
+LOG_LEVEL = "CRITICAL"
 
 # Turn on the retry middleware
 RETRY_ENABLED = True

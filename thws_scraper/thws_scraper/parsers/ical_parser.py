@@ -2,13 +2,13 @@ from datetime import datetime
 from typing import List
 from urllib.parse import parse_qs, urlparse
 
-import scrapy
 from icalendar import Calendar
+from scrapy.http import Response
 
 from ..items import RawPageItem
 
 
-def parse_ical(response: scrapy.Response) -> List[RawPageItem]:
+def parse_ical(response: Response) -> List[RawPageItem]:
     """
     Parse an iCalendar (.ics or vCard) response into one RawPageItem per VEVENT.
     Returns an empty list if parsing fails or no events found.

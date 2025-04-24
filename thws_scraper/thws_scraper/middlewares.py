@@ -119,18 +119,15 @@ class ThwsErrorMiddleware:
 
         if isinstance(exception, DNSLookupError):
             spider.logger.warning(f"[DNS] Could not resolve {request.url}")
-            spider.stats["dns_errors"] = spider.stats.get("dns_errors", 0) + 1
-            spider.subdomain_stats[domain]["errors"] += 1
         else:
             spider.logger.error(f"[ERR] {request.url} failed: {exception!r}")
-            spider.stats["errors"] += 1
-            spider.subdomain_stats[domain]["errors"] += 1
 
-        # update the live stats table
-        try:
-            spider.update_rich_table()
-        except Exception:
-            pass
+        if hasattr(spider, "reporter"):
+            spider.reporter.bump("errors", domain)
 
-        # return None to swallow the exception and drop that request
+            try:
+                spider.update_rich_table()
+            except Exception:
+                pass
+
         return None

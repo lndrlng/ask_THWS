@@ -4,13 +4,13 @@ from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 import fitz  # PyMuPDF
-import scrapy
+from scrapy.http import Response
 
 from ..items import RawPageItem
 from ..utils.text import clean_text
 
 
-def parse_pdf(response: scrapy.Response) -> Optional[RawPageItem]:
+def parse_pdf(response: Response) -> Optional[RawPageItem]:
     """
     Extract text (and minimal metadata) from a PDF response.
     Returns a RawPageItem, or None if no extractable text.
