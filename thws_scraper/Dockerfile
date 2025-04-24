@@ -29,4 +29,4 @@ COPY . .
 
 RUN mkdir -p result
 
-CMD ["scrapy", "crawl", "thws"]
+CMD ["scrapy", "crawl", "thws", "-s", "CONTAINER_MODE=True", "-s", "LOG_LEVEL=INFO"]

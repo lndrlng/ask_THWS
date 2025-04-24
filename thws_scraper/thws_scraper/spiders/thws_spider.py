@@ -42,44 +42,52 @@ class ThwsSpider(CrawlSpider):
         super().__init__(*args, **kwargs)
         self.settings = settings
 
+        self.container_mode = self.settings.getbool("CONTAINER_MODE", False)
+
         # stats & reporting
         self.reporter = StatsReporter()
         self.start_time = datetime.utcnow()
 
-        # live rich table
-        self.console = Console(
-            height=self.settings.getint("RICH_HEIGHT", 200), record=True
-        )
-        self.live = Live(
-            self.reporter.get_table(self.start_time),
-            console=self.console,
-            refresh_per_second=4,
-        )
-        self._follow_links = True
+        if not self.container_mode:
+            # live rich table
+            self.console = Console(
+                height=self.settings.getint("RICH_HEIGHT", 200), record=True
+            )
+            self.live = Live(
+                self.reporter.get_table(self.start_time),
+                console=self.console,
+                refresh_per_second=4,
+            )
+            self._follow_links = True
+        else:
+            self.console = None
+            self.live = None
 
     def spider_opened(self):
-        self.live.__enter__()
+        if self.live:
+            self.live.__enter__()
 
-        # ── extra file handler just for WARNING and up
-        Path("result").mkdir(parents=True, exist_ok=True)
-        fh = RotatingFileHandler(
-            "result/thws_warnings.log",
-            maxBytes=10_000_000,
-            backupCount=3,
-            encoding="utf-8",
-        )
-        fh.setLevel(logging.WARNING)
-        fh.setFormatter(
-            logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-        )
-        logging.getLogger().addHandler(fh)
+            # ── extra file handler just for WARNING and up
+            Path("result").mkdir(parents=True, exist_ok=True)
+            fh = RotatingFileHandler(
+                "result/thws_warnings.log",
+                maxBytes=10_000_000,
+                backupCount=3,
+                encoding="utf-8",
+            )
+            fh.setLevel(logging.WARNING)
+            fh.setFormatter(
+                logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+            )
+            logging.getLogger().addHandler(fh)
 
     def spider_closed(self, reason):
         """
         Called when the spider is closed.  Stops the live table display,
         then converts the final stats table to a csv file.
         """
-        self.live.__exit__(None, None, None)
+        if self.live:
+            self.live.__exit__(None, None, None)
 
         ts = self.start_time.strftime("%Y%m%d_%H%M%S")
         csv_path = f"result/stats_{ts}.csv"
@@ -127,4 +135,5 @@ class ThwsSpider(CrawlSpider):
             self.reporter.bump("total")
             yield item
 
-        self.live.update(self.reporter.get_table(self.start_time))
+        if self.live:
+            self.live.update(self.reporter.get_table(self.start_time))
