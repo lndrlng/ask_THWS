@@ -54,6 +54,14 @@ class ThwsSpider(CrawlSpider):
                 "skipped_empty": 0,
             }
         )
+        self.start_time = datetime.utcnow()
+        self.executor = ThreadPoolExecutor(max_workers=4)
+
+        # Build initial table and Live context with an artificially large height to prevent cropping
+        self.table = self._create_rich_table()
+        self.console = Console(height=200)
+        self.live = Live(self.table, console=self.console, refresh_per_second=4)
+        self.live.__enter__()
 
     def start_requests(self):
         """
@@ -65,7 +73,7 @@ class ThwsSpider(CrawlSpider):
                 url,
                 callback=self.parse_item,
                 errback=self._handle_failure,
-                dont_filter=True,  # ensure we still hit start_urls every run
+                dont_filter=True,
             )
 
     def _handle_failure(self, failure):
@@ -269,16 +277,16 @@ class ThwsSpider(CrawlSpider):
 
     def update_rich_table(self):
         """
-        Update live statistics table.
+        Update live statistics table, with:
+        - no cropping (console.height is large)
+        - alphabetical sorting by subdomain
         """
         elapsed_str = str(datetime.utcnow() - self.start_time).split(".")[0]
         table = self._create_rich_table()
 
-        sorted_subs = sorted(
-            self.subdomain_stats.items(),
-            key=lambda x: x[1]["html"] + x[1]["pdf"] + x[1]["ical"],
-            reverse=True,
-        )
+        # alphabetical by subdomain name
+        sorted_subs = sorted(self.subdomain_stats.items(), key=lambda pair: pair[0])
+
         for domain, counts in sorted_subs:
             table.add_row(
                 domain,
@@ -290,7 +298,7 @@ class ThwsSpider(CrawlSpider):
                 f"{counts['bytes'] / 1024:.2f} KB",
             )
 
-        table.add_row("─" * 60, "", "", "", "", "")
+        table.add_row("─" * 70, "", "", "", "", "", "")
         table.add_row(
             f"SUMMARY ⏱ {elapsed_str}",
             str(self.stats["html"]),
