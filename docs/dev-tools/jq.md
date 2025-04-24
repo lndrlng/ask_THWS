@@ -49,14 +49,34 @@ jq -r '
 
 Summary per subdomain:
 ```shell
-jq '
+jq -r '
+  group_by(.url|split("/")[2])
+  | map({
+      subdomain:  (.[0].url|split("/")[2]),
+      total:      length,
+      html:       (map(select(.type=="html"))       | length),
+      pdf:        (map(select(.type=="pdf"))        | length),
+      ical_event: (map(select(.type=="ical-event")) | length)
+    })
+  | (["subdomain","total","html","pdf","ical_event"]), (.[] | [.subdomain, .total, .html, .pdf, .ical_event])
+  | @tsv
+' data/thws_data3_raw.json \
+| column -t -s (printf '\t')
+```
+
+show only pdfs per subdomain:
+```shell
+jq -r '
   group_by(.url|split("/")[2])
   | map({
       subdomain: (.[0].url|split("/")[2]),
-      total: length,
-      by_type: (group_by(.type) | map({ (.[0].type): length }) | add)
+      pdf_count: (map(select(.type=="pdf")) | length)
     })
-' data/thws_data3_raw.json
+  | map(select(.pdf_count > 0))
+  | (["subdomain","pdf_count"]), (.[] | [.subdomain, .pdf_count])
+  | @tsv
+' data/thws_data3_raw.json \
+| column -t -s (printf '\t')
 ```
 
 List all PDF filenames:
