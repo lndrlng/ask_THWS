@@ -1,8 +1,8 @@
 import io
-import re
 import unicodedata
 from datetime import datetime
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor
 
 import fitz
 import scrapy
@@ -18,128 +18,218 @@ from collections import defaultdict
 
 
 class ThwsSpider(CrawlSpider):
+    """
+    Spider to crawl and scrape content from THWS websites, including PDF, HTML, and iCal data.
+    """
+
     name = "thws"
     allowed_domains = ["thws.de"]
-    start_urls = [
-        "https://www.thws.de/",
-        "https://fiw.thws.de/",
-    ]
+    start_urls = ["https://www.thws.de/", "https://fiw.thws.de/"]
     rules = [
-        # follow all links within allowed_domains, handle every response in parse_item
-        Rule(LinkExtractor(allow_domains=allowed_domains), callback="parse_item", follow=True),
+        Rule(
+            LinkExtractor(allow_domains=allowed_domains),
+            callback="parse_item",
+            follow=True,
+        ),
     ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.stats = {"html": 0, "pdf": 0, "ical": 0, "total": 0, "errors": 0}
-        self.subdomain_stats = defaultdict(lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0})
+        # Track scraping statistics
+        self.stats = {
+            "html": 0,
+            "pdf": 0,
+            "ical": 0,
+            "total": 0,
+            "errors": 0,
+            "bytes": 0,
+        }
+        self.subdomain_stats = defaultdict(
+            lambda: {"html": 0, "pdf": 0, "ical": 0, "errors": 0, "bytes": 0}
+        )
         self.start_time = datetime.utcnow()
 
+        self.executor = ThreadPoolExecutor(max_workers=4)  # For parallel PDF parsing
+
+        # Initialize Rich table for live statistics
         self.table = self._create_rich_table()
         self.live = Live(self.table, console=Console(), refresh_per_second=4)
         self.live.__enter__()
 
+    def start_requests(self):
+        """
+        Override CrawlSpider.start_requests so every Request
+        gets our custom errback attached.
+        """
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url,
+                callback=self.parse_item,
+                errback=self._handle_failure,
+                dont_filter=True,  # ensure we still hit start_urls every run
+            )
+
+    def _handle_failure(self, failure):
+        """
+        Called when any Request errors out (DNS, timeout, etc).
+        We catch DNSLookupError, log a warning, increment a stat,
+        and swallow the failure so the crawl continues.
+        """
+        req = failure.request
+        if failure.check(DNSLookupError):
+            self.logger.warning(f"[DNS] Could not resolve {req.url}")
+            self.stats["dns_errors"] = self.stats.get("dns_errors", 0) + 1
+            self.subdomain_stats[urlparse(req.url).netloc]["errors"] += 1
+        else:
+            self.logger.error(f"[ERR] {req.url} failed: {failure.value!r}")
+            self.stats["errors"] += 1
+            self.subdomain_stats[urlparse(req.url).netloc]["errors"] += 1
+        # no re-raise → Scrapy will drop this request and move on
+
     def parse_item(self, response):
-        url = self.normalize_url(response.url)
+        """
+        Dispatch parsing based on content-type.
+        """
+        url = response.url
         domain = urlparse(url).netloc
         status = response.status
-        etag = response.headers.get("ETag", b"").decode("utf-8", errors="ignore")
-        last_modified = response.headers.get("Last-Modified", b"").decode("utf-8", errors="ignore")
-        ctype = response.headers.get("Content-Type", b"").decode("utf-8", errors="ignore").split(";")[0].lower()
+        ctype = response.headers.get("Content-Type", b"").decode().split(";")[0].lower()
+        content_size = len(response.body)
 
-        # skip hard 404
+        # Update bytes downloaded stats
+        self.stats["bytes"] += content_size
+        self.subdomain_stats[domain]["bytes"] += content_size
+
         if status == 404:
             return
 
         try:
-            if ctype == "application/pdf":
-                yield from self.parse_pdf(response, url, domain, status, etag, last_modified)
+            if (
+                url.lower().endswith(".pdf")
+                or "pdf" in ctype
+                or ctype == "application/octet-stream"
+            ):
+                future = self.executor.submit(
+                    self.parse_pdf, response, url, domain, status
+                )
+                yield from future.result()
             elif ctype in ("text/calendar", "text/vcard", "application/ical"):
-                yield from self.parse_ical(response, url, domain, status, etag, last_modified)
+                yield from self.parse_ical(response, url, domain, status)
             else:
-                yield from self.parse_html(response, url, domain, status, etag, last_modified)
+                yield from self.parse_html(response, url, domain, status)
         except Exception as e:
             self.logger.warning(f"Error parsing {url}: {e}")
             self.stats["errors"] += 1
             self.subdomain_stats[domain]["errors"] += 1
             self.update_rich_table()
 
-    def parse_html(self, response, url, domain, status, etag, last_modified):
-        # extract main content via readability
+    def parse_html(self, response, url, domain, status):
+        """
+        Extract main text from HTML using readability and BeautifulSoup.
+        """
         doc = Document(response.text)
-        summary_html = doc.summary()
-        text = BeautifulSoup(summary_html, "lxml").get_text()
-        cleaned = self.clean_text(text)
+        soup = BeautifulSoup(doc.summary(), "lxml")
+        text = self.clean_text(soup.get_text())
 
-        # skip soft-404s
-        if any(msg in cleaned.lower() for msg in ["404", "not found", "diese seite existiert nicht"]):
+        if "404" in text.lower() or "not found" in text.lower():
             return
 
-        # title and date
-        headline = BeautifulSoup(summary_html, "lxml").select_one("h1")
-        title = headline.get_text().strip() if headline else response.css("title::text").get(default="").strip()
+        title = soup.select_one("h1")
+        title = (
+            title.get_text(strip=True)
+            if title
+            else response.css("title::text").get("").strip()
+        )
         date_updated = self.extract_date(response)
-
-        item = {
-            "url": url,
-            "type": "html",
-            "title": title,
-            "text": cleaned,
-            "date_scraped": datetime.utcnow().isoformat(),
-            "date_updated": date_updated,
-            "status": status,
-            "etag": etag,
-            "last_modified": last_modified,
-        }
 
         self.stats["html"] += 1
         self.subdomain_stats[domain]["html"] += 1
         self.stats["total"] += 1
         self.update_rich_table()
-        yield item
 
-    def parse_pdf(self, response, url, domain, status, etag, last_modified):
+        yield {
+            "url": url,
+            "type": "html",
+            "title": title,
+            "text": text,
+            "date_scraped": datetime.utcnow().isoformat(),
+            "date_updated": date_updated,
+            "status": status,
+        }
+
+    def parse_pdf(self, response, url, domain, status):
+        """
+        Parse PDF content with resilience to failures.
+        """
         try:
             with fitz.open(stream=io.BytesIO(response.body), filetype="pdf") as doc:
-                metadata = doc.metadata or {}
                 text = "\n".join(page.get_text() for page in doc)
+                metadata = doc.metadata or {}
         except Exception as e:
             self.logger.warning(f"PDF parsing failed for {url}: {e}")
             self.stats["errors"] += 1
             self.subdomain_stats[domain]["errors"] += 1
             self.update_rich_table()
+            yield {
+                "url": url,
+                "type": "pdf",
+                "parse_error": str(e),
+                "text": "",
+                "date_scraped": datetime.utcnow().isoformat(),
+                "status": status,
+            }
             return
 
-        cleaned = self.clean_text(text)
-        item = {
-            "url": url,
-            "type": "pdf",
-            "title": metadata.get("title", ""),
-            "author": metadata.get("author", ""),
-            "text": cleaned,
-            "date_scraped": datetime.utcnow().isoformat(),
-            "date_updated": None,
-            "status": status,
-            "etag": etag,
-            "last_modified": last_modified,
-        }
+        cleaned_text = self.clean_text(text)
 
         self.stats["pdf"] += 1
         self.subdomain_stats[domain]["pdf"] += 1
         self.stats["total"] += 1
         self.update_rich_table()
-        yield item
 
-    def parse_ical(self, response, url, domain, status, etag, last_modified):
+        yield {
+            "url": url,
+            "type": "pdf",
+            "title": metadata.get("title", ""),
+            "author": metadata.get("author", ""),
+            "text": cleaned_text,
+            "date_scraped": datetime.utcnow().isoformat(),
+            "status": status,
+        }
+
+    def clean_text(self, text):
+        """Normalize and deduplicate lines."""
+        text = unicodedata.normalize("NFKC", text)
+        lines = set(line.strip() for line in text.splitlines() if line.strip())
+        return "\n".join(lines)
+
+    def extract_date(self, response):
+        """Extract date metadata from HTML."""
+        selectors = [
+            'meta[property="article:published_time"]::attr(content)',
+            'meta[name="date"]::attr(content)',
+            "time::text",
+            ".date::text",
+        ]
+        for sel in selectors:
+            date = response.css(sel).get()
+            if date:
+                return date.strip()
+        return None
+
+    def parse_ical(self, response, url, domain, status):
+        """Parses an iCalendar (.ics or vCard) response and extracts individual events."""
         try:
             cal = Calendar.from_ical(response.body)
             events = [ev for ev in cal.walk("VEVENT")]
             for ev in events:
                 summary = ev.get("SUMMARY")
-                dtstart = ev.get("DTSTART").dt.isoformat() if ev.get("DTSTART") else None
+                dtstart = (
+                    ev.get("DTSTART").dt.isoformat() if ev.get("DTSTART") else None
+                )
                 dtend = ev.get("DTEND").dt.isoformat() if ev.get("DTEND") else None
                 desc = ev.get("DESCRIPTION", "")
-                item = {
+                yield {
                     "url": url,
                     "type": "ical-event",
                     "title": summary,
@@ -148,11 +238,7 @@ class ThwsSpider(CrawlSpider):
                     "end": dtend,
                     "date_scraped": datetime.utcnow().isoformat(),
                     "status": status,
-                    "etag": etag,
-                    "last_modified": last_modified,
                 }
-                yield item
-            # count by event
             self.stats["ical"] += len(events)
             self.subdomain_stats[domain]["ical"] += len(events)
             self.stats["total"] += len(events)
@@ -163,55 +249,18 @@ class ThwsSpider(CrawlSpider):
         finally:
             self.update_rich_table()
 
-    def clean_text(self, text: str) -> str:
-        text = unicodedata.normalize("NFKC", text)
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        return self.deduplicate_lines("\n".join(lines))
-
-    def deduplicate_lines(self, text: str) -> str:
-        seen, out = set(), []
-        for line in text.splitlines():
-            if line not in seen:
-                seen.add(line)
-                out.append(line)
-        return "\n".join(out)
-
-    def normalize_url(self, url: str) -> str:
-        p = urlparse(url)
-        return p._replace(query="").geturl().rstrip("/")
-
-    def extract_date(self, response):
-        for sel in ('meta[property="article:published_time"]::attr(content)',
-                    'meta[name="date"]::attr(content)',
-                    "time::text",
-                    ".date::text"):
-            s = response.css(sel).get()
-            if s:
-                s = s.strip()
-                try:
-                    return datetime.fromisoformat(s).isoformat()
-                except ValueError:
-                    return s
-        return None
-
-    def closed(self, reason):
-        self.live.__exit__(None, None, None)
-        self.logger.info("=== FINAL CRAWLING SUMMARY ===")
-        for k, v in self.stats.items():
-            self.logger.info(f"{k.upper()}: {v}")
-        self.logger.info(f"Spider closed because: {reason}")
-
     def update_rich_table(self):
-        elapsed = datetime.utcnow() - self.start_time
-        elapsed_str = str(elapsed).split(".")[0]
+        """
+        Update live statistics table.
+        """
+        elapsed_str = str(datetime.utcnow() - self.start_time).split(".")[0]
+        table = self._create_rich_table()
 
-        filtered = {
-            d: c for d, c in self.subdomain_stats.items()
-            if (c["html"] + c["pdf"] + c["ical"]) > 1
-        }
-        sorted_subs = sorted(filtered.items(), reverse=True)
-
-        table = Table(show_header=False, expand=True)
+        sorted_subs = sorted(
+            self.subdomain_stats.items(),
+            key=lambda x: x[1]["html"] + x[1]["pdf"] + x[1]["ical"],
+            reverse=True,
+        )
         for domain, counts in sorted_subs:
             table.add_row(
                 domain,
@@ -219,26 +268,34 @@ class ThwsSpider(CrawlSpider):
                 str(counts["pdf"]),
                 str(counts["ical"]),
                 str(counts["errors"]),
+                f"{counts['bytes'] / 1024:.2f} KB",
             )
-        table.add_row("─" * 60, "", "", "", "")
-        table.add_row("Subdomain", "HTML", "PDF", "iCal", "Errors", style="bold magenta")
+
+        table.add_row("─" * 60, "", "", "", "", "")
         table.add_row(
             f"SUMMARY ⏱ {elapsed_str}",
             str(self.stats["html"]),
             str(self.stats["pdf"]),
             str(self.stats["ical"]),
             str(self.stats["errors"]),
+            f"{self.stats['bytes'] / (1024 * 1024):.2f} MB",
             style="bold green",
         )
+        self.live.update(table, refresh=True)
 
-        self.live.update(table)
-
-    def _create_rich_table(self) -> Table:
+    def _create_rich_table(self):
+        """Initialize rich table structure."""
         t = Table(show_header=True, header_style="bold magenta")
         t.add_column("Subdomain", style="cyan")
         t.add_column("HTML", justify="right")
         t.add_column("PDF", justify="right")
         t.add_column("iCal", justify="right")
         t.add_column("Errors", justify="right")
+        t.add_column("Bytes", justify="right")
         return t
-        
+
+    def closed(self, reason):
+        """Close resources gracefully."""
+        self.executor.shutdown(wait=True)
+        self.live.__exit__(None, None, None)
+        self.logger.info(f"Spider closed: {reason}")

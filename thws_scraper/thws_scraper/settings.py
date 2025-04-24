@@ -7,20 +7,22 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+# Identifier for your bot. Used in logs, the default User-Agent header, etc.
 BOT_NAME = "thws_scraper"
 
+# Where Scrapy will look for your Spider classes
 SPIDER_MODULES = ["thws_scraper.spiders"]
 NEWSPIDER_MODULE = "thws_scraper.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "thws-scraper-bot/0.1"
+USER_AGENT = "thws-scraper-bot/0.2"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 64
+CONCURRENT_REQUESTS = 16
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -81,14 +83,55 @@ CONCURRENT_REQUESTS = 64
 
 # Enable and configure HTTP caching (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
+# Enable the HTTP cache
 HTTPCACHE_ENABLED = True
-# HTTPCACHE_EXPIRATION_SECS = 0
-# HTTPCACHE_DIR = "httpcache"
-# HTTPCACHE_IGNORE_HTTP_CODES = []
-# HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
+
+# How long (in seconds) a cached response is considered fresh.
+# 0 means “never expire” (i.e. always reuse until you manually clear the cache).
+HTTPCACHE_EXPIRATION_SECS = 24 * 3600  # one day
+
+# Directory where cached responses are stored
+HTTPCACHE_DIR = "httpcache"
+
+# Which HTTP status codes should *not* be cached.
+# By default you’ll cache even 500s; you can blacklist 500,502,503, etc.
+HTTPCACHE_IGNORE_HTTP_CODES = [500, 502, 503, 504]
+
+# Storage backend: the filesystem is the simplest.
+# You can also swap in a DBM backend, or write your own.
+HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
+
+# (Optional) If you want cached responses to be gzipped on disk:
+HTTPCACHE_GZIP = True
+
+# (Optional) Respect HTTP headers like Cache-Control / Expires:
+HTTPCACHE_POLICY = "scrapy.extensions.httpcache.RFC2616Policy"
 
 # Set settings whose default value is deprecated to a future-proof value
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
+# How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 LOG_LEVEL = "WARNING"
+
+# Turn on the retry middleware
+RETRY_ENABLED = True
+
+# Retry each failed request up to 2 extra times
+RETRY_TIMES = 3
+
+# Which response codes should trigger a retry
+RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408]
+
+
+# Allow the crawler to follow HTTP 3xx redirects
+REDIRECT_ENABLED = True
+
+# Stop after following 20 redirects for a single request
+REDIRECT_MAX_TIMES = 20
+
+# Abort any request taking longer than 15 seconds
+DOWNLOAD_TIMEOUT = 15
+
+# Directory where Scrapy will save/resume crawl state
+JOBDIR = "crawls/thws-1"
