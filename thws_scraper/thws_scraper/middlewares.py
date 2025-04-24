@@ -101,3 +101,39 @@ class ThwsScraperDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+
+from urllib.parse import urlparse
+from twisted.internet.error import DNSLookupError
+
+
+class ThwsErrorMiddleware:
+    """
+    Catch downloader errors (DNS, timeouts, etc.), log and count them,
+    then swallow so the crawl continues.
+    """
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls()
+
+    def process_exception(self, request, exception, spider):
+        domain = urlparse(request.url).netloc
+
+        if isinstance(exception, DNSLookupError):
+            spider.logger.warning(f"[DNS] Could not resolve {request.url}")
+            spider.stats["dns_errors"] = spider.stats.get("dns_errors", 0) + 1
+            spider.subdomain_stats[domain]["errors"] += 1
+        else:
+            spider.logger.error(f"[ERR] {request.url} failed: {exception!r}")
+            spider.stats["errors"] += 1
+            spider.subdomain_stats[domain]["errors"] += 1
+
+        # update the live stats table
+        try:
+            spider.update_rich_table()
+        except Exception:
+            pass
+
+        # return None to swallow the exception and drop that request
+        return None

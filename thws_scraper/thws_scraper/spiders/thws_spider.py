@@ -63,36 +63,6 @@ class ThwsSpider(CrawlSpider):
         self.live = Live(self.table, console=self.console, refresh_per_second=4)
         self.live.__enter__()
 
-    def start_requests(self):
-        """
-        Override CrawlSpider.start_requests so every Request
-        gets our custom errback attached.
-        """
-        for url in self.start_urls:
-            yield scrapy.Request(
-                url,
-                callback=self.parse_item,
-                errback=self._handle_failure,
-                dont_filter=True,
-            )
-
-    def _handle_failure(self, failure):
-        """
-        Called when any Request errors out (DNS, timeout, etc).
-        We catch DNSLookupError, log a warning, increment a stat,
-        and swallow the failure so the crawl continues.
-        """
-        req = failure.request
-        if failure.check(DNSLookupError):
-            self.logger.warning(f"[DNS] Could not resolve {req.url}")
-            self.stats["dns_errors"] = self.stats.get("dns_errors", 0) + 1
-            self.subdomain_stats[urlparse(req.url).netloc]["errors"] += 1
-        else:
-            self.logger.error(f"[ERR] {req.url} failed: {failure.value!r}")
-            self.stats["errors"] += 1
-            self.subdomain_stats[urlparse(req.url).netloc]["errors"] += 1
-        # no re-raise → Scrapy will drop this request and move on
-
     def parse_item(self, response):
         """
         Dispatch parsing based on content-type.
