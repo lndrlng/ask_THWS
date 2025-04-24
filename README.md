@@ -15,6 +15,15 @@
 4. Frontend
     - 
 
+## Ideas
+
+- **Webapp for manual model comparison**  
+  
+  Build a web interface that shows each question and its reference answer alongside anonymized model outputs (labeled A, B, C, …). Evaluators rank the blind responses by quality, producing unbiased, user-driven performance metrics.
+
+- **Containerized scraper with DB backend**  
+  
+  Package your crawler in Docker and connect it to a persistent database (e.g. PostgreSQL or MongoDB). Persist raw content, metadata and “seen URL” state to enable fast, incremental re-scrapes; ensure identical environments across dev, staging and production.
 ---
 
 # Running the stuff
