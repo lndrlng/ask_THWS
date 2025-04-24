@@ -1,3 +1,4 @@
+import csv
 import logging
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
@@ -60,9 +61,9 @@ class ThwsSpider(CrawlSpider):
         self.live.__enter__()
 
         # ── extra file handler just for WARNING and up
-        Path("logs").mkdir(parents=True, exist_ok=True)
+        Path("result").mkdir(parents=True, exist_ok=True)
         fh = RotatingFileHandler(
-            "logs/thws_warnings.log",
+            "result/thws_warnings.log",
             maxBytes=10_000_000,
             backupCount=3,
             encoding="utf-8",
@@ -76,23 +77,26 @@ class ThwsSpider(CrawlSpider):
     def spider_closed(self, reason):
         """
         Called when the spider is closed.  Stops the live table display,
-        then writes out the final stats table to a timestamped text file.
+        then converts the final stats table to a csv file.
         """
-        # stop live-render
         self.live.__exit__(None, None, None)
 
-        # export the recorded table
         ts = self.start_time.strftime("%Y%m%d_%H%M%S")
-        path = f"stats_{ts}.txt"
+        csv_path = f"result/stats_{ts}.csv"
 
-        # re-print the final table into the console's record buffer
-        self.console.print(self.reporter.get_table(self.start_time))
+        # Extract the internal table data
+        table = self.reporter.get_table(self.start_time)
 
-        # write out the recorded text
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(self.console.export_text())
+        # Table has rows like: [domain, html, pdf, ical, errors, skipped, bytes]
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(
+                ["Subdomain", "Html", "Pdf", "Ical", "Errors", "Skipped_empty", "Bytes"]
+            )
+            for row in table.rows:
+                writer.writerow([cell.plain for cell in row.cells])
 
-        self.logger.info(f"Wrote stats table to {path}")
+        self.logger.info(f"Wrote stats table to {csv_path}")
         self.logger.info(f"Spider closed: {reason}")
 
     def parse_item(self, response):
