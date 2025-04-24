@@ -58,8 +58,8 @@ class ThwsSpider(CrawlSpider):
                 console=self.console,
                 refresh_per_second=4,
             )
-            self._follow_links = True
         else:
+            self._follow_links = True
             self.console = None
             self.live = None
 
