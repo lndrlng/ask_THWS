@@ -13,7 +13,7 @@
      - fast (in rust)
      - allows metadata
      - python library
-1. ## Frontend
+1. Frontend
 
 ## Ideas
 
@@ -31,7 +31,11 @@ ______________________________________________________________________
 
 # Setup
 
-open the rag repository Folder in Terminal and install the python dependencies
+To setup python follow [this steps](https://dav354.github.io/askTHWS/dev-tools/python/).
+
+Then you need to set up the git [pre-commit hooks](https://dav354.github.io/askTHWS/dev-tools/precommit/) to ensure that we use all the same formatting of the files.
+
+Open the rag repository Folder in Terminal and install the python dependencies
 
 ```shell
 pip install -r requirements.txt
@@ -40,15 +44,10 @@ pip install -r requirements.txt
 # How to run the scraper
 
 ```shell
-cd thws_scraper
-scrapy crawl thws -o ../data/thws_data_raw.json
+cd thws_scraper && scrapy crawl thws
 ```
 
-# Preprocess the data
-
-```shell
-python3 preprocess_and_chunk.py data/thws_data_raw.json
-```
+This will output the raw data and the chunked data in the thws_scraper folder.
 
 # Load to Vector db
 
