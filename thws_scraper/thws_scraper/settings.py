@@ -146,7 +146,6 @@ RETRY_TIMES = 3
 # Which response codes should trigger a retry
 RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408]
 
-
 # Allow the crawler to follow HTTP 3xx redirects
 REDIRECT_ENABLED = True
 
@@ -157,4 +156,4 @@ REDIRECT_MAX_TIMES = 20
 DOWNLOAD_TIMEOUT = 15
 
 # Directory where Scrapy will save/resume crawl state
-JOBDIR = "crawls/thws-1"
+# JOBDIR = "crawls/thws-1"

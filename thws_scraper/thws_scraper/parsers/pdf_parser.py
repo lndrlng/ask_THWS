@@ -1,12 +1,12 @@
 import io
 from datetime import datetime
 from typing import Optional
-from urllib.parse import parse_qs, urlparse
 
 import fitz  # PyMuPDF
 from scrapy.http import Response
 
 from ..items import RawPageItem
+from ..utils.lang import extract_lang_from_url
 from ..utils.text import clean_text
 
 
@@ -36,9 +36,7 @@ def parse_pdf(response: Response) -> Optional[RawPageItem]:
     if not text:
         return None
 
-    # Extract lang= from URL
-    qs = parse_qs(urlparse(response.url).query)
-    lang = qs.get("lang", [None])[0] or "unknown"
+    lang = extract_lang_from_url(response.url)
 
     return RawPageItem(
         url=response.url,

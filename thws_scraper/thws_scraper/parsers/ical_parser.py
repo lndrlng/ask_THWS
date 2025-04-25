@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import List
-from urllib.parse import parse_qs, urlparse
 
 from icalendar import Calendar
 from scrapy.http import Response
 
 from ..items import RawPageItem
+from ..utils.lang import extract_lang_from_url
 
 
 def parse_ical(response: Response) -> List[RawPageItem]:
@@ -15,9 +15,7 @@ def parse_ical(response: Response) -> List[RawPageItem]:
     """
     events: List[RawPageItem] = []
 
-    # Extract lang= from URL once
-    qs = parse_qs(urlparse(response.url).query)
-    lang = qs.get("lang", [None])[0] or "unknown"
+    lang = extract_lang_from_url(response.url)
 
     try:
         cal = Calendar.from_ical(response.body)
