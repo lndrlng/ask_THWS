@@ -24,7 +24,7 @@ class StatsReporter:
 
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Subdomain", style="cyan")
-        for col in ["html", "pdf", "ical", "errors", "skipped_empty"]:
+        for col in ["html", "pdf", "ical", "errors", "empty"]:
             table.add_column(col.capitalize(), justify="right")
         table.add_column("Bytes", justify="right")
 
@@ -36,7 +36,7 @@ class StatsReporter:
                 str(c["pdf"]),
                 str(c["ical"]),
                 str(c["errors"]),
-                str(c["skipped_empty"]),
+                str(c["empty"]),
                 f"{c['bytes']/1024:.1f} KB",
             )
 
@@ -48,7 +48,7 @@ class StatsReporter:
             str(self.stats["pdf"]),
             str(self.stats["ical"]),
             str(self.stats["errors"]),
-            str(self.stats["skipped_empty"]),
+            str(self.stats["empty"]),
             f"{self.stats['bytes']/(1024*1024):.2f} MB",
             style="bold green",
         )

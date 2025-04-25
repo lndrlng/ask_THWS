@@ -22,9 +22,13 @@ class ThwsSpider(CrawlSpider):
     name = "thws"
     allowed_domains = ["thws.de"]
     start_urls = ["https://www.thws.de/", "https://fiw.thws.de/"]
+    # follow links in the text to icals and pdf too
     rules = [
         Rule(
-            LinkExtractor(allow_domains=allowed_domains),
+            LinkExtractor(
+                allow_domains=allowed_domains,
+                allow=r"\.pdf$|\.ics$|",
+            ),
             callback="parse_item",
             follow=True,
         )
@@ -102,7 +106,7 @@ class ThwsSpider(CrawlSpider):
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
-                ["Subdomain", "Html", "Pdf", "Ical", "Errors", "Skipped_empty", "Bytes"]
+                ["Subdomain", "Html", "Pdf", "Ical", "Errors", "Empty", "Bytes"]
             )
             for row in table.rows:
                 writer.writerow([cell.plain for cell in row.cells])
@@ -127,7 +131,7 @@ class ThwsSpider(CrawlSpider):
             items = parse_html(response)
 
         if not items:
-            self.reporter.bump("skipped_empty", domain)
+            self.reporter.bump("empty", domain)
             return []
 
         for item in items if isinstance(items, list) else [items]:
