@@ -10,7 +10,7 @@ class RawPageItem(scrapy.Item):
     """The full text + metadata for one fetched page or PDF."""
 
     url = scrapy.Field()
-    type = scrapy.Field()  # "html" | "pdf" | "ical-event"
+    type = scrapy.Field()  # "html" | "pdf" | "ical"
     title = scrapy.Field()
     text = scrapy.Field()
     date_scraped = scrapy.Field()

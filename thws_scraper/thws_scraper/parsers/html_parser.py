@@ -25,6 +25,7 @@ def parse_html(response: Response) -> Optional[tuple[RawPageItem, list[str]]]:
         "seite nicht gefunden",
         "not found",
         "404",
+        "Sorry, there is no translation for this news-article.",
     ]
 
     if not text or any(msg in text.lower() for msg in soft_error_skip):
