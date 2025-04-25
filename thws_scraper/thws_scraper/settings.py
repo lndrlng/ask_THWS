@@ -17,12 +17,9 @@ CHUNK_SIZE = 1000
 # Overlapping of the chunks
 CHUNK_OVERLAP = 100
 
-# Fake value for the terminal height, so the whole table is shown
-RICH_HEIGHT = 200
+ENABLE_FILE_LOGGING = True
 
-# Set the loglevel written to the logfile
-LOG_FILE_LEVEL = "INFO"
-
+EXPORT_CSV_STATS = True
 
 # ##################################################
 
@@ -136,7 +133,7 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 # How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOG_LEVEL = "CRITICAL"
+LOG_LEVEL = "INFO"
 
 # Turn on the retry middleware
 RETRY_ENABLED = True

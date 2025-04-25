@@ -6,8 +6,6 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from itemadapter import ItemAdapter
-from rich.console import Console
-from rich.live import Live
 from scrapy import signals
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import CrawlSpider, Rule
@@ -46,55 +44,56 @@ class ThwsSpider(CrawlSpider):
         super().__init__(*args, **kwargs)
         self.settings = settings
 
-        self.container_mode = self.settings.getbool("CONTAINER_MODE", False)
-
         # stats & reporting
         self.reporter = StatsReporter()
         self.start_time = datetime.utcnow()
 
         self._follow_links = True
-        if not self.container_mode:
-            # live rich table
-            self.console = Console(
-                height=self.settings.getint("RICH_HEIGHT", 200), record=True
-            )
-            self.live = Live(
-                self.reporter.get_table(self.start_time),
-                console=self.console,
-                refresh_per_second=4,
-            )
-        else:
-            self.console = None
-            self.live = None
 
     def spider_opened(self):
-        if self.live:
-            self.live.__enter__()
+        ts = self.start_time.strftime("%Y%m%d_%H%M%S")
+        Path("result").mkdir(parents=True, exist_ok=True)
+        log_filename = f"result/thws_{ts}.log"
 
-            log_file_level_str = self.settings.get("LOG_FILE_LEVEL", "WARNING").upper()
-            log_file_level = getattr(logging, log_file_level_str, logging.WARNING)
+        log_level_str = self.settings.get("LOG_LEVEL", "WARNING").upper()
+        log_level = getattr(logging, log_level_str, logging.WARNING)
 
-            # extra file handler just for the logfile
-            Path("result").mkdir(parents=True, exist_ok=True)
+        # Print log level to stdout
+        print(f"Log level set to: {log_level_str}")
+        self.logger.info(f"Spider started at {self.start_time.isoformat()}")
+
+        # Suppress noisy readability logs
+        logging.getLogger("readability.readability").setLevel(logging.ERROR)
+
+        if self.settings.getbool("ENABLE_FILE_LOGGING", True):
             fh = RotatingFileHandler(
-                "result/thws_warnings.log",
+                log_filename,
                 maxBytes=10_000_000,
                 backupCount=3,
                 encoding="utf-8",
             )
-            fh.setLevel(log_file_level)
+            fh.setLevel(log_level)
             fh.setFormatter(
                 logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
             )
             logging.getLogger().addHandler(fh)
+            self.logger.info(f"File logging enabled → {log_filename}")
+        else:
+            self.logger.info("File logging disabled")
 
     def spider_closed(self, reason):
         """
-        Called when the spider is closed.  Stops the live table display,
-        then converts the final stats table to a csv file.
+        Called when the spider is closed.
+        Converts the final stats table to a CSV file if enabled.
+        Also logs the total runtime.
         """
-        if self.live:
-            self.live.__exit__(None, None, None)
+        total_runtime = datetime.utcnow() - self.start_time
+        self.logger.info(f"Spider closed: {reason}")
+        self.logger.info(f"Total runtime: {str(total_runtime).split('.')[0]}")
+
+        if not self.settings.getbool("EXPORT_CSV_STATS", True):
+            self.logger.info("CSV export disabled.")
+            return
 
         ts = self.start_time.strftime("%Y%m%d_%H%M%S")
         csv_path = f"result/stats_{ts}.csv"
@@ -102,7 +101,8 @@ class ThwsSpider(CrawlSpider):
         # Extract the internal table data
         table = self.reporter.get_table(self.start_time)
 
-        # Table has rows like: [domain, html, pdf, ical, errors, skipped, bytes]
+        Path("result").mkdir(parents=True, exist_ok=True)
+
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
@@ -121,7 +121,6 @@ class ThwsSpider(CrawlSpider):
                 writer.writerow([cell.plain for cell in row.cells])
 
         self.logger.info(f"Wrote stats table to {csv_path}")
-        self.logger.info(f"Spider closed: {reason}")
 
     def parse_item(self, response):
         """
@@ -167,9 +166,6 @@ class ThwsSpider(CrawlSpider):
                 self.reporter.bump(item_type, domain)
                 self.reporter.bump("total")
                 yield item
-
-        if self.live:
-            self.live.update(self.reporter.get_table(self.start_time))
 
         # Follow .pdf / .ics links extracted from the HTML page
         for link in embedded_links:
