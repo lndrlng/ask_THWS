@@ -3,16 +3,23 @@
 # Parts
 
 1. webscraper
+
+   - **Disallow: /fileadmin/**: A lot of PDFs are skipped through this rule. Should we skip this rule, or do we need approval from the university?
+
 1. Text Preprocessing & Chunking
+
    - cleanup text
    - make chunks fitting the context window of the llm
    - overlapping 1 sentence, so the model gets the context
+
 1. Vector storage
+
    - with an embedding modell
    - Qdrant as db
      - fast (in rust)
      - allows metadata
      - python library
+
 1. Frontend
 
 ## Ideas
