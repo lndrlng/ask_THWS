@@ -13,7 +13,9 @@ from scrapy.spiders import CrawlSpider, Rule
 from ..parsers.html_parser import parse_html
 from ..parsers.ical_parser import parse_ical
 from ..parsers.pdf_parser import parse_pdf
+from ..utils.env_override import get_setting
 from ..utils.stats import StatsReporter
+from ..utils.stats_server import StatsHTTPServer
 
 
 class ThwsSpider(CrawlSpider):
@@ -55,8 +57,9 @@ class ThwsSpider(CrawlSpider):
         Path("result").mkdir(parents=True, exist_ok=True)
         log_filename = f"result/thws_{ts}.log"
 
-        log_level_str = self.settings.get("LOG_LEVEL", "WARNING").upper()
-        log_level = getattr(logging, log_level_str, logging.WARNING)
+        # Get log level from settings, fallback to WARNING
+        log_level_str = get_setting(self.settings, "LOG_LEVEL", "WARNING", str).upper()
+        log_level = getattr(logging, log_level_str)
 
         # Print log level to stdout
         print(f"Log level set to: {log_level_str}")
@@ -65,7 +68,10 @@ class ThwsSpider(CrawlSpider):
         # Suppress noisy readability logs
         logging.getLogger("readability.readability").setLevel(logging.ERROR)
 
-        if self.settings.getbool("ENABLE_FILE_LOGGING", True):
+        self.stats_server = StatsHTTPServer(self.reporter)
+        self.stats_server.start()
+
+        if get_setting(self.settings, "ENABLE_FILE_LOGGING", True, bool):
             fh = RotatingFileHandler(
                 log_filename,
                 maxBytes=10_000_000,
@@ -84,22 +90,19 @@ class ThwsSpider(CrawlSpider):
     def spider_closed(self, reason):
         """
         Called when the spider is closed.
-        Converts the final stats table to a CSV file if enabled.
-        Also logs the total runtime.
+        Converts the final stats to a CSV file if enabled.
         """
         total_runtime = datetime.utcnow() - self.start_time
         self.logger.info(f"Spider closed: {reason}")
         self.logger.info(f"Total runtime: {str(total_runtime).split('.')[0]}")
+        self.stats_server.stop()
 
-        if not self.settings.getbool("EXPORT_CSV_STATS", True):
+        if not get_setting(self.settings, "EXPORT_CSV_STATS", True, bool):
             self.logger.info("CSV export disabled.")
             return
 
         ts = self.start_time.strftime("%Y%m%d_%H%M%S")
         csv_path = f"result/stats_{ts}.csv"
-
-        # Extract the internal table data
-        table = self.reporter.get_table(self.start_time)
 
         Path("result").mkdir(parents=True, exist_ok=True)
 
@@ -113,12 +116,24 @@ class ThwsSpider(CrawlSpider):
                     "Ical",
                     "Errors",
                     "Empty",
-                    "Bytes",
                     "Ignored",
+                    "Bytes",
                 ]
             )
-            for row in table.rows:
-                writer.writerow([cell.plain for cell in row.cells])
+
+            for domain, counters in sorted(self.reporter.per_domain.items()):
+                writer.writerow(
+                    [
+                        domain,
+                        counters.get("html", 0),
+                        counters.get("pdf", 0),
+                        counters.get("ical", 0),
+                        counters.get("errors", 0),
+                        counters.get("empty", 0),
+                        counters.get("ignored", 0),
+                        f"{counters.get('bytes', 0)/1024:.1f} KB",
+                    ]
+                )
 
         self.logger.info(f"Wrote stats table to {csv_path}")
 

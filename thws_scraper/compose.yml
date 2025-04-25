@@ -3,5 +3,11 @@ services:
     image: ghcr.io/dav354/scraper:latest
     container_name: scraper
     restart: "no"
+    environment:
+      - LOG_LEVEL=INFO
+      - EXPORT_CSV_STATS=False
+      - ENABLE_FILE_LOGGING=False
+    ports:
+      - 7000:7000
     volumes:
       - ./result:/app/result

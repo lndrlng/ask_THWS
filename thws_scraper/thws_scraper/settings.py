@@ -32,7 +32,7 @@ NEWSPIDER_MODULE = "thws_scraper.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "thws-scraper-bot/0.2"
+USER_AGENT = "thws-scraper-bot/0.3.0"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True

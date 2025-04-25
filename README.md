@@ -54,7 +54,7 @@ pip install -r requirements.txt
 cd thws_scraper && scrapy crawl thws
 ```
 
-This will output the raw data and the chunked data in the thws_scraper folder.
+This will output the raw data and the chunked data in the thws_scraper folder. You can watch the progress on http://localhost:7000/live for html based table and http://localhost:7000/stats for the raw json data.
 
 # Load to Vector db
 

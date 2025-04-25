@@ -24,6 +24,7 @@ commitizen==4.4.1
 isort==5.13.2
 flake8==7.2.0
 pre-commit==4.0.1
+jinja2
 # Api server
 fastapi==0.115.12
 uvicorn==0.34.0
