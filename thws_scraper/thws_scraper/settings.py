@@ -157,3 +157,6 @@ DOWNLOAD_TIMEOUT = 15
 
 # Directory where Scrapy will save/resume crawl state
 # JOBDIR = "crawls/thws-1"
+
+# Default allowed length > 2083, 0 to disable it
+URLLENGTH_LIMIT = 0

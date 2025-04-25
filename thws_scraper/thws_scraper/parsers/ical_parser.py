@@ -31,7 +31,7 @@ def parse_ical(response: Response) -> List[RawPageItem]:
             events.append(
                 RawPageItem(
                     url=response.url,
-                    type="ical-event",
+                    type="ical",
                     title=summary,
                     text=text,
                     date_scraped=datetime.utcnow().isoformat(),

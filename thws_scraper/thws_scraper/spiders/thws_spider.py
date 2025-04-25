@@ -1,9 +1,10 @@
 import csv
 import logging
+import re
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from itemadapter import ItemAdapter
 from rich.console import Console
@@ -27,7 +28,7 @@ class ThwsSpider(CrawlSpider):
         Rule(
             LinkExtractor(
                 allow_domains=allowed_domains,
-                allow=r"\.pdf$|\.ics$|",
+                allow=[r"\.pdf$", r"\.ics$", r"/"],
             ),
             callback="parse_item",
             follow=True,
@@ -126,19 +127,21 @@ class ThwsSpider(CrawlSpider):
     def parse_item(self, response):
         """
         Dispatch to the correct parser (HTML, PDF, iCal), and yield parsed items.
+        Also extracts .pdf and .ics links from raw body and follows them.
         """
         domain = urlparse(response.url).netloc
         self.reporter.bump("bytes", domain, len(response.body))
         ctype = response.headers.get("Content-Type", b"").decode().split(";")[0].lower()
-
-        ignored_exts = [".seb"]  # online exam
         url_lower = response.url.lower()
+
+        # Skip unwanted file types
+        ignored_exts = [".seb"]  # online exam format
         if any(url_lower.endswith(ext) for ext in ignored_exts):
             self.logger.debug(f"Ignored filetype: {response.url}")
             self.reporter.bump("ignored", domain)
-            return []
+            return
 
-        # Choose parser based on content type or URL
+        # Choose parser
         if url_lower.endswith(".pdf") or "pdf" in ctype:
             items = parse_pdf(response)
         elif url_lower.endswith(".ics") or ctype in (
@@ -151,15 +154,29 @@ class ThwsSpider(CrawlSpider):
 
         if not items:
             self.reporter.bump("empty", domain)
-            return []
+        else:
+            for item in items if isinstance(items, list) else [items]:
+                adapter = ItemAdapter(item)
+                item_type = adapter.get("type", "unknown")
+                self.reporter.bump(item_type, domain)
+                self.reporter.bump("total")
+                yield item
 
-        for item in items if isinstance(items, list) else [items]:
-            adapter = ItemAdapter(item)
-            item_type = adapter.get("type", "unknown")
+        # Extract and follow embedded .pdf and .ics links
+        body_text = response.text
+        embedded_links = re.findall(
+            r'href=["\'](.*?\.(?:pdf|ics))["\']', body_text, re.IGNORECASE
+        )
 
-            self.reporter.bump(item_type, domain)
-            self.reporter.bump("total")
-            yield item
+        for href in embedded_links:
+            abs_url = urljoin(response.url, href)
+            parsed = urlparse(abs_url)
+
+            # Skip if scheme isn't http/https
+            if parsed.scheme not in ("http", "https"):
+                continue
+
+            yield response.follow(abs_url, callback=self.parse_item)
 
         if self.live:
             self.live.update(self.reporter.get_table(self.start_time))
