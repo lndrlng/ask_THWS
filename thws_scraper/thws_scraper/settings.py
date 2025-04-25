@@ -74,6 +74,7 @@ TELNETCONSOLE_ENABLED = False
 DOWNLOADER_MIDDLEWARES = {
     # default priority is 550
     "thws_scraper.middlewares.ThwsErrorMiddleware": 550,
+    # "thws_scraper.middlewares.RobotsBypassMiddleware": 100,
 }
 
 # Enable or disable extensions

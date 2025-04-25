@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 # useful for handling different item types with a single interface
 from scrapy import signals
+from scrapy.downloadermiddlewares.robotstxt import RobotsTxtMiddleware
 from twisted.internet.error import DNSLookupError
 
 
@@ -131,3 +132,21 @@ class ThwsErrorMiddleware:
                 pass
 
         return None
+
+
+class RobotsBypassMiddleware(RobotsTxtMiddleware):
+    """
+    Bypass robots.txt only for certain subpaths like /fileadmin/.
+    All other rules from robots.txt are still respected.
+    """
+
+    def _allowed(self, robotstxt, request, spider):
+        parsed = urlparse(request.url)
+
+        # Allow /fileadmin/ paths
+        if parsed.path.startswith("/fileadmin/"):
+            spider.logger.debug(f"Bypassing robots.txt for: {request.url}")
+            return True
+
+        # Fall back to default behavior for other URLs
+        return super()._allowed(robotstxt, request, spider)
