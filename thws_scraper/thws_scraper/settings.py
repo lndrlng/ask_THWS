@@ -92,28 +92,28 @@ ITEM_PIPELINES = {
 # Enable and configure HTTP caching (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings # noqa: E501
 # Enable the HTTP cache
-HTTPCACHE_ENABLED = True
+# HTTPCACHE_ENABLED = True
 
 # How long (in seconds) a cached response is considered fresh.
 # 0 means “never expire” (i.e. always reuse until you manually clear the cache).
-HTTPCACHE_EXPIRATION_SECS = 24 * 3600  # one day
+# HTTPCACHE_EXPIRATION_SECS = 24 * 3600  # one day
 
 # Directory where cached responses are stored
-HTTPCACHE_DIR = "httpcache"
+# HTTPCACHE_DIR = "httpcache"
 
 # Which HTTP status codes should *not* be cached.
 # By default you’ll cache even 500s; you can blacklist 500,502,503, etc.
-HTTPCACHE_IGNORE_HTTP_CODES = [500, 502, 503, 504]
+# HTTPCACHE_IGNORE_HTTP_CODES = [500, 502, 503, 504]
 
 # Storage backend: the filesystem is the simplest.
 # You can also swap in a DBM backend, or write your own.
-HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
+# HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 
 # (Optional) If you want cached responses to be gzipped on disk:
-HTTPCACHE_GZIP = True
+# HTTPCACHE_GZIP = True
 
 # (Optional) Respect HTTP headers like Cache-Control / Expires:
-HTTPCACHE_POLICY = "scrapy.extensions.httpcache.RFC2616Policy"
+# HTTPCACHE_POLICY = "scrapy.extensions.httpcache.RFC2616Policy"
 
 # Set settings whose default value is deprecated to a future-proof value
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
