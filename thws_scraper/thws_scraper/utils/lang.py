@@ -5,19 +5,27 @@ def extract_lang_from_url(url: str) -> str:
     """
     Detect language from:
     - ?lang=de (query string)
-    - /en/, /de/ (first path segment)
+    - /en/, /de/, /us/ (first path segment)
+    Normalizes known aliases (e.g. 'us' → 'en').
     Falls back to 'unknown'.
     """
     parsed = urlparse(url)
 
+    # Aliases map
+    lang_aliases = {
+        "us": "en",
+    }
+
     # Check query string: ?lang=de
     qs_lang = parse_qs(parsed.query).get("lang", [None])[0]
     if qs_lang:
-        return qs_lang
+        return lang_aliases.get(qs_lang.lower(), qs_lang.lower())
 
-    # Check first path segment: /en/ or /de/
+    # Check first path segment
     segments = parsed.path.strip("/").split("/")
-    if segments and segments[0] in {"en", "de"}:
-        return segments[0]
+    if segments:
+        segment = segments[0].lower()
+        if segment in {"en", "de", "us"}:
+            return lang_aliases.get(segment, segment)
 
     return "unknown"
