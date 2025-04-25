@@ -106,7 +106,16 @@ class ThwsSpider(CrawlSpider):
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
-                ["Subdomain", "Html", "Pdf", "Ical", "Errors", "Empty", "Bytes"]
+                [
+                    "Subdomain",
+                    "Html",
+                    "Pdf",
+                    "Ical",
+                    "Errors",
+                    "Empty",
+                    "Bytes",
+                    "Ignored",
+                ]
             )
             for row in table.rows:
                 writer.writerow([cell.plain for cell in row.cells])
@@ -122,10 +131,20 @@ class ThwsSpider(CrawlSpider):
         self.reporter.bump("bytes", domain, len(response.body))
         ctype = response.headers.get("Content-Type", b"").decode().split(";")[0].lower()
 
+        ignored_exts = [".seb"]  # online exam
+        url_lower = response.url.lower()
+        if any(url_lower.endswith(ext) for ext in ignored_exts):
+            self.logger.debug(f"Ignored filetype: {response.url}")
+            self.reporter.bump("ignored", domain)
+            return []
+
         # Choose parser based on content type or URL
-        if response.url.lower().endswith(".pdf") or "pdf" in ctype:
+        if url_lower.endswith(".pdf") or "pdf" in ctype:
             items = parse_pdf(response)
-        elif ctype in ("text/calendar", "application/ical"):
+        elif url_lower.endswith(".ics") or ctype in (
+            "text/calendar",
+            "application/ical",
+        ):
             items = parse_ical(response)
         else:
             items = parse_html(response)
