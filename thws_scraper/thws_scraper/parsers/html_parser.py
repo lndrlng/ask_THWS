@@ -20,8 +20,16 @@ def parse_html(response: Response) -> Optional[RawPageItem]:
     soup = BeautifulSoup(summary_html, "lxml")
     text = clean_text(soup.get_text())
 
-    # drop empty pages or obvious 404 pages
-    if not text or "404" in text.lower() or "not found" in text.lower():
+    # drop empty pages or obvious 404s (soft or hard)
+    soft_error_skip = [
+        "diese seite existiert nicht",
+        "this page does not exist",
+        "seite nicht gefunden",
+        "not found",
+        "404",
+    ]
+
+    if not text or any(msg in text.lower() for msg in soft_error_skip):
         return None
 
     # Title: prefer <h1>, fall back to <title>

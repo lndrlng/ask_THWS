@@ -70,7 +70,7 @@ class ThwsSpider(CrawlSpider):
             log_file_level_str = self.settings.get("LOG_FILE_LEVEL", "WARNING").upper()
             log_file_level = getattr(logging, log_file_level_str, logging.WARNING)
 
-            # extra file handler just for WARNING and up
+            # extra file handler just for the logfile
             Path("result").mkdir(parents=True, exist_ok=True)
             fh = RotatingFileHandler(
                 "result/thws_warnings.log",
