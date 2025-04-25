@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from readability import Document
@@ -10,11 +11,8 @@ from ..utils.lang import extract_lang_from_url
 from ..utils.text import clean_text
 
 
-def parse_html(response: Response) -> Optional[RawPageItem]:
-    """
-    Extract the main content of an HTML page using Readability+BeautifulSoup.
-    Returns a RawPageItem or None if the page is empty or a 404/no-content.
-    """
+def parse_html(response: Response) -> Optional[tuple[RawPageItem, list[str]]]:
+
     doc = Document(response.text)
     summary_html = doc.summary()
     soup = BeautifulSoup(summary_html, "lxml")
@@ -53,7 +51,7 @@ def parse_html(response: Response) -> Optional[RawPageItem]:
 
     lang = extract_lang_from_url(response.url)
 
-    return RawPageItem(
+    item = RawPageItem(
         url=response.url,
         type="html",
         title=title,
@@ -63,3 +61,13 @@ def parse_html(response: Response) -> Optional[RawPageItem]:
         status=response.status,
         lang=lang,
     )
+
+    # Extract and follow embedded .pdf and .ics links
+    embedded_links = []
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if href.lower().endswith((".pdf", ".ics")):
+            abs_url = urljoin(response.url, href)
+            embedded_links.append(abs_url)
+
+    return item, embedded_links

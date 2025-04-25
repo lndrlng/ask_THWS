@@ -1,10 +1,9 @@
 import csv
 import logging
-import re
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 from itemadapter import ItemAdapter
 from rich.console import Console
@@ -144,13 +143,20 @@ class ThwsSpider(CrawlSpider):
         # Choose parser
         if url_lower.endswith(".pdf") or "pdf" in ctype:
             items = parse_pdf(response)
+            embedded_links = []
         elif url_lower.endswith(".ics") or ctype in (
             "text/calendar",
             "application/ical",
         ):
             items = parse_ical(response)
+            embedded_links = []
         else:
-            items = parse_html(response)
+            parsed = parse_html(response)
+            if parsed is None:
+                items = None
+                embedded_links = []
+            else:
+                items, embedded_links = parsed
 
         if not items:
             self.reporter.bump("empty", domain)
@@ -162,21 +168,9 @@ class ThwsSpider(CrawlSpider):
                 self.reporter.bump("total")
                 yield item
 
-        # Extract and follow embedded .pdf and .ics links
-        body_text = response.text
-        embedded_links = re.findall(
-            r'href=["\'](.*?\.(?:pdf|ics))["\']', body_text, re.IGNORECASE
-        )
-
-        for href in embedded_links:
-            abs_url = urljoin(response.url, href)
-            parsed = urlparse(abs_url)
-
-            # Skip if scheme isn't http/https
-            if parsed.scheme not in ("http", "https"):
-                continue
-
-            yield response.follow(abs_url, callback=self.parse_item)
-
         if self.live:
             self.live.update(self.reporter.get_table(self.start_time))
+
+        # Follow .pdf / .ics links extracted from the HTML page
+        for link in embedded_links:
+            yield response.follow(link, callback=self.parse_item)
