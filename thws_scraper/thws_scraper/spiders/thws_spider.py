@@ -48,6 +48,7 @@ class ThwsSpider(CrawlSpider):
         self.reporter = StatsReporter()
         self.start_time = datetime.utcnow()
 
+        self._follow_links = True
         if not self.container_mode:
             # live rich table
             self.console = Console(
@@ -59,7 +60,6 @@ class ThwsSpider(CrawlSpider):
                 refresh_per_second=4,
             )
         else:
-            self._follow_links = True
             self.console = None
             self.live = None
 
