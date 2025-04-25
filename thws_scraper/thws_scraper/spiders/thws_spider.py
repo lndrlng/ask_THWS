@@ -67,7 +67,10 @@ class ThwsSpider(CrawlSpider):
         if self.live:
             self.live.__enter__()
 
-            # ── extra file handler just for WARNING and up
+            log_file_level_str = self.settings.get("LOG_FILE_LEVEL", "WARNING").upper()
+            log_file_level = getattr(logging, log_file_level_str, logging.WARNING)
+
+            # extra file handler just for WARNING and up
             Path("result").mkdir(parents=True, exist_ok=True)
             fh = RotatingFileHandler(
                 "result/thws_warnings.log",
@@ -75,7 +78,7 @@ class ThwsSpider(CrawlSpider):
                 backupCount=3,
                 encoding="utf-8",
             )
-            fh.setLevel(logging.WARNING)
+            fh.setLevel(log_file_level)
             fh.setFormatter(
                 logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
             )

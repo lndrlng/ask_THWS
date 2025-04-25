@@ -7,7 +7,24 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+# ##################################################
+# Custom values; might be configureable via env tbd
+# ##################################################
+
+# Size of the chunks
+CHUNK_SIZE = 1000
+
+# Overlapping of the chunks
+CHUNK_OVERLAP = 100
+
+# Fake value for the terminal height, so the whole table is shown
 RICH_HEIGHT = 200
+
+# Set the loglevel written to the logfile
+LOG_FILE_LEVEL = "INFO"
+
+
+# ##################################################
 
 # Identifier for your bot. Used in logs, the default User-Agent header, etc.
 BOT_NAME = "thws_scraper"
@@ -67,8 +84,6 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 100
 
 ITEM_PIPELINES = {
     "thws_scraper.pipelines.RawOutputPipeline": 100,  # write raw pages first
