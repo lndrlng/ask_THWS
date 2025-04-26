@@ -32,7 +32,7 @@ NEWSPIDER_MODULE = "thws_scraper.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "thws-scraper-bot/0.3.0"
+USER_AGENT = "thws-scraper-bot/0.3.2"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -151,7 +151,7 @@ REDIRECT_ENABLED = True
 REDIRECT_MAX_TIMES = 20
 
 # Abort any request taking longer than 15 seconds
-DOWNLOAD_TIMEOUT = 15
+DOWNLOAD_TIMEOUT = 60
 
 # Directory where Scrapy will save/resume crawl state
 # JOBDIR = "crawls/thws-1"

@@ -163,6 +163,7 @@ class ThwsSpider(CrawlSpider):
             "tx_fhwsvideo_frontend",
             "/videos/",
             "/wp-content/uploads/",
+            "/login/",
         ]
         if any(pat in url_lower for pat in IGNORED_URL_PATTERNS):
             self.logger.debug(f"Ignored page by pattern: {response.url}")

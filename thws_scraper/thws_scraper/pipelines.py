@@ -110,8 +110,4 @@ class ChunkingOutputPipeline:
             line = json.dumps(dict(chunk_item), ensure_ascii=False)
             self.chunks_file.write(line + "\n")
 
-            # Yield chunk for any further pipelines
-            yield chunk_item
-
-        # Finally, re-emit the original RawPageItem
-        yield item
+        return item
