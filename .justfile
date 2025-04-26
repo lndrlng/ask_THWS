@@ -11,3 +11,6 @@ compress FILE:
     tar -cf "{{without_extension(FILE)}}.tar.xz" \
         -I "xz -9 --threads=0" \
         "{{FILE}}"
+
+show FILE:
+    column -t -s, {{FILE}} | less -S
