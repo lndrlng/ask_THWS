@@ -148,9 +148,24 @@ class ThwsSpider(CrawlSpider):
         url_lower = response.url.lower()
 
         # Skip unwanted file types
-        ignored_exts = [".seb"]  # online exam format
-        if any(url_lower.endswith(ext) for ext in ignored_exts):
+        IGNORED_EXTS = [
+            ".seb",  # online exam format
+            ".crt",
+            ".pkg",
+        ]
+        if any(url_lower.endswith(ext) for ext in IGNORED_EXTS):
             self.logger.debug(f"Ignored filetype: {response.url}")
+            self.reporter.bump("ignored", domain)
+            return
+
+        # Skip unwanted sites, eg. video files
+        IGNORED_URL_PATTERNS = [
+            "tx_fhwsvideo_frontend",
+            "/videos/",
+            "/wp-content/uploads/",
+        ]
+        if any(pat in url_lower for pat in IGNORED_URL_PATTERNS):
+            self.logger.debug(f"Ignored page by pattern: {response.url}")
             self.reporter.bump("ignored", domain)
             return
 

@@ -6,3 +6,8 @@ build-scraper VERSION:
 
 fmt:
     pre-commit run --all-files
+
+compress FILE:
+    tar -cf "{{without_extension(FILE)}}.tar.xz" \
+        -I "xz -9 --threads=0" \
+        "{{FILE}}"
