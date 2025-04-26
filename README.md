@@ -2,9 +2,57 @@
 
 # Parts
 
-1. webscraper
+1. Webscraper
 
-   - **Disallow: /fileadmin/**: A lot of PDFs are skipped through this rule. Should we skip this rule, or do we need approval from the university?
+   - Disallow: /fileadmin/:
+     Many PDFs are skipped due to this rule in robots.txt.
+     ➔ Options:
+
+     - Skip the rule for PDFs only (currently done carefully).
+
+     - Or ask the university for explicit approval to scrape PDFs under /fileadmin/.
+
+   - Scrapy DeltaFetch:
+     Use scrapy-deltafetch to avoid refetching already scraped pages.
+     ➔ Benefits:
+
+     - Faster, incremental crawls.
+
+     - Only new or changed pages trigger updates (saves compute & storage).
+
+   - Handling database updates:
+     ➔ Options for handling rescraped content:
+
+     - Overwrite existing entries in Postgres based on URL primary key.
+
+     - Add new versions of the same document and track versions separately.
+
+     - Delete old versions before inserting new ones (if freshness is critical).
+
+   - RAG Pipeline consequences:
+     ➔ If we replace/update data:
+
+     - Need to rechunk the updated documents.
+
+     - Need to recreate embeddings for the changed chunks.
+
+     - Need to rebuild or update the knowledge graph (KG) accordingly.
+
+   - Chunking & KG refresh strategy:
+     ➔ Options:
+
+     - Always rebuild from scratch after a new crawl. (simpler, heavier)
+
+     - Implement partial updates if only a small subset changed. (complex, efficient)
+
+   - Deployment:
+     ➔ Options:
+
+     - Schedule via Cronjobs and docker run
+
+     - via orchestration: swarm/ k8s and cronjobs
+
+     - master container which has access to the docker socket
 
 1. Text Preprocessing & Chunking
 
