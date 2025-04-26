@@ -18,9 +18,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install Black
-        run: pip install black==23.9.1
+        run: pip install black==25.1.0
       - name: Check code formatting with Black
-        run: black --check .
+        run: black --check --verbose .
 
   check-isort:
     name: isort import sorting
