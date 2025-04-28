@@ -1,0 +1,698 @@
+﻿question,correct_answer,source,answer_gemma7b_time,answer_gemma7b,answer_orca-mini7b_time,answer_orca-mini7b,answer_mistral_latest_time,answer_mistral_latest,answer_phi4_latest_time,answer_phi4_latest,answer_qwen2_5_14b_time,answer_qwen2_5_14b,answer_orca-mini_13b_time,answer_orca-mini_13b,answer_gemma3_27b_time,answer_gemma3_27b,answer_deepseek_r1_32b_time,answer_deepseek_r1_32b,answer_qwq_latest_time,answer_qwq_latest,score_gemma7b_time,score_gemma7b,score_orca-mini7b_time,score_orca-mini7b,score_mistral_latest_time,score_mistral_latest,score_phi4_latest_time,score_phi4_latest,score_qwen2_5_14b_time,score_qwen2_5_14b,score_orca-mini_13b_time,score_orca-mini_13b,score_gemma3_27b_time,score_gemma3_27b,score_deepseek_r1_32b_time,score_deepseek_r1_32b,score_qwq_latest_time,score_qwq_latest
+Welche Öffnungszeiten haben die Gebäude der THWS während der Vorlesungs- und Prüfungszeit?,Während der Vorlesungs- und Prüfungszeit sind die Gebäude der THWS von Montag bis Freitag von 6:30 bis 22:00 Uhr und am Samstag von 8:00 bis 18:00 Uhr geöffnet,https://www.thws.de,4.761118173599243,Die Gebäude der THWS haben während der Vorlesungs- und Prüfungszeit von Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr und am Samstag von 8:00 Uhr bis 18:00 Uhr geöffnet.,2.6287648677825928,"Die Öffnungszeiten für die Gebäude der THWS sind:
+
+Würzburg: Montag bis Freitag, 6:30 Uhr bis 22:00 Uhr und Samstag, 8:00 Uhr bis 18:00 Uhr.
+Schweinfurt: Montag bis Freitag, 6:30 Uhr bis 22:00 Uhr.
+
+Während der Vorlesungs- und Prüfungszeit schwanken die Öffnungszeiten in Abhängigkeit von den Vorlesungen und Prüfungen. Es wird empfohlen, sich auf der Website der THWS unter ""Bürozeiten"" oder im Terminkalender für einzelne Gebäude und Abteilungen zu informieren.",3.6929659843444824,"Die Gebäude der Technischen Hochschule Würzburg-Schweinfurt sind täglich von Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr geöffnet. Samstags ist die Öffnungszeit von 8:00 Uhr bis 18:00 Uhr. Während der Vorlesungs- und Prüfungszeit können diese Zeiten jeweils variieren, bitte überprüfe dies auf unserer Website unter www.thws.de.",8.072654962539673,Die Öffnungszeiten der Gebäude der THWS während der Vorlesungs- und Prüfungszeit sind Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr und samstags von 8:00 Uhr bis 18:00 Uhr.,8.05562686920166,"Die gegebenen Informationen besagen, dass das Allgemeine Öffnungszeiten für die Gebäude der THWS Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr gelten. Für Samstage sind die Öffnungszeiten von 8:00 Uhr bis 18:00 Uhr angegeben. Diese Zeiten gelten generell und wurden im Kontext nicht spezifisch für die Vorlesungs- oder Prüfungszeit geändert, sodass wir davon ausgehen können, dass diese Zeiten während der gesamten Zeit gültig sind, einschließlich der Vorlesungs- und Prüfungszeit.",7.657918930053711,"Die Öffnungszeiten der Gebäude der THWS während der Vorlesungs- und Prüfungszeit sind Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr, am Samstag von 8:00 Uhr bis 18:00 Uhr.",12.131136178970335,Die Gebäude der THWS haben von Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr und samstags von 8:00 Uhr bis 18:00 Uhr geöffnet.,43.7681200504303,"<think>
+Okay, ich muss die Frage beantworten: ""Welche Öffnungszeiten haben die Gebäude der THWS während der Vorlesungs- und Prüfungszeit?"" Basierend auf dem gegebenen Kontext.
+
+Zuerst lese ich den Text sorgfältig durch. Da steht, dass die Gebäude der THWS Montags bis Freitags von 6:30 Uhr bis 22:00 Uhr geöffnet sind. Am Samstag ist es von 8:00 Uhr bis 18:00 Uhr. Es wird nichts über Sonntag erwähnt, also nehme ich an, dass am Sonntag die Gebäude geschlossen sind.
+
+Aber warte, der Kontext enthält auch Informationen über Bibliotheken und Büros. Die Bibliothek in Würzburg hat Montags bis Freitags von 8:00 bis 19:00 Uhr, in Schweinfurt sogar bis 22:00 Uhr. Bürozeiten sind Montag-Donnerstag von 13:30-16:00 Uhr.
+
+Die Frage ist spezifisch nach den Gebäuden der THWS, also die allgemeinen Öffnungszeiten, nicht Bibliothek oder Büros. Also greife ich auf den Absatz mit ""Gebäude der THWS"" zu.
+
+Also, Montags bis Freitags 6:30-22 Uhr, Samstag 8-18 Uhr, Sonntag ist nicht erwähnt, wahrscheinlich geschlossen. Keine besonderen Tage zurzeit, wie im Text steht.
+
+Zusammenfassung: Gebäude der THWS sind in Vorlesungszeit Montags bis Freitags von 6:30-22 Uhr und Samstags 8-18 Uhr geöffnet.
+</think>
+
+Die Gebäude der THWS sind während der Vorlesungs- und Prüfungszeit Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr sowie am Samstag von 8:00 Uhr bis 18:00 Uhr geöffnet. Am Sonntag sind sie geschlossen.
+
+Antwort:
+Die Gebäude der THWS haben während der Vorlesungs- und Prüfungszeit folgende Öffnungszeiten:
+- Montag bis Freitag: 6:30 Uhr bis 22:00 Uhr
+- Samstag: 8:00 Uhr bis 18:00 Uhr
+
+Am Sonntag sind die Gebäude geschlossen.",42.21070122718811,"<think>
+Okay, ich muss die Öffnungszeiten der THWS-Gebäude während der Vorlesungs- und Prüfungszeit herausfinden. Lass ich mir den gegebenen Kontext durchlesen.
+
+Im Kontext steht unter ""Gebäude der THWS"": Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr und Samstags von 8:00 Uhr bis 18:00 Uhr. Es gibt auch eine Erwähnung von ""Schließtage und geänderte Öffnungszeiten derzeit keine Besonderheiten"", was darauf hindeutet, dass es keine Ausnahmen gibt. 
+
+Außerdem gibt es eine Stelle in der Bibliotheksinformation, wo ab dem 07.01.2025 die Öffnungszeiten für Würzburg Montag-Freitag 8-19 Uhr und Schweinfurt 8-22 Uhr sind. Aber die Frage bezieht sich auf die Gebäude generell, nicht speziell die Bibliotheken. 
+
+Die Frage nach den Gebäudeöffnungszeiten während Vorlesungs- und Prüfungszeit. Der Kontext nennt die allgemeinen Gebäudezeiten als Mo-Fr 6:30-22:00 und Sa 8-18:00. Da keine besonderen Änderungen aktuell bestehen, sind das wahrscheinlich die Zeiten für die Vorlesungszeit. 
+
+Also sollte die Antwort die Montag-Freitagzeiten 6:30-22 Uhr und Samstag 8-18 Uhr nennen. Die Bibliothek hat eigene Zeiten, aber die Frage ist allgemein auf die Gebäude gerichtet. Also stimmt die Antwort mit dem Kontext überein.
+</think>
+
+Die Gebäude der THWS sind während der Vorlesungs- und Prüfungszeit **von Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr** sowie **samstags von 8:00 Uhr bis 18:00 Uhr** geöffnet. Aktuell gelten keine speziellen Änderungen oder Schließtage.",0.0,1.0,0.0,0.9,0.0,0.95,0.0,1.0,0.0,0.95,0.0,1.0,0.0,1.0,0.0,0.95,0.0,0.95
+Wann haben die THWS Gebäude geschlossen?,"Die aktuellen vorlesungsfreien Termine, sowie Semester Beginn, Ende der Semester und des Pürfungszeitraumes können Sie auf der Website der THWS im Bereich ""Termine"" oder direkt unter dem Link https://www.thws.de/termine/ finden",https://www.thws.de/termine/,4.964334964752197,"Die provided Text enthält keine Informationen zu einer Schließung der THWS-Gebäude, so dass ich diese Frage nicht beantworten kann.</start_of_turn>",4.7547080516815186,"Die Fakultät Maschinenbau der Technischen Hochschule Wildau (THWS) hat ihren Standardbetrieb mit dem Schaltertelefon. Der Hauptzugang für Besucher, Studierende und Mitarbeiter ist die Eingangsseite, die an beiden Wochentagen von 6:30 Uhr bis 22:00 Uhr geöffnet ist. Samstags sind die THWS-Gebäude zwischen 8:00 Uhr und 18:00 Uhr geöffnet.",5.899348974227905,"Die THWS-Gebäude sind Montags bis Freitags von 12:00 Uhr bis 18:00 Uhr geschlossen. Am Wochenende sowie außerhalb dieser Zeit sind sie offen (6:30 Uhr bis 22:00 Uhr an Werktagen und 8:00 Uhr bis 18:00 Uhr am Samstag). Die Gebäude schließen sich also täglich zwischen 12:00 Uhr und 18:00 Uhr. Das ist jedoch keine Schließung im eigentlichen Sinne, sondern lediglich eine Zeitspanne, in der sie nicht offen für den Besuch sind.",8.825202941894531,Die Gebäude der Hochschule THWS sind montags bis freitags von 6:30 Uhr bis 22:00 Uhr und samstags von 8:00 Uhr bis 18:00 Uhr geöffnet. Folglich schließen sie an Wochentagen um 22:00 Uhr und am Samstag um 18:00 Uhr.,8.276204824447632,Die Gebäude der THWS schließen Montag bis Freitag um 22:00 Uhr und am Wochenende um 18:00 Uhr.,7.794332265853882,Die THWS Gebäude schließen am Montag bis Freitag um 22:00 Uhr und samstags um 18:00 Uhr. Bitte informieren Sie sich auf der Website der Bibliotheken zu ggf. besonderen Bedingungen.,12.678276777267456,Die Gebäude der THWS haben Montag bis Freitag von 6:30 Uhr bis 22:00 Uhr und Samstags von 8:00 Uhr bis 18:00 Uhr geöffnet. Informationen über Schließzeiten sind im Kontext nicht enthalten.,39.16477680206299,"<think>
+Okay, ich muss die Frage beantworten: ""Wann haben die THWS Gebäude geschlossen?"" Dazu schaue ich mir den gegebenen Kontext an.
+
+Zuerst suche ich nach Informationen über Öffnungszeiten der Gebäude. Im Kontext finde ich einen Abschnitt mit dem Titel ""Gebäudeöffnungs- und Schließzeiten, Hinweise"" unter dem Namen ""Dekanat Maschinenbau"". Dort steht:
+
+Montag bis Freitag von 8:00 Uhr bis 12:00 Uhr und nach Vereinbarung am Nachmittag.
+
+Darunter folgen die Bibliotheken mit Montag bis Freitag, 8:00 Uhr bis 18:00 Uhr. Weitere Hinweise auf der Website der Bibliotheken.
+
+Weiter unten im Text gibt es Informationen über das Gebäude der THWS:
+
+Montag bis Freitag: 6:30 Uhr bis 22:00 Uhr
+Samstags: 8:00 Uhr bis 18:00 Uhr
+
+Außerdem ist da ein Abschnitt ""Quicklinks"" und weitere Nachrichten, die nicht direkt zu den Öffnungszeiten beitragen.
+
+Die Frage konzentriert sich auf die Schließzeit der Gebäude. Die THWS-Gebäude sind Montags bis Freitags von 6:30 Uhr bis 22:00 Uhr geöffnet und samstags von 8:00 Uhr bis 18:00 Uhr. Ansonsten, also an sonntagen oder außerhalb dieser Zeiten, sind die Gebäude wahrscheinlich geschlossen.
+
+Also, um die Frage zu beantworten, gebe ich die genaue Schließzeit an, je nachdem ob es ein Werktag ist oder Samstag.
+</think>
+
+Die THWS-Gebäude schließen Montags bis Freitags um 22:00 Uhr und samstags um 18:00 Uhr.",36.63930106163025,"<think>
+Okay, ich muss die Frage beantworten, wann die THWS Gebäude geschlossen sind. Lass mal den gegebenen Kontext durchlesen.
+
+Im Kontext gibt es einen Abschnitt über ""Bauöffnungs- und Schließzeiten"". Dort steht: ""Gebäude der THWS Montag bis Freitag: 6:30 Uhr bis 22:00 Uhr Samstags: 8:00 Uhr bis 18:00 Uhr"". Sonntags ist nichts erwähnt, aber da die Angaben Montag-Freitag und Samstag sind, nehme ich an, dass sonntags geschlossen. 
+
+Die Frage ist nach den Schließzeiten, also die Uhrzeiten, zu denen die Gebäude geschlossen sind. Also die genannten Zeiten beziehen sich auf Öffnungszeiten, aber die Schließzeit ist derende der genannten Zeiträume. Also Montags bis Freitag schließen sie um 22:00, Samstag um 18:00. Ansonsten, also Sonntag, sind sie wahrscheinlich geschlossen. 
+
+Es gibt keine Erwähnung von Sonderzeiten außerhalb der normalen Öffnungszeiten, abgesehen von Hinweisen auf Vereinbarungen am Nachmittag für das Dekanat, aber die Frage ist allgemein. Also die Antwort sollte die Standardzeiten nennen.
+</think>
+
+Die THWS-Gebäude schließen an Montagen bis Freitagen um 22:00 Uhr und an Samstagen um 18:00 Uhr. Sonntags sind die Gebäude geschlossen.",0.05,0.2,0.0,0.15,0.0,0.05,0.05,0.05,0.05,0.15,0.05,0.15,0.0,0.05,0.01,0.85,0.0,0.85
+Wo kann ich Informationen über Beratungsangebote an der THWS finden?,"Studierende können Informationen über Beratungsangebote unter ""Beratung und Service"" auf der THWS-Website finden. Dort sind die wichtigsten Seiten für Studierende zusammengestellt, einschließlich Informationen zur Bibliothek, zu Terminen und zu verschiedenen Beratungsangeboten.",https://www.thws.de/beratung-und-service/,4.4532458782196045,Die Informationen zu Beratungsangeboten an der THWS finden Sie auf der Seite https://www.thws.de/studieninteressierte/beratung-und-service.,4.255372047424316,"Du findest Informationen über Beratungsangebote an der Technischen Hochschule Würzburg-Schweinfurt unter https://www.thws.de/beratungservice/. Dort findest du auch Kontaktpersonen, die sich um deine Fragen bewerben.",5.473623991012573,"Die Informationen zur Studienberatung an der Technischen Hochschule Würzburg-Schweinfurt finden Sie bei den zentralen Beratungs- und Serviceeinrichtungen der THWS, dem Hochschulservice Studium (HSST) und der Studienberatung. Sie können per Telefon +49 931 3511-6500 oder per E-Mail an degreeseeker[at]thws.de kontaktieren. Zusätzlich stehen Ihnen die Angebote des Studentenwerks zur Verfügung, welche Sie direkt in der Studienberatung finden können.",10.551879167556764,"Informationen über Beratungsangebote an der Technischen Hochschule Würzburg-Schweinfurt (THWS) findest du unter dem Bereich „Beratung & Service“ auf deren Webseite. Die zentralen Beratungs- und Serviceeinrichtungen, die für Studierende zur Verfügung stehen, umfassen das Hochschulservice Studium (HSST), die Studienberatung und das Studentische Gesundheitsmanagement. Weitere spezifische Kontaktstellen sind das International Office für Fragen zum Bewerbungsverfahren, Visum und Co., sowie das MAI Helpcenter für Fragen zu Studieninhalten. Detaillierte Informationen findest du auf der Seite https://www.thws.de/studieninteressierte/.",7.41915488243103,Sie können Informationen über Beratungsangebote an der THWS auf der Seite „Beratung & Service“ unter dem Bereich „Kontaktpersonen für weitere Fragen“ sowie im Bereich „Hochschulservice Studium (HSST)“ und „Studienberatung“ finden. Nähere Details zu spezifischen Beratungsangeboten und Terminen sind auf der Website im Menüpunkt „Beratung & Service“ verfügbar.,4.0569891929626465,"Du kannst Informationen über Beratungsangebote an der THWS unter ""Beratung und Service > Kontaktpersonen für weitere Fragen"" im Navigationspfad finden. Dort sind die entsprechenden Kontaktmöglichkeiten aufgelistet, z. B. International Office oder MAI Helpcenter für Studieninhalte.",13.101205110549929,"Informationen über Beratungsangebote finden Sie auf der Seite ""Beratung und Service"" auf der THWS-Website oder unter https://www.thws.de/studieninteressierte/. Dort sind auch die Kontaktdaten des International Office, des MAI Helpcenters, des Hochschulservice Studium (HSST) und des Studentenwerks aufgeführt.",30.28720474243164,"<think>
+Okay, ich muss die Frage beantworten: ""Wo kann ich Informationen über Beratungsangebote an der THWS finden?"" Zuerst lese ich den gegebenen Kontext sorgfältig durch.
+
+Im Kontext sind verschiedene Bereiche erwähnt, unter anderem ""Beratung & Service"". Dort werden die wichtigsten Seiten für Studierende genannt. Es gibt Links zu verschiedenen Einrichtungen wie dem International Office und dem MAI Helpcenter. Unter den Services sind auch die Hochschulservice Studium (HSST) und die Studienberatung erwähnt.
+
+Außerdem wird auf der Seite ""Studieninteressierte"" unter https://www.thws.de/studieninteressierte/ Informationen zu Beratungsangeboten, Bewerbung und Zulassung gefunden. Dies ist ein weiterer Hinweis darauf, dass diese Webseite relevant ist.
+
+Zusammenfassend sehe ich, dass die THWS verschiedene Kanäle für Beratungsangebote anbietet, wobei die genannte Webseite direkt auf das Thema abzielt.
+</think>
+
+Informationen über Beratungsangebote an der THWS können Sie auf der Seite ""Studieninteressierte"" unter dem Link https://www.thws.de/studieninteressierte/ finden.",46.62531304359436,"<think>
+Okay, ich muss die Frage beantworten, wo Informationen über Beratungsangebote an der THWS gefunden werden können. Zuerst schaue ich mir den gegebenen Kontext an. Im Kontext sind verschiedene Einrichtungen erwähnt, wie z.B. das International Office, MAI Helpcenter und das Studentische Gesundheitsmanagement. Es steht auch von der Hochschulservice Studium (HSST) und der Studienberatung des Studentenwerks die Rede.
+
+Außerdem gibt es einen Link zur Seite ""Studieninteressierte"", der allgemeine Infos zu Bewerbung, Veranstaltungen und Beratung bietet. Da die Frage nach Beratungsangeboten ist, sind die Kontaktdaten wie E-Mails und Adressen relevant, aber die Hauptquelle könnte die Seite ""Beratung und Service"" sein, die im Kontext erwähnt wird. Dort werden die zentralen Beratungseinrichtungen aufgelistet. Zudem wird der Link https://www.thws.de/studieninteressierte/ genannt, der für Studieninteressierte Informationen bereitstellt, einschließlich Beratung. 
+
+Die Antwort sollte also auf die genannten Seiten und Links verweisen. Eventuell auch die Kontaktpersonen wie das International Office und das MAI Helpcenter nennen. Es ist wichtig, präzise zu sein und die Hauptquellen zu nennen, die im Kontext stehen. Die THWS.de Seite unter ""Beratung und Service"" sowie die spezifische URL für Studieninteressierte sind die Hauptquellen. Ich sollte auch erwähnen, dass die zentralen Beratungseinrichtungen dort aufgeführt sind.
+</think>
+
+Informationen über Beratungsangebote an der THWS finden Sie auf der Seite **""Beratung und Service""** unter dem Punkt **""Studieninteressierte""** auf der THWS-Website:  
+→ **https://www.thws.de/studieninteressierte/**  
+
+Dort sind Kontaktdaten und Beratungsoptionen aufgelistet, u. a.:  
+- **International Office** (Bewerbung, Visum),  
+- **MAI Helpcenter** (Studieninhalte),  
+- **Hochschulservice Studium (HSST)** und das **Studentische Gesundheitsmanagement**.  
+
+Weitere Termine und Veranstaltungen sind ebenfalls dort verlinkt.",0.0,0.95,0.0,0.95,0.0,0.85,0.95,0.95,0.95,0.95,0.05,0.85,0.0,0.95,0.0,0.95,0.0,0.95
+Was ist das Studentische Gesundheitsmanagement?,Das Studentische Gesundheitsmanagement ist eine zentrale Anlaufstelle an der THWS für Anliegen von Studierenden rund um ihre Gesundheit.,https://www.thws.de/beratung-und-service/studentisches-gesundheitsmanagement/,4.152306079864502,"Die provided Text enthält keine Informationen zu dem Studentische Gesundheitsmanagement, so dass ich die Frage leider nicht beantworten kann.",5.412221908569336,"Das Studentische Gesundheitsmanagement ist eine Angebotspalette, die sich auf die individuelle Unterstützung und Gruppenangebote konzentriert. Sie bietet kostenlos und vertraulich vor allem für Studierende an, die sich körperlich, mentale und soziale Gesundheit im Studium betreffen. Ziel ist es, den Schülern zu helfen, in ihren Alltagseinkommen, Studien- und Freizeitplan einzugreifen und mögliche gesundheitlichen Risiken bei sicherzustellen. Dazu gehören unter anderem Informationen zur Gesundheitsaufklärung, Angebote für psychosoziale Unterstützung und beratungslose Übungsmöglichkeiten im Bereich Bewegung, Ernährung und Stressmanagement.",4.947933912277222,"Das Studentische Gesundheitsmanagement ist eine Angebotseinheit, die zur Förderung Ihrer körperlichen, mentalen und sozialen Gesundheit während Ihres Studiums an der THWS Business School bereitgestellt wird. Die Einrichtung unterstützt Ihre Gesundheit kostenlos und vertraulich.",9.244235754013062,"Das Studentische Gesundheitsmanagement an der Hochschule THWS bietet individuelle Unterstützung und Gruppenangebote zur Förderung der körperlichen, mentalen und sozialen Gesundheit von Studierenden. Die Angebote sind in Würzburg und Schweinfurt verfügbar, kostenlos und vertraulich. Kontakt kann über gesund.studieren@thws.de oder telefonisch unter +49 931-3511-9231 aufgenommen werden. Mitarbeiter sind Jessica Thätz, Lisa Demar und Johanna Kestler. Weitere Informationen finden sich auf der Homepage im Bereich E-Learning.",9.45205569267273,"Das Studentische Gesundheitsmanagement der THWS bietet individuelle Unterstützung und Gruppenangebote, um die körperliche, mentale und soziale Gesundheit von Studierenden während ihres Studiums zu fördern. Diese Angebote sind kostenlos und vertraulich in Würzburg und Schweinfurt erhältlich. Kontakte und weitere Informationen finden Sie unter gesund.studieren@thws.de oder telefonisch unter +49 931-3511-9231 sowie auf der Homepage des Studentischen Gesundheitsmanagements.",8.3139169216156,"Das Studentische Gesundheitsmanagement ist ein Angebot der Hochschule THWS, das sich auf die körperliche, mentale und soziale Gesundheit von Studierenden während ihres Studiums konzentriert. Es bietet individuelle Unterstützung und gruppenbezogene Aktivitäten an, um die Gesundheit und Wohlergehen der Studenten zu fördern. Das Angebot ist kostenlos und vertraulich und wird von den Mitarbeiterinnen Jessica Thätz, Lisa Demar und Johanna Kestler durchgeführt.",10.29699683189392,"Das Studentische Gesundheitsmanagement bietet individuelle Unterstützung und Gruppenangebote für die körperliche, mentale und soziale Gesundheit der Studierenden in Würzburg und Schweinfurt. Es ist kostenlos und vertraulich.",45.201995849609375,"<think>
+Okay, ich muss die Frage ""Was ist das Studentische Gesundheitsmanagement?"" beantworten, basierend auf dem gegebenen Kontext. Zunächst lese ich den Text sorgfältig durch, um die relevanten Informationen zu finden.
+
+Im Kontext wird ""Studentisches Gesundheitsmanagement"" erwähnt und es wird angeboten, individuelle Unterstützung und Gruppenangebote für körperliche, mentale und soziale Gesundheit im Studium zu bieten. Das Angebot ist kostenlos und vertraulich und kann in Würzburg und Schweinfurt genutzt werden. Die Kontaktdaten sind gesund.studieren@thws.de und die Telefonnummer +49 931-3511-9231 angegeben.
+
+Darüber hinaus werden Namen wie Jessica Thätz, Lisa Demar und Johanna Kestler erwähnt, vermutlich die Ansprechpartner oder Mitarbeiter des Services. Es gibt auch einen Hinweis auf eine Homepage und E-Learning-Ressourcen.
+
+Zudem sind verschiedene Lehrveranstaltungen im Sommersemester 2025 aufgeführt, wie BWGO, Digitales Rettungsmanagement, MNWG usw., was darauf hindeutet, dass das Gesundheitsmanagement in verschiedenen Studiengängen integriert ist.
+
+Um die Antwort zu formulieren, sollte ich kurz und präzise sein. Die Hauptpunkte sind: Name des Services, die Angebote (individuelle Unterstützung und Gruppenangebote), welche Aspekte der Gesundheit sie abdecken (körperlich, mental, sozial), Zielgruppe (Studenten), Kostenfreiheit und Vertraulichkeit, Standorte und Kontaktmöglichkeiten.
+
+Es ist wichtig, nicht zu viele Details aus den Lehrveranstaltungen aufzunehmen, da die Frage speziell nach dem Studentischen Gesundheitsmanagement fragt. Allerdings könnte man erwähnen, dass es in verschiedenen Studiengängen integriert ist, um den Umfang des Angebots zu illustrieren.
+
+Zusammenfassend strukturiere ich die Antwort so, dass sie alle wichtigen Informationen enthält und klar verständlich ist.
+</think>
+
+Das Studentische Gesundheitsmanagement der THWS bietet kostenlose und vertrauliche Unterstützung für körperliche, mentale und soziale Gesundheit im Studium. Es umfasst individuelle Unterstützung, Gruppenangebote sowie E-Learning-Ressourcen und ist in Würzburg und Schweinfurt verfügbar. Die Kontaktdaten sind unter gesund.studieren@thws.de und +49 931-3511-9231 zu erreichen. Dieses Angebot integriert verschiedene Studiengänge, wie z.B. BWL von Gesundheitsorganisationen und Digitales Rettungsmanagement.",63.28082823753357,"<think>
+Okay, ich muss die Frage beantworten: ""Was ist das Studentische Gesundheitsmanagement?"" basierend auf dem gegebenen Kontext. 
+
+Zuerst schaue ich mir den Kontext an. Hier steht, dass das Studentische Gesundheitsmanagement individuelle Unterstützung und Gruppenangebote anbietet, um die körperliche, mentale und soziale Gesundheit der Studierenden während ihres Studiums zu unterstützen. Es gibt Informationen über die Kontaktdaten (Email, Telefonnummer), die Ansprechpartner (Jessica Thätz, Lisa Demar, Johanna Kestler) und die Homepage sowie E-Learning. Die Dienstleistungen sind in Würzburg und Schweinfurt verfügbar, kostenlos und vertraulich.
+
+Darüber hinaus gibt es einige Wiederholungen und Angaben zu Studiengängen wie BWL von Gesundheitsorganisationen, Digitales Rettungsmanagement, Grundlagenfächer etc., aber das scheint eventuell zu den Angeboten der THWS Business School im Sommersemester 2025 zu gehören. Diese Informationen könnten jedoch irrelevant für die Frage sein, da die Frage sich auf das Studentische Gesundheitsmanagement selbst bezieht.
+
+Die eigentliche Frage ist nach der Definition oder dem Zweck des Studentischen Gesundheitsmanagements. Der Kontext liefert hierfür die notwendigen Informationen. Ich muss also zusammenfassen, was im Kontext steht, ohne unnötige Details wie die Studiengänge oder die genauen Semesterangaben zu erwähnen.
+
+Ich sollte darauf achten, die Antwort auf Deutsch, präzise und klar zu halten. Wenn ich mir unsicher bin, muss ich antworten, dass ich die Frage nicht beantworten kann. Aber hier scheint alles klar zu sein.
+
+Also: Das Studentische Gesundheitsmanagement der THWS bietet kostenlose und vertrauliche Unterstützungsmaßnahmen für die körperliche, mentale und soziale Gesundheit von Studierenden. Es gibt individuelle Unterstützung und Gruppenangebote in den Standorten Würzburg und Schweinfurt. Kontaktdaten und Ansprechpartner werden genannt, sowie die Homepage und E-Learning-Ressourcen.
+
+Ich sollte die Antwort strukturieren, um die Hauptpunkte hervorzuheben: Zweck (Unterstützung in den drei Bereichen), Verfügbarkeit der Dienste, kostenlos und vertraulich, Standorte und Kontaktdaten. Aber die Kontaktdaten sind vielleicht nicht unbedingt Teil der Definition, aber der Fragestellung folgend, könnte es sinnvoll sein, sie zu erwähnen, um die Antwort vollständig zu machen. Oder sollte ich nur das Wesentliche nennen?
+
+Die Frage ist ""Was ist das..."", also die Hauptfunktionen und Ziele. Die Kontaktdaten könnten optional sein, aber der Kontext fügt sie an, also vielleicht erwähnen, dass es über bestimmte Kontakte erreichbar ist. 
+
+Zusammenfassung: Die Antwort sollte den Zweck (Unterstützung in körperlich, mental, sozial), die kostenlosen und vertraulichen Angebote, die Standorte, sowie evtl. die Kontaktdaten erwähnen. Aber die genauen Namen der Mitarbeiter könnten optional sein. Die Studiengängenangaben sind wahrscheinlich nicht relevant hier, da sie zu anderen Lehrveranstaltungen gehören.
+</think>
+
+Das Studentische Gesundheitsmanagement der THWS ist ein Service, der Studierenden kostenlose und vertrauliche Unterstützungen für ihre körperliche, mentale und soziale Gesundheit während des Studiums anbietet. Es umfasst individuelle Beratungen sowie Gruppenangebote und ist in den Standorten Würzburg und Schweinfurt verfügbar. Kontaktaufnahme erfolgt über die E-Mail *gesund.studieren@thws.de*, die Telefonnummer *+49 931-3511-9231* oder die Homepage. Unterstützt werden die Studierenden von Fachkräften wie Jessica Thätz, Lisa Demar und Johanna Kestler.",0.0,0.05,0.05,0.75,0.95,0.9,0.95,0.95,0.95,0.85,0.85,0.85,0.95,0.85,0.0,0.92,0.85,0.95
+Was macht das studentische Gesundheitsmanagement?,"Individuelle Unterstützungsgespräche, Weitervermittlung an interne und externe Anlaufstellen, Durchführung gesundheitsbezogener Veranstaltungen, Gruppenprogramme (z.B. Workshops zu Bewegung, Ernährung, Stressmanagement,...), Lauf-/Freizeitangebote",https://www.thws.de/beratung-und-service/studentisches-gesundheitsmanagement/,4.316338062286377,"Das studentische Gesundheitsmanagement ist ein Angebot der THWS, das Studentenupport für ihre körperliche, mentale und soziale Gesundheit im Studium anbietet. Es ist kostenlos und vertraulich.",4.7797980308532715,"Das studentische Gesundheitsmanagement bietet individuelle Unterstützung und Gruppenangebote für die körperliche, mentale und soziale Gesundheit von Studierenden an der THWS. Es ist kostenlos und vertraulich und wird in Würzburg und Schweinfurt angeboten. Die Angebote umfassen Workshops, Beratungen und E-Learning-Modulare. Ziel ist es, den gesundheitlichen Wunsch von Studierenden zu erreichen und sie während ihres Studiums zu unterstützen.",1.1204612255096436,"Das studentische Gesundheitsmanagement bietet Ihnen im Rahmen Ihres Studiums individuelle Unterstützung und Gruppenangebote für die Förderung Ihrer körperlichen, mentalen und sozialen Gesundheit.",9.544151782989502,"Das studentische Gesundheitsmanagement an der Hochschule THWS bietet individuelle Unterstützung und Gruppenangebote für die körperliche, mentale und soziale Gesundheit der Studierenden in Würzburg und Schweinfurt. Die Angebote sind kostenlos und vertraulich. Kontaktmöglichkeiten umfassen eine E-Mail-Adresse (gesund.studieren@thws.de) und eine Telefonnummer (+49 931-3511-9231). Verantwortlich sind Jessica Thätz, Lisa Demar und Johanna Kestler. Informationen finden sich auch auf der Homepage im Bereich E-Learning.",8.972445249557495,"Das studentische Gesundheitsmanagement bietet eindividuelle Unterstützung und Gruppenangebote für die körperliche, mentale und soziale Gesundheit von Studierenden während ihres Studiums an den Standorten Würzburg und Schweinfurt. Diese Dienstleistungen sind kostenlos und vertraulich. Es umfasst verschiedene Formen der Unterstützung, wie z.B. Beratung zu gesundheitsbezogenen Themen, Workshops und Gruppenangebote.",2.9995930194854736,"Das studentische Gesundheitsmanagement bietet individuelle Unterstützung und group-based offers zur Förderung der körperlichen, mentalen und sozialen Gesundheit von Studierenden während ihres Studiums. Es gibt kostenlos und vertraulich Unterstützungsmöglichkeiten in Form von Beratungen, Workshops oder anderen Angeboten. Das Ziel ist es, die Gesundheit und den Wohlbefinden der Studierenden während ihres Studiums zu stärken.",10.499917030334473,"Das studentische Gesundheitsmanagement bietet individuelle Unterstützung und Gruppenangebote für die körperliche, mentale und soziale Gesundheit der Studierenden in Würzburg und Schweinfurt. Die Angebote sind kostenlos und vertraulich.",42.80811333656311,"<think>
+Okay, ich muss die Frage ""Was macht das studentische Gesundheitsmanagement?"" beantworten und dabei den gegebenen Kontext berücksichtigen. Zuerst lese ich den Kontext sorgfältig durch.
+
+Im Kontext wird erwähnt, dass es um ein Studentisches Gesundheitsmanagement geht, das individuelle Unterstützung und Gruppenangebote anbietet. Es zielt auf die körperliche, mentale und soziale Gesundheit im Studium ab. Das Angebot ist kostenlos und vertraulich und findet in Würzburg und Schweinfurt statt. Kontaktdaten sind angegeben, ebenso wie die Namen von Personen und weitere Links zu einer Homepage und E-Learning-Ressourcen.
+
+Außerdem werden verschiedene Kurse für das Sommersemester 2025 aufgelistet, wie BWL von Gesundheitsorganisationen, Digitales Rettungsmanagement, Grundlagen des Organisations- und Innovationsmanagements im Rettungswesen usw. Allerdings scheinen diese Kurse eher zu einem Bereich der THWS Business School zu gehören, also nicht unmittelbar mit dem Studentischen Gesundheitsmanagement verknüpft.
+
+Um die Frage zu beantworten, konzentriere ich mich auf den ersten Teil des Kontextes. Das Studentische Gesundheitsmanagement bietet Unterstützung in drei Bereichen: körperliche, mentale und soziale Gesundheit. Es gibt sowohl individuelle Hilfe als auch Gruppensitzungen, alles kostenlos und vertraulich. Die Dienstleistung ist an zwei Standorten verfügbar.
+
+Ich sollte also die wichtigsten Punkte zusammenfassen: wer (das Team), was angeboten wird, welche Bereiche abgedeckt werden, die Gratis- und Vertraulichkeitsversprechen, sowie die Kontaktdaten. Vielleicht erwähne ich auch die Möglichkeit, via E-Learning Unterstützung zu erhalten.
+
+Zusammenfassend formuliere ich eine klare und präzise Antwort auf Deutsch, die alle relevanten Informationen enthält.
+</think>
+
+Das studentische Gesundheitsmanagement der THWS bietet Unterstützung in den Bereichen körperliche, mentale und soziale Gesundheit. Es umfasst individuelle Hilfe sowie Gruppenangebote, die kostenlos und vertraulich sind. Die Dienste stehen in Würzburg und Schweinfurt zur Verfügung, und Kontaktdaten wie E-Mail und Telefonnummer ermöglichen ein einfaches Anfragen. Weitere Informationen können auf der Homepage oder über das E-Learning-Portal gefunden werden.",46.22008991241455,"<think>
+Okay, ich muss die Frage beantworten: ""Was macht das studentische Gesundheitsmanagement?"" basierend auf dem gegebenen Kontext.
+
+Zuerst schaue ich mir den Kontext an. Hier steht, dass das Studentische Gesundheitsmanagement individuelle Unterstützung und Gruppenangebote anbietet, um die körperliche, mentale und soziale Gesundheit der Studierenden im Studium zu unterstützen. Es gibt Informationen über die Kontaktdaten (Email, Telefonnummer), die Ansprechpartner (Jessica Thätz, Lisa Demar, Johanna Kestler) und die Homepage sowie E-Learning. 
+
+Außerdem sind einige Studiengänge oder Module aufgelistet wie BWL von Gesundheitsorganisationen, Digitales Rettungsmanagement, Grundlagen des Organisations- und Innovationsmanagements im Rettungswesen usw. Aber diese scheinen eher zu den Angeboten der THWS Business School im Sommersemester 2025 zu gehören und könnten eventuell ablenken.
+
+Die Frage ist nach den Aufgaben des Studentischen Gesundheitsmanagements. Der Kontext erwähnt, dass es sich um Unterstützung in körperlich, mental und sozialen Gesundheitsaspekten handelt. Es wird auf individuelle Unterstützung und Gruppenangebote hingewiesen, außerdem ist es kostenlos und vertraulich. 
+
+Ich sollte also zusammenfassen, dass das Studentische Gesundheitsmanagement Dienstleistungen in den Bereichen körperliche, mentale und soziale Gesundheit anbietet, sowohl individuell als auch in Gruppen, kostenlos und vertraulich. Die genannten Kontaktdaten und Ansprechpartner sind Zusatzinformationen, die die Frage beantworten helfen.
+
+Ich muss darauf achten, nicht die Studiengänge als Teil des Gesundheitsmanagements darzustellen. Die Hauptpunkte sind die Unterstützung in den drei Gesundheitsbereichen, Formen der Unterstützung (individuell, Gruppen), sowie die Attribute (kostenlos, vertraulich). Die Antwort sollte knapp und präzise sein, wie verlangt.
+</think>
+
+Das studentische Gesundheitsmanagement der THWS bietet **kostenlose und vertrauliche Unterstützungsmaßnahmen** in den Bereichen **körperliche, mentale und soziale Gesundheit** für Studierende. Dazu gehören **individuelle Beratung** sowie **Gruppenangebote**. Die Dienstleistungen sind in den Standorten Würzburg und Schweinfurt verfügbar. Kontaktdaten und weitere Informationen finden sich unter der Email `gesund.studieren@thws.de`, der Telefonnummer `+49 931-3511-9231` oder über die Homepage/E-Learning-Plattform.",0.05,0.75,0.05,0.85,0.75,0.85,0.25,0.85,0.25,0.92,0.2,0.9,0.0,0.85,0.0,0.95,0.05,0.92
+Was kosten die Angebote des studentischen Gesundheitsmanagements?,Alle Angebote des studentischen Gesundheitsmanagements sind für Studierende der THWS kostenlos.,https://www.thws.de/beratung-und-service/studentisches-gesundheitsmanagement/,4.905540943145752,Die Angebote des studentischen Gesundheitsmanagements sind kostenlos und vertraulich.,4.506422996520996,Die Angebote des studentischen Gesundheitsmanagements sind kostenfrei und vertraulich. Sie werden in Würzburg und Schweinfurt angeboten. Du kannst dir unter https://gesund.studieren@thws.de/ueber-uns/anfahrt-und-preise/ weitere Informationen zu den Angeboten und den Preisen anschauen.,4.405482053756714,Die Angebote des studentischen Gesundheitsmanagements sind kostenlos und vertraulich. Der Ansprechpartner ist gesund.studieren@thws.de und der Telefonkontakt lautet +49 931-3511-9231.,7.711226224899292,Die Angebote des studentischen Gesundheitsmanagements an der THWS sind kostenlos und vertraulich. Weitere Informationen können per E-Mail an gesund.studieren@thws.de oder telefonisch unter +49 931-3511-9231 eingeholt werden.,7.072815179824829,Die Angebote des studentischen Gesundheitsmanagements sind kostenlos und vertraulich.,6.582783937454224,Die Angebote des studentischen Gesundheitsmanagements sind kostenlos und vertraulich.,9.27986216545105,Die Angebote des studentischen Gesundheitsmanagements sind kostenlos.,28.836985111236572,"<think>
+Okay, let's see. I need to figure out the costs for the student health management offers based on the given context. Hmm, first, I should look through the provided text carefully.
+
+So, in the context, there are sections about the student health management, mentioning that it's free of charge and confidential. The contact details include an email and phone number, along with names like Jessica Thätz and others. It also mentions individual support and group offers for physical, mental, and social health during studies.
+
+Wait, but I'm supposed to find out the costs. The context clearly states ""kostenlos und vertraulich,"" which means free and confidential. So that should be it—no costs involved. But just to make sure, let me scan through again to see if there's any mention of fees or charges related to health management.
+
+Looking further down, I see information about Salzburg and some other programs with costs around 150-170 euros, but that's for a different event, not the student health management. There's also a section about UNIcert® fees, which are €285 for the course including exams, but that's related to language courses, not health services.
+
+So yeah, the student health management offers are explicitly stated as free. No costs involved there.
+</think>
+
+Die Angebote des studentischen Gesundheitsmanagements sind kostenlos und vertraulich.",32.01712226867676,"<think>
+Okay, ich muss die Frage beantworten, was die Angebote des studentischen Gesundheitsmanagements kosten. Lass ich mir den Kontext durchlesen.
+
+Im gegebenen Text steht unter dem Abschnitt ""Studentisches Gesundheitsmanagement"" dass die Dienstleistungen ""kostenlos und vertraulich"" sind. Es werden auch Kontaktdaten und die Ansprechpartner wie Jessica Thätz genannt. Daher scheint die Antwort klar zu sein: es gibt keine Kosten, es ist kostenlos.
+
+Die andere Information im Kontext bezieht sich auf das Thema Salzburg 2025 und Sprachkursgebühren wie UNIcert®, aber das ist ein anderer Bereich. Die Frage konzentriert sich auf das Gesundheitsmanagement, also ignoriere ich die anderen Preise wie die 150-170 € für Salzburg oder die Sprachkursgebühren. 
+
+Also die richtige Antwort ist, dass die Angebote kostenlos sind.
+</think>
+
+Die Angebote des studentischen Gesundheitsmanagements an der THWS sind **kostenlos und vertraulich** für Studierende. Dies gilt für individuelle Unterstützung sowie Gruppenangebote zur Förderung der körperlichen, mentalen und sozialen Gesundheit. Weitere Infos erreichen Sie unter gesund.studieren@thws.de oder +49 931-3511-9231.",0.0,0.9,0.0,0.85,0.0,0.85,0.0,0.95,0.0,0.9,0.0,0.9,0.98,0.95,0.0,1.0,0.0,1.0
+Wo finde ich das studentischen Gesundheitsmanagements?,"In Würzburg: Tiepolostraße 6, Raum T.D.39 (Dachgeschoss), In Schweinfurt: Johann-Modler-Weg 2, Raum 21.1.10, Campus Ledward (3)",https://www.thws.de/beratung-und-service/studentisches-gesundheitsmanagement/,1.398711919784546,Die Angabe des Ortes des studentischen Gesundheitsmanagements ist nicht in dem gegebenen Text enthalten.,4.942033052444458,"Du findest das Studentische Gesundheitsmanagement unter der Adresse http://gesund.studieren@thws.de in Würzburg und Schweinfurt kostenlos und vertraulich anbieten. Es ist eine individuelle Unterstützung und Gruppenangebote, die sich auf deine körperliche, mentale und soziale Gesundheit im Studium konzentriert. Die Mitarbeiterinnen und Mitarbeiter sind bereit, dir zu helfen und dir Ratschläge zur Verbesserung deines Gesundheitszustandes zu geben.",4.736016273498535,"Im Kontext der angegebenen Information findest du das studentische Gesundheitsmanagement auf der Homepage der Hochschule THWS. Weiterhin bietet die E-Learning-Plattform der Hochschule Zugang zu diesen Angeboten an. Die Kontaktperson ist Jessica Thätz, die auch für die Unterstützung zuständig ist. Kontaktiere sie unter gesund.studieren@thws.de oder per Telefon auf +49 931-3511-9231.",9.637724876403809,"Das Studentische Gesundheitsmanagement an der Hochschule THWS bietet individuelle Unterstützung und Gruppenangebote für die körperliche, mentale und soziale Gesundheit während des Studiums in Würzburg und Schweinfurt. Informationen dazu sind auf der Homepage unter dem Bereich E-Learning zu finden. Kontaktieren kannst du das Team per E-Mail an gesund.studieren@thws.de oder telefonisch unter +49 931-3511-9231. Jessica Thätz, Lisa Demar und Johanna Kestler stehen für weitere Auskünfte zur Verfügung. Das Angebot ist kostenlos und vertraulich.",9.615489959716797,"Sie finden Informationen zum studentischen Gesundheitsmanagement auf der Homepage der THWS oder unter gesund.studieren@thws.de. Dort können Sie mehr über individuelle Unterstützung und Gruppenangebote erfahren, die für Ihre körperliche, mentale und soziale Gesundheit während Ihres Studiums kostenlos und vertraulich angeboten werden. Es gibt auch eine Kontaktmöglichkeit per Telefon unter +49 931-3511-9231 sowie Kontaktaufnahme mit den Beraterinnen Jessica Thätz, Lisa Demar und Johanna Kestler.",4.02656888961792,"Du findest das studentischen Gesundheitsmanagements unter dem Kontext ""Studentisches Gesundheitsmanagement Individuelle Unterstützung & Gruppenangebote"" in Würzburg und Schweinfurt. Es bietet kostenlose und vertrauliche Unterstützung für deine körperliche, mentale und soziale Gesundheit während des Studiums. Du kannst dich unter gesund.studieren@thws.de oder unter +49 931-3511-9231 anmelden, um individualisierte Unterstützung zu erhalten.",10.15246295928955,Das studentische Gesundheitsmanagement findest du in Würzburg und Schweinfurt. Du erreichst es unter gesund.studieren@thws.de oder +49 931-3511-9231.,30.082377910614017,"<think>
+Okay, so I'm trying to figure out where the ""studentische Gesundheitsmanagement"" is based on the given context. Let me read through the information again.
+
+The context mentions ""Studentisches Gesundheitsmanagement Individuelle Unterstützung & Gruppenangebote Für eure körperliche, mentale und soziale Gesundheit im Studium! … in Würzburg und Schweinfurt … kostenlos und vertraulich!"" So it's talking about student health management services offered in Würzburg and Schweinfurt. That probably means the services are available at those two locations.
+
+Looking further down, there are contact details: gesund.studieren@thws.de and a phone number. Also, names like Jessica Thätz, Lisa Demar, Johanna Kestler, Homepage, and E-Learning are listed. These might be points of contact or ways to access more information about the services.
+
+The question is asking where to find the student health management. From the context, it's clear that the services are located in Würzburg and Schweinfurt. Additionally, they can be reached via email, phone, or through their homepage or E-Learning platform.
+
+So putting this together, the answer should mention both cities as locations and perhaps the contact methods available.
+</think>
+
+Das studentische Gesundheitsmanagement ist in Würzburg und Schweinfurt verfügbar. Sie können die Dienste unter der Email-Adresse gesund.studieren@thws.de, per Telefon +49 931-3511-9231 oder über die Homepage und das E-Learning-Portal kontaktieren.",38.77201819419861,"<think>
+Okay, ich muss die Frage beantworten, wo man das studentische Gesundheitsmanagement finden kann. Zuerst sehe ich mir den gegebenen Kontext an. Im Kontext steht, dass das Studentische Gesundheitsmanagement kostenlos und vertraulich ist und in Würzburg und Schweinfurt verfügbar ist. Die Kontaktdaten sind gesund.studieren@thws.de und die Telefonnummer +49 931-3511-9231. Außerdem sind die Namen Jessica Thätz, Lisa Demar und Johanna Kestler erwähnt, sowie die Homepage und E-Learning.
+
+Die Frage ist nach dem Ort, wo man das Gesundheitsmanagement finden kann. Im Kontext steht ausdrücklich, dass es in Würzburg und Schweinfurt angeboten wird. Deshalb sind das die beiden Orte. Vielleicht gibt es auch eine Homepage, die genauer angegeben werden kann, aber im Kontext steht nur ""Homepage"" ohne URL. Die Antwort sollte also die Orte nennen und evtl. die Kontaktdaten erwähnen. 
+
+Ich sollte überprüfen, ob es andere Informationen gibt, aber der Rest des Kontexts bezieht sich auf Studiengänge wie Digitales Rettungsmanagement und Lehrveranstaltungen, was offensichtlich nicht relevant ist. Also konzentriere ich mich auf die Angaben zum Gesundheitsmanagement. Die Antwort ist also, dass es in Würzburg und Schweinfurt verfügbar ist, und die Kontaktdaten sind angegeben. Die Frage ist nach dem Ort, also die Orte nennen.
+</think>
+
+Das studentische Gesundheitsmanagement der THWS ist in **Würzburg** und **Schweinfurt** verfügbar. Für Kontakte stehen die E-Mail-Adresse *gesund.studieren@thws.de*, die Telefonnummer *+49 931-3511-9231* sowie die genannten Ansprechpartner (Jessica Thätz, Lisa Demar, Johanna Kestler) zur Verfügung. Weitere Infos finden Sie auf der Homepage oder über das E-Learning-Portal.",0.95,0.0,0.0,0.35,0.0,0.15,0.0,0.65,0.0,0.35,0.0,0.65,0.0,0.65,0.0,0.85,0.0,0.75
+Welche Fakultäten gibt es an der THWS?,"Angewandte Natur- und Geisteswissenschaften, Angewandte Sozialwissenschaften, Architektur und Bauingenieurwesen, Elektrotechnik, Gestaltung, Informatik und Wirtschaftsinformatik, Kunststofftechnik und Vermessung, Maschinenbau, THWS Business School, Wirtschaftsingenieurwesen",https://www.thws.de,1.7952477931976318,Die Angabe der angebotenen Fakultäten ist nicht in dem gegebenen Kontext enthalten und kann ich daher nicht aus den Informationen ableiten.,5.928462982177734,"Die Hochschule THWS hat folgende Fakultäten: 
+1. Fakultät für Wirtschaft und Technik
+   - BWL von Gesundheitsorganisationen (BWGO)
+   - Digitales Rettungsmanagement
+   - Grundlagen des Organisations- und Innovationsmanagement im Rettungswesen (OIMR)
+   - Medizinisch-naturwissenschaftliche Grundlagen (MNWG)
+   - Grundlagen Pflegewissenschaften (GPFW)
+   - Grundlagen Rettungswissenschaft (GREW)
+   - Informationstechnologie im Gesundheitswesen (ITGW)
+2. Fakultät für Wirtschaft und Technik
+   - Digitales Rettungsmanagement
+   - Grundlagen der Gesundheitsökonomie (GGOE)
+   
+In den Fakultäten werden verschiedene Bachelor- und Masterstudiengänge angeboten, die sich thematisch stark auf das Gesundheitssystem ausrichten.",3.40460205078125,"Es gibt folgende Fakultäten an der THWS: BWL von Gesundheitsorganisationen, Medizinisch-naturwissenschaftliche Grundlagen, Grundlagen Pflegewissenschaften, Grundlagen Rettungswissenschaft und Informationstechnologie im Gesundheitswesen.",8.113817691802979,"Der gegebene Kontext enthält Informationen zu Kursen und Semestern, die in der ""THWS Business School"" angeboten werden. Es wird jedoch keine spezifische Information über die gesamte Anzahl oder Liste von Fakultäten an der THWS bereitgestellt. Daher kann ich nicht sagen, welche Fakultäten es an der THWS gibt.
+
+Diese Frage kann ich leider nicht beantworten.",7.201431035995483,"Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext enthält keine Informationen über die Fakultäten der THWS, sondern nennt spezifische Kurse und Module für das Studium im Semester SS25.",3.0227298736572266,"Es gibt folgende Fakultäten an der THWS Business School:
+
+1. Fachbereich Wirtschaftswissenschaften (Wirtschaftswissenschaft, BWL)
+2. Fachbereich Gesundheitswissenschaften (Gesundheitsorganisationen, BWGO)
+3. Informatik und Informationstechnologie (Informationstechnologie im Gesundheitswesen, ITGW)",7.817000865936279,Der vorliegende Kontext nennt die THWS Business School. Weitere Fakultäten werden nicht explizit genannt.,25.250385999679565,"<think>
+Okay, ich muss die Frage ""Welche Fakultäten gibt es an der THWS?"" beantworten. Dazu habe ich den gegebenen Kontext zu analysieren. 
+
+Der Kontext listet verschiedene Lehrveranstaltungen und Module auf, wie z.B. BWL von Gesundheitsorganisationen, Digitales Rettungsmanagement, Grundlagen des Organisations- und Innovationsmanagement im Rettungswesen, usw. Alle diese Kurse scheinen mit dem Bereich der Wirtschafts- oder Gesundheitswissenschaft zu tun zu haben.
+
+Jetzt frage ich mich, ob die THWS eine Universität ist, die Fakultäten wie Wirtschaft, Medizin, Technologie usw. hat. In der Liste sind eher spezifische Module genannt, die wahrscheinlich innerhalb einer oder mehrerer Fakultäten angeboten werden. 
+
+Doch ich sehe nicht explizit aufgelistet, welche Fakultäten es gibt. Ohne diese Information kann ich eine genaue Liste der Fakultäten nicht liefern.
+
+Also, die Antwort lautet: ""Diese Frage kann ich leider nicht beantworten.""
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",46.39135003089905,"<think>
+Okay, ich muss die Frage beantworten, welche Fakultäten an der THWS existieren, basierend auf dem gegebenen Kontext. Zuerst schaue ich mir den Kontext an. Der Kontext listet verschiedene Vorlesungen oder Module für das Sommersemester 2025 auf. Beispiele sind ""BWL von Gesundheitsorganisationen"", ""Digitales Rettungsmanagement"", ""Grundlagen des Organisations- und Innovationsmanagement im Rettungswesen"" und andere. Alle diese Module scheinen zum Bereich der THWS Business School zu gehören, da sie mehrmals darin erwähnt werden. 
+
+Es gibt auch Module wie ""Medizinisch-naturwissenschaftliche Grundlagen"", ""Grundlagen Pflegewissenschaften"", ""Grundlagen Rettungswissenschaft"" und ""Informationstechnologie im Gesundheitswesen"", die alle im Zusammenhang mit Gesundheitswesen oder Rettungsdiensten stehen. Die Frage ist nun, ob diese Module zu einer eigenen Fakultät gehören oder Teil der THWS Business School sind.
+
+In vielen Hochschulen gibt es separate Fakultäten für Wirtschaft, Gesundheitswissenschaften, Technik usw. Allerdings sind die im Kontext genannten Module alle im Zusammenhang mit der THWS Business School, wie beispielsweise ""THWS Business School"" direkt in den Modulnamen steht. Das könnte darauf hindeuten, dass die THWS Business School die Hauptfakultät ist, die verschiedene Studiengänge im Bereich Wirtschaft, Management und Gesundheitsorganisationen anbietet.
+
+Es gibt auch Erwähnungen von Semestern wie ""1. Semester (Wdh.)"" und ""2. Semester"", was auf Studiengänge hinweist, aber keine Fakultätsnamen. Die Frage nach Fakultäten ist spezifisch, und der Kontext liefert keine expliziten Fakultätsnamen außer der THWS Business School. Vielleicht gibt es weitere Fakultäten, die nicht im Kontext erwähnt werden, aber basierend auf dem gegebenen Informationen kann ich nicht mehr sagen. Daher sollte ich die Antwort auf die Fakultät beschränken, die explizit genannt wurde, oder zugeben, dass es keine weiteren Angaben gibt.
+</think>
+
+Die THWS Business School ist die aus dem Kontext ersichtliche Fakultät. Die genannten Module wie ""Digitales Rettungsmanagement"", ""BWL von Gesundheitsorganisationen"" und andere gehören offensichtlich in den Lehrbereich dieser Fachhochschule, die sich auf Studiengänge im Bereich Wirtschaft, Management und Gesundheitswesen fokussiert. Weitere Fakultäten werden im gegebenen Kontext nicht erwähnt.",0.95,0.05,0.0,0.15,0.0,0.05,0.95,0.05,0.0,0.05,0.0,0.15,0.0,0.2,0.0,0.05,0.0,0.25
+"An wen kann ich mich wenden, wenn ich fragen zu Nachhaltigkeitsthemen an der THWS habe?","Die Ansprechpartner aus dem Nachhaltigkeitsteam der THWS sind Prof. Dipl.‐Ing. Martin Naumann, Prof. Dr. Ulrich Müller‐Steinfahrt und Katharina Falkenstein. Die allgemeine Mailadresse lautet nachhaltigkeit@thws.de",https://www.thws.de/hochschule/profil-der-thws/nachhaltigkeit/wen-kann-ich-ansprechen/,2.1802031993865967,An den Beauftragten für Nachhaltigkeit der THWS.,4.345860004425049,"Du kannst sich bei dem Hochschulbereich für Nachhaltigkeit wenden, der im Institut für angewandte Logistik angesiedelt ist. Hier können Fachjournalisten und Fachjournalistinnen Fragen zur Nachhaltigkeitsberichterstattung beantworten und Pionierarbeit leisten.",4.60391902923584,"An den Nachhaltigkeitsbeauftragten der THWS, Prof. Dr. Achim Förster (Telefon: +49 931 3511-6096, E-Mail: studienmitbehinderung[at]thws.de), können Sie sich wenden, wenn Sie Nachhaltigkeitsthemen an der THWS haben.",7.516819000244141,"Fragen zur Nachhaltigkeit an der THWS können Sie an den Nachhaltigkeitsbeauftragten im Institut für angewandte Logistik richten. Weitere Details zum Kontaktpersonen oder wie Sie Kontakt aufnehmen können, sind jedoch nicht im gegebenen Kontext enthalten.",8.546049118041992,"Für Fragen zum Thema Nachhaltigkeit an der Technischen Hochschule Würzburg-Schweinfurt (THWS) können Sie sich am besten an den Nachhaltigkeitsbeauftragten wenden. Da dieser im Institut für angewandte Logistik ansässig ist, ist es ratsam, dort direkt Kontakt aufzunehmen oder die entsprechende Person über das THWS-Portal zu finden.",4.503459930419922,"Du kannst dich bei der Institutsleitung für Angewandte Logistik oder dem Institutsvorstand der Technischen Hochschule Würzburg-Schweinfurt wenden, um Fragen zu Nachhaltigkeitsthemen an der THWS zu stellen.",8.6218581199646,"An das Institut für angewandte Logistik, da dort der Nachhaltigkeitsbeauftragte der THWS angesiedelt ist.",33.84298491477966,"<think>
+Okay, ich muss die Frage beantworten, an wen sich jemand mit Fragen zu Nachhaltigkeitsthemen an der THWS wenden soll. Der gegebene Kontext erwähnt, dass der Institut für angewandte Logistik den Nachhaltigkeitsbeauftragten hat und ein Konzept für den Nachhaltigkeitsbericht erstellt wird. Also ist der Beauftragte dort zuständig.
+
+In dem Text steht unter ""Überwachungsstelle..."" die E-Mailadresse studierenmitbehinderung@thws.de, aber das bezieht sich auf Studierende mit Behinderung oder chronischen Erkrankungen, nicht direkt auf Nachhaltigkeit. Die Vertrauensperson für Beschäftigte ist Manuel Mauer, Telefonnummer und E-Mail sind angegeben.
+
+Falls der Beauftragte für Nachhaltigkeit eine eigene Kontaktmöglichkeit hat, sollte das genannt werden. Wenn die Information fehlt, muss man vermuten, dass es entweder bei dem Institut oder jemand anderem ist. Da der Text den Beauftragten im Institut erwähnt, ist er wahrscheinlich zuständig.
+
+Also, antworten, dass man sich an den Beauftragten für Nachhaltigkeit im Institut für angewandte Logistik wenden soll und eventuell Kontaktmöglichkeiten nennen, falls sie vorhanden sind. Hier fehlen die Details, also kann man nicht mehr sagen.
+</think>
+
+An den Beauftragten für Nachhaltigkeit der THWS im Institut für angewandte Logistik können Sie sich mit Fragen zu Nachhaltigkeitsthemen wenden. Die genauen Kontaktmöglichkeiten (wie Telefonnummer oder E-Mail-Adresse) sind in dem gegebenen Kontext nicht angegeben, aber es wird erwähnt, dass der Beauftragte dort ansässig ist.",60.403284788131714,"<think>
+Okay, ich muss die Frage beantworten: ""An wen kann ich mich wenden, wenn ich Fragen zu Nachhaltigkeitsthemen an der THWS habe?"" 
+
+Zuerst schaue ich mir den gegebenen Kontext an. In dem Text steht, dass der Nachhaltigkeitsbeauftragte der THWS im Institut für angewandte Logistik ansässig ist. Sie arbeiten an künftigen Nachhaltigkeitsberichten und entwickeln ein Konzept dafür. Also ist der Nachhaltigkeitsbeauftragte der richtige Ansprechpartner.
+
+Weiter unten im Text gibt es diverse Kontaktdaten, aber die meisten beziehen sich auf Barrierefreiheit oder Studierende mit Behinderungen. Da steht auch der Vizepräsident Prof. Dr. Achim Förster als Beauftragter für Studierende mit Behinderung, aber das thematisch nicht direkt nachhaltigkeitsspezifisch. 
+
+Der Schlüsselsatz ist: ""der Nachhaltigkeitsbeauftragte der THWS angesiedelt ist"". Allerdings sind hier keine direkten Kontaktdaten wie E-Mail oder Telefonnummer des Beauftragten angegeben. Vielleicht ist der genaue Name nicht im Kontext enthalten? 
+
+Dennoch, die Frage ist, an wen sich wenden. Die Antwort sollte auf den Nachhaltigkeitsbeauftragten verweisen, der im Institut für angewandte Logistik arbeitet. Falls keine direkten Daten da sind, muss ich das so formulieren. Vielleicht gibt es eine allgemeine E-Mail oder die Webseite. 
+
+Im Kontext steht: ""zusammen mit dem Institut für angewandte Logistik"". Vielleicht kann man sich dort melden. Allerdings sind im gezeigten Text keine Kontaktdaten des Instituts direkt angegeben. 
+
+Die Antwort sollte also darauf hindeuten, dass der Nachhaltigkeitsbeauftragte der richtige Ansprechpartner ist, und den Leser an das Institut für angewandte Logistik verweisen. Möglicherweise auch auf die Website verweisen, wo mehr Infos stehen. 
+
+Da im Kontext keine konkreten Kontaktdaten des Beauftragten angegeben sind, kann ich nur auf die Stelle hinweisen, wo dieser ansässig ist. Also laut Kontext: ""im Institut für angewandte Logistik"". Vielleicht gibt es eine allgemeine E-Mail-Adresse für das Institut? Im gegebenen Text steht aber nur die E-Mail des Beauftragten für Studierende mit Behinderung oder der Vertrauensperson für Beschäftigte. 
+
+Also die klare Antwort müsste lauten: Der Nachhaltigkeitsbeauftragte der THWS im Institut für angewandte Logistik ist zuständig. Da keine direkten Kontaktinformationen im Text sind, muss ich das so antworten. Vielleicht auch erwähnen, dass man auf der THWS-Website nach weiteren Infos sucht. 
+
+Aber die Frage ist konkret nach der Person. Also die Antwort ist: Der Nachhaltigkeitsbeauftragte der THWS, der im Institut für angewandte Logistik arbeitet. Falls die Kontaktdaten nicht im gegebenen Text vorhanden sind, kann ich die genauen Angaben nicht machen, aber die Frage kann beantwortet werden, wer zuständig ist.
+</think>
+
+An den Nachhaltigkeitsbeauftragten der THWS im Institut für angewandte Logistik können Sie sich wenden. Die genauen Kontaktdaten (z. B. E-Mail oder Telefonnummer) sind im bereitgestellten Kontext nicht explizit angegeben, aber die zuständige Stelle ist hier näher beziehungsweise über die Website der THWS ermittelbar.",0.0,0.3,0.0,0.35,0.0,0.3,0.0,0.65,0.95,0.65,0.0,0.15,0.95,0.65,0.0,0.65,0.95,0.65
+Für welche Werte steht die THWS?,"Die THWS steht für Respekt, Fairness, Zusammenhalt und Vielfalt. Sie fördert Chancengleichheit, Gleichberechtigung und eine offene, diskriminierungsfreie Kommunikation. Nachhaltigkeit in ökologischer, sozialer und ökonomischer Hinsicht ist ebenso zentral wie ein wertschätzendes Miteinander und Freude an Studium, Forschung und Arbeit.",https://www.thws.de/hochschule/profil-der-thws/leitbild/,4.479676008224487,"Die provided Text enthält keine Informationen zu den Werten der THWS, so dass ich diese Frage leider nicht beantworten kann.",3.968297958374023,"Die Hochschule THWS steht für Werteträgerschaft, Fokus auf Praxiserfahrung und internationale Vernetzung sowie dem Engagement für ethische und soziale Verantwortung.",3.3570077419281006,"Die THWS steht für die Werte Integrität, Verantwortungsbewusstsein, Offenheit und Innovation.",9.314090967178345,"Der gegebene Kontext enthält keine expliziten Angaben zu den Werten der Hochschule THWS. Der Abschnitt, der erwähnt wird, bezieht sich auf Richtlinien zur Informationssicherheit und deren Geltungsbereich, sowie die Ziele zur Sicherstellung von Verfügbarkeit, Integrität und Vertraulichkeit von Informationen. Es werden jedoch keine spezifischen Werte oder Prinzipien der THWS genannt.
+
+Diese Frage kann ich leider nicht beantworten.",3.161170721054077,Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext bezieht sich auf eine Informationssicherheitsrichtlinie und enthält keine spezifischen Informationen über die Werte der THWS.,8.066375017166138,"Die THWS steht für folgende Werte:
+
+1. Hochschulische Exzellenz und Innovation
+2. Angewandtes Wissen und praxisorientierter Forschung
+3. Internationale Perspektive und globale Vernetzung
+4. Mentoren- und Betreuungssystem, das auf den Bedürfnissen der Studenten basiert
+5. Nachhaltige Entwicklung und soziales Engagement",9.567989826202393,"Der Kontext liefert keine direkten Informationen über die Werte der THWS. Er erwähnt lediglich Informationssicherheit als wichtiges Thema und Ziele wie Verfügbarkeit, Integrität und Vertraulichkeit von Informationen.",31.663806915283203,"<think>
+Okay, ich muss die Frage ""Für welche Werte steht die THWS?"" beantworten. Dazu habe ich den gegebenen Kontext zu analysieren.
+
+Zuerst überfliege ich den Kontext. Er listet verschiedene Ordner und Unterordner wie ""Werte und Führung THWS Business School"", sowie vergangene Semester, Praxisprojekte, Masterarbeiten usw. Da der Name ""THWS Business School"" vorkommt, könnte es sich um die Technische Hochschule Wilhelmshaven oder eine ähnliche Institution handeln.
+
+Der Kontext bezieht sich auf Vorlesungsverzeichnisse und_MODULE wie I2M, M3ve, Praxisprojekte und Masterarbeiten. Da nirgendwo explizit Werte genannt werden, ist es schwierig, die Werte der THWS Business School zu bestimmen.
+
+Vielleicht sind die Werte in den Seminarthemen versteckt, wie z.B. ""ethische und rechtliche Grundlagen"" oder ""marken- und medienstrategien"". Das könnte auf Transparenz,.ethisches Handeln, Innovation und Professionalität hindeuten. Allerdings sind das Vermutungen.
+
+Da der Kontext nicht ausreichend ist, um die Werte sicher zu bestimmen, sollte ich angeben, dass genaue Informationen fehlen.
+</think>
+
+Diese Frage kann ich leider nicht beantworten, da der gegebene Kontext keine ausdrücklichen Angaben über die Werte der THWS enthält.",42.10199570655823,"<think>
+Okay, ich muss die Frage beantworten, für welche Werte die THWS steht, basierend auf dem gegebenen Kontext. Zuerst schaue ich mir den Kontext an. Der Kontext listet einige Kurse oder Themen aus dem Semester SS 16 auf, wie ""Ethische und rechtliche Grundlagen"", ""Marken- und Medienstrategien"", ""Webbasiertes Marken-/Medienmanagement"" und ähnliche. Darüber hinaus gibt es eine Leitlinie zur Informationssicherheit, die auf Verpflichtungen und Ziele eingeht, wie die Gewährleistung von Verfügbarkeit, Integrität und Vertraulichkeit von Informationen.
+
+Die Frage nach den Werten der THWS Business School. In den verlinkten Ordner ""Werte und Führung THWS Business School"" könnte der Schlüssel liegen. Aber im gegebenen Text des Kontexts sind keine konkreten Werte aufgelistet. Es werden lediglich Themengebiete von Veranstaltungen und Regelungen zur Informationssicherheit erwähnt. 
+
+Die Informationssicherheitsleitlinie betont Werte wie Vertraulichkeit, Integrität und Verfügbarkeit, aber das sind eher Ziele der IT-Sicherheit, nicht unbedingt die grundsätzlichen Werte der Hochschule. Vielleicht sind die Kurse wie ""ethische Grundlagen"" darauf hinweisen, dass Ethik und Rechtlichkeit wichtig sind. Aber der Kontext liefert keine explizite Auflistung der Werte der THWS. 
+
+Da der Benutzer explizit auf den Kontext verweist und ich keine offensichtliche Stelle sehe, wo die Werte direkt genannt werden, könnte ich die Frage nicht beantworten. Oder könnte ich aus den Kursnamen Rückschlüsse ziehen? Zum Beispiel, dass Werte wie Ethik, Transparenz, Exzellenz in Medienmanagement, Innovation usw. relevant sind. Aber das ist Spekulation. Da der Kontext keine klaren Werte auflistet, sollte ich besser nicht mutmaßen und stattdessen die Standardantwort geben, dass ich die Frage nicht beantworten kann.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",0.0,0.05,0.0,0.4,0.0,0.4,0.95,0.05,0.0,0.05,0.95,0.25,0.95,0.05,0.0,0.05,0.0,0.0
+Welche Nachhaltigkeitsstrategie verfolgt die THWS?,"Die THWS verfolgt eine umfassende Nachhaltigkeitsstrategie in fünf Handlungsfeldern – Lehre, Forschung, Betrieb, Governance und gesellschaftlicher Transfer – mit dem Ziel, ökologisch, sozial und ökonomisch verantwortungsvoll zu handeln und nachhaltige Entwicklung ganzheitlich zu fördern.",https://www.thws.de/hochschule/profil-der-thws/nachhaltigkeit/unsere-vision-strategie/nachhaltigkeitsstrategie-der-thws/,1.241502046585083,"Die provided Text enthält keine Informationen zu den nachhaltigkeitsstrategien der THWS, so dass ich diese Frage leider nicht beantworten kann.",7.316764831542969,"Die Hochschule THWS verfolgt eine nachhaltige Strategie in ihrem Unterricht, Forschung und Verwaltung. Sie ist dabei besonders auf die Klimaschutz- und Umweltthemen fokussiert und setzt sich für Nachhaltigkeit ein. Der Schwerpunkt liegt auf der Verbesserung von Ressourceneffizienz, Energieeinsparung, CO2-Emissionen-Reduktion und dem Erreichen einer vollständigen Dekarbonisierung. Die THWS betreibt verschiedene Maßnahmen zur Reduzierung des Energieverbrauchs in ihren Gebäuden, wie z. B. die installierte Photovoltaik-, Windkraft- oder Wärmepumpeanlage, sowie das Ersetzen von konventionellen Kühlschranken durch energetischere Geräte. Die THWS engagiert sich auch bei Projekten, die sich mit Umweltfragen auseinandersetzen wie z. B. der Entwicklung einer ländlichen Erneuerbaren-Energie-Infrastruktur und dem Aufbau eines Forschungszentrums für nachhaltige Stadtentwicklung. Die Hochschule unterstützt auch Studenten bei den Planung, Umsetzung und Evaluation von Nachhaltigkeitsprojekten im Rahmen ihres Lehrplans.",4.958511114120483,"Die THWS verfolgt eine nachhaltige Strategie, die in verschiedenen Bereichen umgesetzt wird. Sie beinhaltet unter anderem Anstrengungen im Bereich des Umweltschutzes und der Energieeffizienz, Responsible Sourcing, Social Responsibility sowie den Ausbau von nachhaltigen Unternehmensprojekten und Innovationen. Es gibt jedoch keine allgemein zugängliche detaillierte Nachhaltigkeitsstrategie veröffentlicht. Es ist empfohlen, auf der Webseite oder bei dem Studienzentrum der THWS weitere Informationen zu erhalten.",7.337384939193726,Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext enthält keine Informationen über eine spezifische Nachhaltigkeitsstrategie der THWS Business School. Er listet lediglich die Lehrveranstaltungen und Module eines bestimmten Semesters auf.,7.801980018615723,"Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext bezieht sich auf verschiedene Module und Themen des Studiums am THWS in den vergangenen Semestern, aber er enthält keine spezifischen Informationen über die Nachhaltigkeitsstrategie der THWS.",10.803836822509766,"Die Hochschule THWS verfolgt eine Nachhaltigkeitsstrategie, die sich auf drei Grundpfeiler stützt:
+
+1. Bildung und Forschung: THWS bietet Studiengänge, die sich auf nachhaltige Entwicklungen und Technologien konzentrieren und so zu einer gesellschaftlichen Veränderung beitragen möchten.
+
+2. Innovation und Transfer: Die Hochschule fördert interdisziplinäre Zusammenarbeit zwischen Wissenschaft und Wirtschaft und stellt dabei ein Brückenbauwerk zwischen Forschung, Lehre und Praxis dar.
+
+3. Nachhaltiges Handeln im Alltag: THWS unterstützt die Umsetzung nachhaltiger Strategien in allen Bereichen ihres täglichen Lebens, wie z. B. durch Energie- und Ressourcenverbrauch, Mobilität oder Verantwortung für das soziale Umfeld.
+
+Diese drei Grundpfeiler sind Teil eines umfassenden Nachhaltigkeitskonzepts, das die THWS umsetzt, um zu einer nachhaltigen Entwicklung beizutragen.",7.144866943359375,Diese Frage kann ich leider nicht beantworten.,22.02215003967285,"<think>
+Okay, ich muss die Frage ""Welche Nachhaltigkeitsstrategie verfolgt die THWS?"" beantworten. Dazu habe ich den gegebenen Kontext zur Verfügung, der verschiedene Module des_ws21/22 Semesters auflistet.
+
+Zuerst lese ich durch, was im Kontext erwähnt wird: Trendanalyse, Strategieentwicklung, Risiken und Zukunftstechnologien, Kommunikation, Logistik, Marketing, Innovationsbewertung, MIS/ERP, Entrepreneurship. Da ist nichts direkt über Nachhaltigkeitsstrategien oder ähnliches vorhanden.
+
+Also, keine Informationen über Umwelt- oder soziale Initiativen, grüne Ziele oder类似的内容。Das bedeutet, ich kann die Frage nicht beantworten, weil der Kontext nichts darüber sagt.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",38.17054295539856,"<think>
+Okay, ich muss die Frage beantworten, welche Nachhaltigkeitsstrategie die THWS verfolgt, basierend auf dem gegebenen Kontext. Zuerst sehe ich mir den Kontext an. Der Kontext listet verschiedene Module aus dem WS 21/22 im Studiengang I2M auf, wie z.B. Trendanalyse, Chancen-/Risikenanalyse, Kommunikation im Team, Logistik, Marketing, Bewertung von Innovationsprojekten, MIS und ERP, sowie Entrepreneure und Führung.
+
+Die Frage nach der Nachhaltigkeitsstrategie der THWS ist jedoch nicht direkt in den aufgeführten Modulen ersichtlich. Die Module behandeln Themen wie Strategieentwicklung, Zukunftstechnologien, Marketing etc., aber es gibt keine explizite Erwähnung von Nachhaltigkeitsstrategien. 
+
+Ich sollte überprüfen, ob irgendein Modul indirekt auf Nachhaltigkeit eingeht, zum Beispiel in der Chancen-/Risikenanalyse oder Zukunftstechnologien. Doch der Kontext gibt keine Details preis, was genau in diesen Modulen besprochen wurde. Ohne konkrete Informationen über Inhalte wie Umweltstrategien, soziale Aspekte oder Governance kann ich keine genaue Antwort geben.
+
+Da der gegebene Kontext keine Angaben zur Nachhaltigkeitsstrategie der THWS enthält, sollte ich die Frage nicht beantworten und stattdessen darauf hinweisen, dass die Information nicht verfügbar ist.
+</think>
+
+Diese Frage kann ich leider nicht beantworten. Der im Kontext aufgeführten Informationen aus dem WS 21/22 Semester der THWS Business School (Modulthemen wie Trendanalyse, Logistik, Marketing, Entrepreneurship etc.) fehlt eine explizite Erwähnung oder Beschreibung von Nachhaltigkeitsstrategien der Hochschule. Ohne zusätzliche Angaben zu zentralen Richtlinien, Ziele oder Lehrinhalten im Bereich Nachhaltigkeit ist eine präzise Antwort nicht möglich.",0.85,0.05,0.75,0.85,0.95,0.75,0.95,0.05,0.75,0.05,0.95,0.75,0.85,0.0,0.25,0.0,0.0,0.05
+Wann findet die nächste Public Climate School statt?,Vom 24. bis 28. November 2025 findet die nächste Public Climate School statt.,https://publicclimateschool.de/hochschulprogramm/,1.4979498386383057,"Die provided Text enthält keine Informationen zu einer kommenden Public Climate School, so dass ich diese Frage leider nicht beantworten kann.",3.149972915649414,"Die nächste Public Climate School wird vom 23.04. bis zum 25.04.2023 in Schweinfurt stattfinden. Es handelt sich um eine dreitägige Blockveranstaltung, die sich mit dem Thema ""Klimawandel und Wasser als Kernthema"" auseinandersetzt. Die Teilnahme ist für Schülerinnen und Schüler der Stufen 10 bis 12 sowie Eltern oder Lehrer möglich. Anmeldeschluss ist der 9.04.2023. Weitere Informationen sind unter https://fang.thws.de/frame2023 zu finden.",3.919067859649658,Die nächste Public Climate School wird vom 10. bis zum 21. Februar 2025 in Bari stattfinden.,8.209719181060791,"Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext enthält keine Informationen über eine ""Public Climate School"". Es gibt Details zur Veranstaltung einer Winter School im Februar und März 2025 sowie zu einem Projekt ""Mobility Goes Virtual"", aber keine spezifischen Angaben zur Public Climate School.",8.154239892959595,"Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext bezieht sich auf eine Winter School, die vom 10. bis 21. Februar 2025 in Bari stattfindet und keine spezifische ""Public Climate School"" erwähnt.",6.914036989212036,"Die Informationen zu der nächsten Public Climate School sind nicht im gegebenen Kontext enthalten. Bitte fragen Sie zu einer bestimmten Veranstaltung, um eine präzisere Antwort geben zu können.",12.264831066131592,"Die nächste Winter School, die im Kontext der Public Climate School steht, findet vom 10. bis zum 21. Februar 2025 in Bari statt, gefolgt von einer Online-Projektphase im März und April 2025. Eine weitere Veranstaltung für Schülerinnen und Schüler der Stufen 11 bis 13 findet vom 05.03.2025 - 07.03.2025 in Schweinfurt statt.",27.318843126296997,"<think>
+Okay, ich muss der Frage ""Wann findet die nächste Public Climate School statt?"" aufgrund des gegebenen Kontextes beantworten. Zuerst lese ich den Kontext sorgfältig durch.
+
+In dem Text wird von einer Winter School in Bari erwähnt, die vom 10. bis zum 21. Februar 2025 stattfindet und eine Projektphase im März und April 2025 hat. Es gibt auch Informationen über eine 3-tägige Winter School in den Winterferien 2025, die von Mittwoch, dem 5. März 2025, bis Freitag, den 7. März 2025, dauert.
+
+Zudem wird ein Projekt namens ""Mobility Goes Virtual"" mit dem Modul ""Green IT"" erwähnt, das im Wintersemester 2022/23 stattgefunden hat. Allerdings gibt es keine Erwähnung einer Public Climate School in diesem Text.
+
+Daher ist die Public Climate School nicht im gegebenen Kontext enthalten, und ich kann die genaue Termininformation nicht liefern.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",32.763564109802246,"<think>
+Okay, ich muss die Frage beantworten, wann die nächste Public Climate School stattfindet. Zuerst schaue ich mir den gegebenen Kontext an. 
+
+Im ersten Teil des Kontexts wird von einer Winter School der THWS die Rede, die vom 10. bis 21. Februar 2025 in Bari stattfindet. Danach folgt eine Projektphase im März und April 2025. Hier wird aber von einer ""Winter School"" gesprochen, nicht von einer ""Public Climate School"".
+
+Weiter unten im Kontext steht etwas über das Projekt „Mobility Goes Virtual“ mit dem Modul „Green IT“. Dort wird erzählt von Aktivitäten im Wintersemester 2022/2023 und einer ursprünglichen Planung für das Sommersemester 2022. Aber hier wird ebenfalls keine Public Climate School erwähnt.
+
+Die Frage ist nun, ob die Public Climate School mit der Winter School identisch ist oder ein separates Event. Der Kontext nennt keine Public Climate School explizit. Die erwähnten Events sind die Winter School 2025 und das Projekt „Mobility Goes Virtual“, aber keine Public Climate School. 
+
+Da im gegebenen Text keine Informationen zur Public Climate School enthalten sind, kann ich die Frage nicht beantworten. Vielleicht ist es ein Missverstndnis oder ein anderer Termin, der nicht im Kontext erwähnt wird. Also muss ich antworten, dass ich die Frage nicht beantworten kann.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",0.0,0.05,0.0,0.05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.05,0.0,0.25,0.0,0.0,0.0,0.0
+Gibt es Infos zur THWS auch in leichter Sprache?,"Ja, einige Infos zur THWS stehen in leichter Sprache zur Verfügung https://www.thws.de/leichte-sprache/",https://www.thws.de/leichte-sprache/,1.640727996826172,"Ja, Informationen zur THWS sind auch in leichter Sprache auf der THWS-Website verfügbar. Sie finden diese auf der Seite https://www.thws.de/studieninteressierte/.",2.1727070808410645,"Ja, es gibt Informationen über die Technische Hochschule Würzburg-Schweinfurt (THWS) auf der Homepage in leichter Sprache. Unter dem Link https://www.thws.de/studieninteressierte/ finden Sie allgemeine Informationen, Veranstaltungen, Studienberatung, Bewerbung und Zulassung.",4.206106901168823,"Ja, es gibt Informationen zur Technischen Hochschule Würzburg-Schweinfurt (THWS) auch in leichter Sprache. Du findest diese auf der Seite <https://www.thws.de/leichte-sprache/>.",8.093883275985718,"Ja, Informationen über die Technische Hochschule Würzburg-Schweinfurt (THWS) sind auch in Leichter Sprache verfügbar. Sie finden diese unter den Menüpunkten ""Leichte Sprache"" auf der Webseite der THWS. Dort werden wichtige Informationen zugänglicher gestaltet, um ein breiteres Publikum zu erreichen.",8.325911045074463,"Ja, die Technische Hochschule Würzburg-Schweinfurt bietet Informationen in leichte Sprache an. Sie können diese unter dem Menüpunkt ""Leichte Sprache"" auf der Website finden. Dort werden Inhalte angeboten, die für Menschen mit geringerer Schriftlichkeit oder Lesefähigkeit verständlicher gemacht wurden.",7.3211829662323,"Ja, es gibt Informationen zur THWS in leichterer Sprache. Diese sind unter dem Link ""Leichte Sprache"" auf der Seite https://www.thws.de/studieninteressierte/ zu finden. Dort können Sie alle wichtigen Informationen zum Studium an der THWS einfach verständlich lesen.",7.904726028442383,"Ja, Informationen zur THWS sind auch in leichter Sprache verfügbar.",25.999222993850708,"<think>
+Okay, ich muss die Frage beantworten: ""Gibt es Infos zur THWS auch in leichter Sprache?"" 
+
+Zuerst lese ich den gegebenen Kontext sorgfältig durch. Darauf achtend, ob irgendwo erwähnt wird, dass Informationen in leicher Sprache verfügbar sind.
+
+Im Kontext sehe ich unter dem Abschnitt ""Informationen für Studieninteressierte"" einen Link: https://www.thws.de/studieninteressierte/. Da der Link nicht explizit auf leichte Sprache hinweist, sollte ich nach anderen Stellen suchen.
+
+Weiter unten finde ich die Liste mit verschiedenen Angeboten: ""Leichte Sprache Gebärdensprache Sitemap"". Das Wort ""Leichte Sprache"" ist hier klar vermerkt. Dies deutet darauf hin, dass die THWS Informationen in leicher Sprache bereitstellt.
+
+Zusammenfassend sehe ich also, dass es Infos zur THWS in leichter Sprache gibt. Somit kann ich eine kurze und präzise Antwort geben.
+</think>
+
+Ja, die THWS bietet Informationen auch in leicher Sprache an.",39.543599128723145,"<think>
+Okay, ich muss die Frage beantworten, ob es Informationen zur THWS auch in leiser Sprache gibt. Zuerst schaue ich mir den gegebenen Kontext an.
+
+Im Kontext sehe ich, dass unter dem Abschnitt ""Leichte Sprache"" eine Eintragung ist, aber es ist nicht direkt ersichtlich, ob dort konkrete Informationen zur THWS in leichter Sprache verlinkt sind. Weiter unten im Text gibt es eine Liste mit Links wie ""Gebärdensprache"", ""Sitemap"" und andere, aber der Kontext ist etwas unübersichtlich aufgrund der Formatierungsprobleme. 
+
+Doch dann fällt mir ein, dass in der oberen Hälfte des Kontextes unter ""Kontext"" explizit ""Leichte Sprache"" als eine der verfügbaren Optionen erwähnt wird. Neben ""Gebärdensprache"", ""Sitemap"" und anderen ist ""Leichte Sprache"" aufgelistet. Das deutet darauf hin, dass die THWS Informationen in leichter Sprache anbietet. 
+
+Zusätzlich finde ich im unteren Teil des Kontextes unter der Navigationsstruktur den Punkt ""Information zur barrierefreien Bedienung"" und ""Leichte Sprache"" erneut erwähnt. Damit bestätigt sich, dass es solche Informationen gibt. Der Link könnte auf der Hauptseite oder in der Datenschutz Erklärung sein, aber die Frage ist nur danach, ob es sie gibt, nicht wo genau. 
+
+Also kann ich mit Sicherheit sagen, dass die THWS Infos in leichter Sprache anbietet, basierend auf den expliziten Erwähnungen im Kontext.
+</think>
+
+Ja, die THWS bietet Informationen in leicher Sprache an. Dies ist im Kontext unter den punktuierten Optionen „Leichte Sprache“, „Gebärdensprache“ und „Sitemap“ explizit erwähnt. Weitere Details finden Sie auf der Website der THWS, z. B. unter den barrierefreien Bedienungsoptionen.",0.95,0.85,0.95,0.85,0.95,1.0,0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.95,0.98,0.95,0.95,0.95
+"An wen kann ich mich wenden, wenn ich Diskriminiert werde?","Prof. Dr. Silke Neuderth ist Ansprechperson für Antidiskriminierung und zum Schutz vor sexueller Belästigung und sexualisierter Gewalt nach Artikel 25 des Bay. HIG. Sie können eine Email an antidiskriminierung@thws.de schreiben. 
+Zudem gibt es eine Beschwerdestelle der THWS, Sie erreichen diese unter der Email beschwerdestelle@thws.de. Ansprechpartner sind Stefan Hartmann und Sandra Müller.",https://www.thws.de/hochschule/anlaufstellen-bei-diskriminierung/,4.882900953292847,"Die Angabe der Kontaktinformationen für den Beauftragten für Studierende mit Behinderung oder chronischer Erkrankung (Telefon +49 931 3511-6096, E-Mail: studierenmitbehinderung[at]thws.de) ist relevant.",2.807548999786377,"Sie können sich jederzeit an den Beauftragten für Studierende mit Behinderung oder chronischer Erkrankung (Prof. Dr. Achim Förster) oder die Vertrauensperson der Schwerbehinderten Beschäftigten (Herr Manuel Mauer) wenden, wenn Sie diskriminiert werden.",6.426086902618408,"Sie können sich bei Diskriminierung an die Vertrauensperson (Inklusionsbeauftragte) der Schwerbehinderten Beschäftigten Herrn Manuel Mauer wenden (Telefon +49 9721 904-8787, E-Mail: schwerbehindertenvertretung[at]thws.de). Auch der Beauftragte für Studierende mit Behinderung oder chronischer Erkrankung ist zur Verfügung, den Vizepräsident Prof. Dr. Achim Förster (Telefon +49 931 3511-6096, E-Mail: studierenmitbehinderung[at]thws.de). Bei Bedarf ist es möglich, bei der Schlichtungsstelle BGG nach § 16 des Behindertengleichstellungsgesetzes ein Schlichtungsverfahren einzuleiten.",13.995942831039429,"Wenn Sie sich an der Technischen Hochschule Würzburg-Schweinfurt diskriminiert fühlen, können Sie folgende Kontakte nutzen:
+
+1. **Studierende:** Der Beauftragte für Studierende mit Behinderung oder chronischer Erkrankung:
+   - Telefon: +49 931 3511-6096
+   - E-Mail: studierenmitbehinderung@thws.de
+
+2. **Beschäftigte der THWS:** Die Vertrauensperson (Inklusionsbeauftragte) der Schwerbehinderten Beschäftigten:
+   - Telefon: +49 9721 904-8787
+   - E-Mail: schwerbehindertenvertretung@thws.de
+
+Zusätzlich ist es möglich, das Thema Barrierefreiheit und Diskriminierung bei der Hochschulkommunikation anzusprechen:
+- Technische Hochschule Würzburg-Schweinfurt Digitale Barrierefreiheit
+- E-Mail: digitale-barrierefreiheit@thws.de
+
+Sollten diese Schritte nicht ausreichen, können Sie ein Schlichtungsverfahren nach § 16 des Behindertengleichstellungsgesetzes bei der Schlichtungsstelle BGG in Betracht ziehen.",11.17369794845581,"Wenn Sie sich fürchten, diskriminiert zu werden oder bereits diskriminiert worden sind, sollten Sie zunächst an den Beauftragten für Studierende mit Behinderung oder chronischer Erkrankung der THWS wenden. Dieser kann Ihnen Unterstützung und Beratung anbieten.
+
+Kontakt:
+- Vizepräsident Prof. Dr. Achim Förster
+- Telefon: +49 931 3511-6096
+- E-Mail: studierenmitbehinderung[at]thws.de
+
+Darüber hinaus können Sie sich an die Vertrauensperson (Inklusionsbeauftragte) der Schwerbehinderten Beschäftigten wenden, wenn Sie Beschäftigte der THWS sind.
+
+Weitere Unterstützung finden Sie auch durch die Überwachungsstelle für barrierefreie Informationstechnik in München:
+- E-Mail: bitv[at]bayern.de
+- Webseite: https://www.ldbv.bayern.de/digitalisierung/bitv.html
+
+Bei Bedarf können Sie außerdem ein Schlichtungsverfahren nach § 16 des Behindertengleichstellungsgesetzes (BGG) einleiten.",13.408859014511108,"Du können dich an den Beauftragten für Studierende mit Behinderung oder chronischer Erkrankung, Vizepräsident Prof. Dr. Achim Förster, wenden, der sich auf Angelegenheiten von studierenden mit Behinderungen oder chronischen Erkrankungen spezialisiert hat. Seine E-Mail-Adresse ist studierenmitbehinderung@thws.de und seine Telefonnummer ist +49 931 3511-6096.
+
+Weiterhin kannst du dich an die Vertrauensperson (Inklusionsbeauftragte) der Schwerbehinderten Beschäftigten, Herr Manuel Mauer, wenden, der sich auf Angelegenheiten von beschäftigten mit Behinderungen spezialisiert hat. Seine E-Mail-Adresse ist schwerbehindertenvertretung@thws.de und seine Telefonnummer ist +49 9721 904-8787.
+
+Außerdem kannst du dich an die Schlichtungsstelle BGG nach § 16 des Behindertengleichstellungsgesetzes wenden, um ein Schlichtungsverfahren einzuleiten. Ihre Adresse ist Münzstraße 12, 97070 Würzburg und ihre E-Mail-Adresse ist digitale-barrierefreiheit@thws.de.",13.75079607963562,"Bei Diskriminierung können Sie sich an folgende Stellen wenden:
+
+*   **Beauftragter für Studierende mit Behinderung oder chronischer Erkrankung:** studierenmitbehinderung[at]thws.de
+*   **Vertrauensperson (Inklusionsbeauftragte) der Schwerbehinderten Beschäftigten:** schwerbehindertenvertretung[at]thws.de
+*   **Schlichtungsstelle BGG** (gemäß § 16 des Behindertengleichstellungsgesetzes).",54.90331697463989,"<think>
+Okay, ich muss die Frage ""An wen kann ich mich wenden, wenn ich Diskriminiert werde?"" beantworten. Dazu habe ich den gegebenen Kontext zu analysieren.
+
+Zuerst lese ich durch, was im Kontext steht. Da ist erwähnt, dass man sich bei der Technischen Hochschule Würzburg-Schweinfurt für digitale Barrierefreiheit an die E-Mail-Adresse digital-barrierefreiheit@thws.de wenden kann. Aber das Thema hier ist Diskriminierung, also muss ich nach weiteren Kontaktmöglichkeiten suchen.
+
+Weiter unten finde ich Informationen über den Beauftragten für Studierende mit Behinderung oder chronischer Erkrankung, Prof. Dr. Achim Förster. Seine E-Mail-Adresse ist studierenmitbehinderung@thws.de. Das könnte relevant sein, da Diskriminierung oft in Zusammenhang mit Behinderungen steht.
+
+Außerdem wird die Vertrauensperson (Inklusionsbeauftragte) für Beschäftigte der THWS genannt, Manuel Mauer, mit Telefonnummer und E-Mail schwerbehindertenvertretung@thws.de. Das könnte ebenfalls hilfreich sein, wenn jemand Beschäftigter ist.
+
+Es wird auch die Schlichtungsstelle BGG erwähnt, bei der man nach § 16 des Behindertengleichstellungsgesetzes ein Verfahren einleiten kann. Das ist wahrscheinlich relevant, da Diskriminierung oft im Zusammenhang mit Behinderung oder benachteiligten Gruppen steht.
+
+Inhaltlich sehe ich also drei Kontaktpunkte: die Beauftragte für Studierende, die Vertrauensperson für Beschäftigte und die Schlichtungsstelle BGG. Das sollten alle in der Antwort erwähnt werden.
+
+Ich muss sicherstellen, dass ich die richtigen E-Mail-Adressen und Telefonnummern aufnehme, falls nötig. Obwohl die Frage nach dem Wendenkönnen ist, nicht unbedingt nach Details wie Telefonnummer, aber manchmal hilfreich.
+
+Also strukturiere ich die Antwort so: Zuerst den Beauftragten für Studierende mit Behinderung, dann die Vertrauensperson für Beschäftigte und schließlich die Schlichtungsstelle BGG. So decke ich verschiedene Szenarien ab.
+</think>
+
+Sie können sich an folgende Stellen wenden:
+
+1. **Beauftragter für Studierende mit Behinderung oder chronischer Erkrankung**  
+   Vizepräsident Prof. Dr. Achim Förster  
+   E-Mail: studierenmitbehinderung@thws.de  
+
+2. **Vertrauensperson (Inklusionsbeauftragte) für Beschäftigte der THWS**  
+   Herr Manuel Mauer  
+   E-Mail: schwerbehindertenvertretung@thws.de  
+
+3. **Schlichtungsstelle BGG**  
+   Hierbei handelt es sich um die Schlichtungsstelle gemäß § 16 des Behindertengleichstellungsgesetzes, bei der ein Schlichtungsverfahren eingeleitet werden kann.
+
+Diese Kontakte bieten Unterstützung und Informationen in Bezug auf Diskriminierung oder Benachteiligung.",69.98047614097595,"<think>
+Okay, ich muss die Frage beantworten, an wen man sich wenden kann, wenn man diskriminiert wird, basierend auf dem gegebenen Kontext. 
+
+Zuerst sehe ich mir den Kontext genauer an. Es gibt mehrere Abschnitte. Im ersten Teil steht etwas über Barrierefreiheit bei Webseiten und Kontaktdaten der THWS, wie die E-Mail für digitale Barrierefreiheit. Dann gibt es den Teil über ""Empower & Prevent"", wo es um Bias, Diskriminierung und Unterstützung durch Design geht. 
+
+Weiter unten sind Kontaktdaten aufgelistet. Die Überwachungsstelle für barrierefreie Informationstechnik in München wird erwähnt, aber das könnte spezieller für technische Barrieren sein. Dann gibt es zwei Hauptkontakte: 
+
+1. Für Studierende mit Behinderung oder chronischer Erkrankung steht der Beauftragte, Prof. Dr. Achim Förster, mit Telefon und E-Mail.
+2. Für Beschäftigte der THWS gibt es die Vertrauensperson Manuel Mauer, die Schwerbehindertenvertretung.
+
+Die Frage ist allgemein, wer zu wenden ist, wenn man diskriminiert wird. Die Kontextangaben scheinen zwei separate Wege aufzuschlagen: Einer für Studierende und einer für Beschäftigte. Da die Frage nicht spezifiziert, ob es um einen Studierenden oder Mitarbeiter geht, muss ich beide Möglichkeiten nennen. 
+
+Außerdem steht im Kontext etwas von der Schlichtungsstelle BGG nach dem Behindertengleichstellungsgesetz, falls die THWS nicht zufriedenstellend reagiert. Das könnte auch relevant sein, falls die初回 Kontakte nicht helfen.
+
+Also sollte die Antwort die Kontaktdaten für Studierende und Beschäftigte nennen und evtl. die BGG Schlichtungsstelle erwähnen. Muss sicherstellen, dass alle relevanten Angaben aus dem Kontext verwendet werden und nichts ausgelassen wird. 
+
+Überprüfe nochmal: Die Frage ist allgemein, also beide Kontakte angeben. Die BGG ist eine Option, falls notwendig. Die BitV Stelle in München könnte auch relevant sein, da sie für barrierefreie IT zuständig ist, aber Diskriminierung generell könnte breiter sein. Vielleicht ist der Beauftragte für Studierende oder die Vertrauensperson die direkteste Antwort. 
+
+Also Zusammenfassung: Für Studierende ans Beauftragte (Prof. Förster), für Beschäftigte an die Vertrauensperson (Manuel Mauer). Und falls nicht zufriedenstellend, dann BGG. Die BitV könnte auch eine Option sein, aber im Kontext wird sie im Zusammenhang mit Barrierefreiheit erwähnt, nicht unbedingt Diskriminierung generell. Also besser die genannten Kontakte der THWS selbst.
+</think>
+
+Wenn Sie diskriminiert werden, können Sie sich je nach Ihrer Rolle an folgende Kontakte wenden:
+
+- **Studierende**: Wenden Sie sich an den **Beauftragten für Studierende mit Behinderung oder chronischer Erkrankung**, Prof. Dr. Achim Förster.  
+  Kontakt:  
+  Telefon: +49 931 3511-6096  
+  E-Mail: studierenmitbehinderung@thws.de  
+
+- **Beschäftigte der THWS**: Kontaktieren Sie die **Vertrauensperson (Inklusionsbeauftragte) für Schwerbehinderte Beschäftigte**, Herrn Manuel Mauer.  
+  Kontakt:  
+  Telefon: +49 9721 904-8787  
+  E-Mail: schwerbehindertenvertretung@thws.de  
+
+Falls Sie keine zufriedenstellende Lösung finden, können Sie auch die **Schlichtungsstelle BGG** gemäß § 16 des Behindertengleichstellungsgesetzes einbeziehen. Weitere Beratungsmöglichkeiten finden Sie auch über die **Überwachungsstelle für barrierefreie Informationstechnik (BITV)** in Bayern (bitv@bayern.de).",0.95,0.1,0.95,0.3,0.95,0.45,0.95,0.65,0.95,0.45,0.0,0.15,0.95,0.3,0.95,0.65,0.95,0.92
+Welche Informationsveranstaltungen bietet die THWS für Studieninteressierte an?,"Die THWS veranstaltet jährlich im März die Studieninfotage, bei denen du online und vor Ort alles über die Studiengänge, Berufsaussichten und das Campusleben erfahren kannst. Du kannst dich mit Studierenden und Lehrenden austauschen, Labore besichtigen und an Infoveranstaltungen zu Themen wie Auslandsstudium, Duales Studium oder Studienwahl teilnehmen.",https://www.thws.de/studieninteressierte/studieninfotage/,6.776072025299072,"Die THWS bietet folgende Informationsveranstaltungen für Studieninteressierte an:
+
+* Infoveranstaltung am 16.04.2025 um 13:00 Uhr auf dem Campus Röntgenring (Präsenz)
+* Online-Präsentation der Bachelorstudiengänge Geovisualisierung sowie Vermessung und Geoinformatik und des Masterstudiengangs Geodatentechnologie am 13. März 2024 von 15:00 - 16:00 Uhr
+* Studieninfotage vom 10. bis 14. März 2025",5.481265068054199,"Die THWS bietet für Studieninteressierte eine Reihe von Informationen- und Infoveranstaltungen an. Zusätzlich zur regelmäßigen Studiesinfotage im März, die das Spektrum der Studiengänge und Standorte der THWS zeigt, gibt es auch spezielle Online-Präsentationen sowie Campusführungen in Würzburg und Schweinfurt, bei denen sich das Studium in Detail anschauen lässt. Des Weiteren bietet die Hochschule ein Online-Tool zur Stellung von Bewerbungsanträgen an. In einem Kurs- und Veranstaltungsverzeichnis finden Sie alle Informationen zu den Angeboten der THWS für Studieninteressierte.",9.376862049102783,"Die Technische Hochschule Würzburg-Schweinfurt bietet Informationen für Studieninteressierte anhand der folgenden Veranstaltungen:
+
+1. Infoveranstaltung und Veranstaltung für Studieninteressierte aller Altersstufen am Campus Röntgenring: 16.04.2025 ab 13.00 in Präsenz am Campus Röntgenring (Informationen für alle)
+2. Studieninfotage für Schülerinnen und Schüler der Oberstufe sowie weitere Studieninteressierte: Vom Mo, 10. bis Fr, 14. März 2025 (online-Präsentation von Bachelorstudienangeboten im Nachmittag und Campusführungen in Würzburg und Schweinfurt am Freitagnachmittag)
+3. Infoveranstaltung und Veranstaltung für Studieninteressierte aller Altersstufen am Campus Röntgenring: 19.11.2025 von 14.00 - 18:00 Uhr in Präsenz am Campus Röntgenring (Informationen für alle)
+4. Online-Präsentation der Bachelorstudiengänge Geovisualisierung sowie Vermessung und Geoinformatik und des Masterstudiums Geodatentechnologie: Mittwoch, 13. März 2024, 15:00 - 16:00 Uhr (Spezialthema: Vermessung, Virtual Reality, Data Science im Studienbereich Geo)
+
+In allen dieser Veranstaltungen erhalten Sie umfassende Informationen über die Studiengänge an der THWS und können so erste Entscheidungsimpulse bekommen.",12.283217906951904,"Die THWS bietet verschiedene Informationsveranstaltungen für Studieninteressierte an:
+
+1. **Studieninfotage**: Diese finden jährlich im März statt, wobei die nächsten vom 10. bis 14. März 2025 geplant sind. Die Veranstaltung umfasst Online-Präsentationen von Bachelor-Studiengängen und Campusführungen vor Ort in Würzburg und Schweinfurt.
+
+2. **Infoveranstaltungen und allgemeine Veranstaltungen**: Diese finden sowohl in Präsenz als auch online statt, beispielsweise am 16. April 2025 ab 13:00 Uhr und vom 19. November 2025 von 14:00 bis 18:00 Uhr am Campus Röntgenring.
+
+Detaillierte Informationen zu Veranstaltungen, Studienberatung, Bewerbung und Zulassung finden sich auf der Webseite der THWS unter https://www.thws.de/studieninteressierte/.",11.27760910987854,"Die Technische Hochschule Würzburg-Schweinfurt (THWS) bietet regelmäßig Veranstaltungen für Studieninteressierte an, darunter Infoveranstaltungen und Studieninfotage. Der nächste Termin ist eine Infoveranstaltung am Mittwoch, den 16. April 2025 von 13:00 Uhr abwesend auf dem Campus Röntgenring. Darüber hinaus finden jährlich im März die Studieninfotage statt. Diese bieten die Möglichkeit, die Vielfalt der Studiengänge und Standorte kennenzulernen sowie Einblicke in Inhalte und berufliche Perspektiven zu erhalten. Das genaue Programm für das kommende Jahr wird später veröffentlicht.",10.621745824813845,"Die Technische Hochschule Würzburg-Schweinfurt bietet verschiedene Informationsveranstaltungen für Studieninteressierte an. Zu diesen Veranstaltungen zählen Studieninfotage, bei denen die vielfältigen Studiengänge und berufliche Perspektiven vorgestellt werden. Hier können Schülerinnen und Schüler der Oberstufen von Gymnasien, Beruflichen Oberschulen sowie alle weiteren Interessierten sicherlich Fragen zu den einzelnen Studiengängen stellen und Antworten erhalten.
+
+Das nächste Studieninfotage-Angebot findet vom 10. bis 14. März 2025 statt, mit einer Online-Präsentation unserer Bachelorstudiengänge am Montag bis Donnerstag nachmittags und Campusführungen vor Ort in Würzburg und Schweinfurt am Freitagnachmittag.",11.246230125427246,Die THWS bietet Infoveranstaltungen und Studieninfotage an. Die nächsten Studieninfotage finden vom 10. bis 14. März 2025 statt. Geplant sind außerdem eine Infoveranstaltung am 16.04.2025 und am 19.11.2025.,49.54554510116577,"<think>
+Okay, ich muss die Frage beantworten, welche Informationsveranstaltungen die THWS für Studieninteressierte anbietet. Zunächst lese ich den gegebenen Kontext sorgfältig durch.
+
+Im ersten Abschnitt sind zwei Infoveranstaltungstermine aufgeführt: eine am 16.04.2025 und eine weitere am 19.11.2025, beide an Campus Röntgenring. Das klingt nach allgemeinen Informationsveranstaltungen für Studieninteressierte.
+
+Dann geht es weiter zu den jährlichen Studieninfotagen im März. Diese dauern mehrere Tage und bieten verschiedene Aktivitäten wie Präsentationen, Campusführungen und die Möglichkeit, mit Studierenden und Professoren zu sprechen. Die Termine für 2025 sind vom 10. bis 14. März, wobei Montag bis Donnerstag online stattfinden und Freitag vor Ort in Würzburg und Schweinfurt.
+
+Außerdem gibt es im Jahr 2024 ebenfalls Studieninfotage, die von 11. bis 14. März stattfanden, mit spezifischen Präsentationsterminen für bestimmte Studiengänge.
+
+Zusammenfassend bieten die THWS also mehrere Veranstaltungsformen: allgemeine Infoveranstaltungstage im April und November, jährliche Studieninfotage im März mit online und vor Ort Angeboten. Deshalb sollte ich in der Antwort alle diese Termini erwähnen und kurz beschreiben.
+</think>
+
+Die THWS bietet für Studieninteressierte folgende Informationsveranstaltungen an:
+
+1. **Infoveranstaltung am 16.04.2025**:
+   - Ort: Campus Röntgenring
+   - Zeit: ab 13:00 Uhr
+
+2. **Infoveranstaltung am 19.11.2025**:
+   - Ort: Campus Röntgenring
+   - Zeit: von 14:00 bis 18:00 Uhr
+
+3. **Studieninfotage im März 2025**:
+   - Datum: vom 10. bis 14. März 2025
+   - Angebot:
+     - Online-Präsentationen der Bachelorstudiengänge (Montag bis Donnerstag)
+     - Campusführungen vor Ort in Würzburg und Schweinfurt am Freitag
+
+Diese Veranstaltungen ermöglichen es Studieninteressierten, die verschiedenen Studiengänge kennenzulernen, Einblicke in den Aufbau und die Inhalte der Studienangebote zu erhalten sowie berufliche Perspektiven zu diskutieren. Weitere Informationen finden Sie auf der Webseite [https://www.thws.de/studieninteressierte/](https://www.thws.de/studieninteressierte/).",54.23514890670776,"<think>
+Okay, ich muss die Frage beantworten, welche Informationsveranstaltungen die THWS für Studieninteressierte anbietet. Zuerst schaue ich mir den gegebenen Kontext an.
+
+Im Kontext sind mehrere Veranstaltungen erwähnt. Zunächst sind zwei Infoveranstaltungen geplant: eine am 16.04.2025 und eine am 19.11.2025, beide am Campus Röntgenring. Dann gibt es die Studieninfotage im März 2025, die vom 10. bis 14. März stattfinden. Dort werden online Präsentationen der Bachelorstudiengänge am Nachmittag von Montag bis Donnerstag durchgeführt, und am Freitag gibt es Campusführungen in Würzburg und Schweinfurt. 
+
+Außerdem sind die Studieninfotage 2024 erwähnt, aber da die Frage aktuelle Veranstaltungen betrifft, sollte ich mich auf die 2025 konzentrieren. Allerdings sind die 2024-Details wie die Online-Präsentationen für Geovisualisierung etc. ein Beispiel, was typisch für solche Veranstaltungen ist. 
+
+Die allgemeine Seite für Studieninteressierte ist auch genannt, aber die Frage ist nach Veranstaltungen, nicht Links. 
+
+Also die Hauptveranstaltungen sind die monatlichen Infoveranstaltungen (April und November 2025) und die jährlichen Studieninfotage im März, die Online-Präsentationen und Campusführungen umfassen. 
+
+Ich sollte die Antwort klar strukturieren, die genannten Termine nennen und die verschiedenen Formate wie online und vor Ort erwähnen. Vielleicht auch die Studienangebote wie Bachelor- und Masterprogramme erwähnen, wie in den Beispielen.
+</think>
+
+Die THWS bietet für Studieninteressierte folgende Informationsveranstaltungen an:  
+1. **Infoveranstaltungen** (beispielsweise am 16.04.2025 und 19.11.2025) im Präsenz-Modus am Campus Röntgenring.  
+2. **Studieninfotage** jährlich im März (z. B. 10.–14. März 2025):  
+   - Online-Präsentationen der Bachelorstudiengänge (wie Geovisualisierung, Vermessung und Geoinformatik) von Montag bis Donnerstag nachmittags.  
+   - Campusführungen am Freitag nachmittag vor Ort in Würzburg und Schweinfurt.  
+3. Themenschwerpunkte umfassen Studiengangsinhalte, berufliche Perspektiven sowie Praxisbeispiele aus Laboren. Teilnehmende können sich mit Studierenden, Professoren und Praktika austauschen.  
+Weitere Details finden sich auf der Seite [https://www.thws.de/studieninteressierte/](https://www.thws.de/studieninteressierte/).",0.95,0.85,0.95,0.9,0.95,0.85,0.95,0.95,0.95,0.85,0.95,0.92,0.95,0.85,0.95,0.95,0.95,0.95
+Kann ich mir den Campus auch vor Ort ansehen?,Für Studieninteressierte gibt es sowohl in Schweinfurt als auch in Würzburg Campusführungen. Für die Führungen ist eine Anmeldung erforderlich.,https://www.thws.de/studieninteressierte/studieninfotage/campusfuehrungen/,1.7052853107452393,"Ja, du kannst den Campus GEO in Würzburg am Röntgenring auch vor Ort besuchen. Die Anmeldung für eine Campusführung findest du auf der THWS-Website.",2.4623870849609375,"Nein, die Anmeldevorschriften besagen, dass das Schnupperstudium nur online stattfindet und keine persönliche Besichtigung des Campus möglich ist. Du findest hier unter https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/ deine Möglichkeit, in das Studierendenleben einzutauchen.",5.5701682567596436,"Ja, du kannst dich auch persönlich zum Campus GEO an der THWS in Würzburg anmelden und dabei einen Einblick in die verschiedenen Hörsäle und Labore erhältst. Dies geschieht durch Campusführungen, die von Studierenden angeboten werden und für eine begrenzte Zeit eigens für dich geplant sind. Dazu kannst du sich auf unserer Webseite (<https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/>) anmelden. Wir freuen uns auf deinen Besuch!",15.334387302398682,"Ja, ihr könnt euch den Campus GEO in Würzburg am Röntgenring vor Ort ansehen. Es gibt die Möglichkeit, eine Campusführung mit Studierenden zu besuchen, um einen Einblick in verschiedene Hörsäle und Labore der Photogrammetrie, Geoinformationssysteme und Instrumentenkunde zu erhalten. Details zur Anmeldung findet ihr auf der angegebenen Webseite: https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/
+
+Für den Besuch des Designstudiums bietet sich die Teilnahme an einem Livestream oder einer kleinen Open-Air-Präsenzausstellung im Innenhof am 23.07. an, bei der die Arbeiten der Bachelor- und Masterabsolvent:innen gezeigt werden. Details zur Anmeldung findet ihr per E-Mail unter bergwerk.fg@fhws.de.
+
+Für den Campus Sanderheinrichsleitenweg gibt es ebenfalls die Möglichkeit eines Besuchs zwischen dem 7. und 8. Februar 2025, weitere Informationen dazu sind vermutlich auf der entsprechenden Hochschulseite zu finden.
+
+Die Anfahrt ist mit öffentlichen Verkehrsmitteln möglich: Die Linie 114 fährt in der Nähe des Sportzentrums und die Linie 10 hält an der Haltestelle Äußeres Hubland, welche nur einen kurzen Fußweg entfernt liegt.",10.114551782608032,"Ja, Sie können sich den Campus GEO in Würzburg persönlich ansehen. Es gibt campusweite Führungen durch Studierende, bei denen man die verschiedenen Hörsäle und Labore besichtigen kann. Weitere Informationen und die Möglichkeit zur Anmeldung finden Sie auf der THWS-Website unter https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/. Bitte beachten Sie auch den Besuchtermine und stellen Sie sicher, dass Sie sich gegebenenfalls entsprechend für Führungen oder Präsenzausstellungen anmelden.",7.591499090194702,"Ja, du kannst dich im Rahmen von Schnupperstudien zur THWS-Campusführung durch das Studierendenleben einführen. Du findest mehr Informationen unter https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/.",10.583473920822144,"Ja, es gibt die Möglichkeit, den Campus GEO in Würzburg im Rahmen einer Führung kennenzulernen und auch eine Präsenzausstellung im Innenhof zu besuchen. Außerdem ist der Campus Sanderheinrichsleitenweg am 7.-8.2.25 zugänglich.",26.875638723373413,"<think>
+Okay, ich muss die Frage beantworten: ""Kann ich mir den Campus auch vor Ort ansehen?"" Basierend auf dem gegebenen Kontext.
+
+Zuerst suche ich im Text nach Informationen über Campus Besichtigungen oder Events. Sehe, dass es eine Campusführung von Studierenden gibt, die am Röntgenring ist. Es wird auch von einer Open-Air-Präsenzausstellung am 23.07. erwähnt, bei der Arbeiten gezeigt werden. Da muss man anmelden per E-Mail.
+
+Aber die Frage ist allgemein: kann man sich den Campus ansehen? Ja, es gibt Termine wie Campusführungen und das Bergwerk-Event, also Vor Ort Besichtigung ist möglich.
+
+Antwort sollte klar sein, dass ja, man kann den Campus besichtigen, beziehe mich auf die genannten Events.
+</think>
+
+Ja, du kannst dir den Campus GEO in Würzburg am Röntgenring vor Ort ansehen. Du hast die Möglichkeit, an einer Campusführung von Studierenden teilzunehmen oder dich der Open-Air-Präsenzausstellung zu beteiligen.",39.022818088531494,"<think>
+Okay, der User fragt, ob er sich den Campus auch vor Ort ansehen kann. Ich muss den gegebenen Kontext durchlesen und nach relevanten Informationen suchen.
+
+Im ersten Abschnitt steht was über den Campus GEO in Würzburg am Röntgenring. Da gibt's Campusführungen von Studierenden und Anmeldung über die Webseite. Das ist eindeutig ein Vor Ort Angebot.
+
+Weiter unten gibt es etwas über ein Präsenzbergwerk am 23.07., wo Arbeiten der Absolventen gezeigt werden. Da kann man teilnehmen, aber man muss sich anmelden und Test vorweisen. Also auch vor Ort.
+
+Außerdem erwähnt die Anreise mit Buslinien 114 und 10, Haltestelle Äußeres Hubland. Das deutet darauf hin, dass der Campus besuchbar ist.
+
+Die Antwort sollte bestätigen, dass Vor Ort Besichtigungen möglich sind, mit Hinweisen auf Campusführungen, das Präsenzbergwerk und die Anreise. Die genauen Termine und Anmeldungslinks sind im Kontext genannt, also darauf verweisen.
+</think>
+
+Ja, Sie können sich den Campus vor Ort ansehen. Es gibt Campusführungen von Studierenden, die Ihnen einen Einblick in Hörsäle und Labore geben. Zudem finden am 23.07. eine kleine Open-Air-Präsenzausstellung der Absolventenarbeiten statt (Anmeldung erforderlich). Die Anmeldung zur Campusführung finden Sie hier: [https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/](https://www.thws.de/studieninteressierte/schnupperstudium/campusfuehrungen-von-studierenden/). Für das Präsenzbergwerk buchen Sie ein Zeitfenster per E-Mail an bergwerk.fg@fhws.de. Teilnahme bedingt einen aktuellen negativen Test (max. 24 Stunden alt).",0.85,0.85,0.0,0.15,0.25,0.85,0.05,0.85,0.05,0.85,0.85,0.75,0.05,0.75,0.05,0.85,0.25,0.95
+Gibt es spezielle Angebote für Schülerinnen und Schüler?,"Ja, es gibt allgemeine Angbote wie ein Frühstudium in ausgewählten technischen Studiengängen oder Meet a Student angebote. Zudem gibt es Schnupperangebote wie den Girl's und Boy's Day. Termine findest du unter https://www.thws.de/studieninteressierte/veranstaltungen/",https://www.thws.de/studieninteressierte/schule-und-thws/schuelerinnen-und-schueler/,4.630495071411133,Die providedenen Informationen enthalten keine spezifischen Angebote für Schülerinnen und Schüler.,4.636312961578369,"Nein, es gibt keine speziellen Angebote für Schülerinnen und Schüler an der Virtuellen Hochschule Bayern. Allerdings besteht die Möglichkeit, sich im Rahmen von Schulungskursen und Präsenzzeiten zum Studium anzumelden.",4.734226942062378,"Ja, es gibt spezielle Angebote für Schülerinnen und Schüler an der Virtuellen Hochschule Bayern. Es kann bei den Veranstaltungen angegeben sein, ob sie nur Schülerinnen und Schüler betreffen oder auch Studierende. Um weitere Informationen zu erhalten, kann man sich jeweils auf die Angaben des einzelnen Angebots verlassen.",4.576303958892822,"Im gegebenen Kontext werden verschiedene universitäre Programme und Test-Kurse aufgeführt, die hauptsächlich an Studierende der Hochschule THWS gerichtet sind. Es gibt keine spezifischen Informationen über Angebote für Schülerinnen und Schüler in dem bereitgestellten Textabschnitt.
+
+Diese Frage kann ich leider nicht beantworten.",9.464051961898804,"Diese Frage kann ich leider nicht beantworten. Der gegebene Kontext enthält keine spezifische Information über Angebote für Schülerinnen und Schüler. Er beschreibt hauptsächlich Angebote und Kurse im Zusammenhang mit der THWS (Technische Hochschule Wildau und der Virtuellen Hochschule Bayern), die eher für Studierende bestimmt sind.",10.332366943359377,"Ja, es gibt spezielle Angebote für Schülerinnen und Schüler. Bei der Virtuellen Hochschule Bayern (VHB) werden beispielsweise Schülerangebote mit reduziertem Studienbeitrag angeboten, um den Eintritt in ein Studium zu erleichtern. Außerdem bieten einige Berufskollegs und berufliche Schulen speziell für Jugendliche zugeschnittene Bildungsmöglichkeiten an. Es ist empfehlenswert, sich direkt an die jeweilige Institution oder das zuständige Amt für schulische Angelegenheiten zu wenden, um weitere Informationen zu erhalten und eventuelle Fragen zu stellen.",9.105241298675535,Diese Frage kann ich leider nicht beantworten.,29.520784854888916,"<think>
+Okay, ich muss die Frage beantworten: ""Gibt es spezielle Angebote für Schülerinnen und Schüler?"" Basierend auf dem gegebenen Kontext.
+
+Zuerst überfliege ich den Kontext. Er listet verschiedene Angebote unter ""Sonstige Angebote"", darunter Schulungen, Stipendienberatung, Kursvorlagen und Test-Kurse. Es gibt auch Beiträge von der Virtuellen Hochschule Bayern, die diverse Kurse anbietet.
+
+Dann sehe ich, dass die meisten Angebote wie Schulungen, Stipendienberatung oder Kurse offensichtlich für Studierende oder Mitarbeiter der THWS gedacht sind. Da Schülerinnen und Schüler normalerweise nicht im Hochschulbereich sind, sondern in der Schule, fehlen hier spezifische Programme für sie.
+
+Außerdem finde ich keine Einträge wie Schulprojekte, Workshops oder Stipendien, die direkt an Schüler gerichtet wären. Die vorhandenen Links beziehen sich auf Angebote der Virtuellen Hochschule Bayern, die vermutlich für Studierende gedacht sind.
+
+Also gibt es im Kontext keine speziellen Angebote für Schülerinnen und Schüler.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",37.03942584991455,"<think>
+Okay, ich muss die Frage beantworten, ob es spezielle Angebote für Schülerinnen und Schüler an der THWS gibt. Zuerst schaue ich mir den gegebenen Kontext an. Der Kontext listet verschiedene Foren und Kurse auf, wie zum Beispiel im Bereich ""Sonstige Angebote"" Schulungen, Stipendienberatung und Test-Kurse. Unter den Test-Kursen sind Einträge wie BEST-FIT, LearnFab_Personalmanagement und Logistik. Außerdem wird erwähnt, dass einige Angebote der Virtuellen Hochschule Bayern zugehörig sind, wie der Kurs mit COURSEID 18112.
+
+Die Frage zielt auf Angebote für Schüler, also Schüler vor dem Hochschulstudium. Im Kontext sehe ich keine expliziten Erwähnungen von Schulprogrammen, Austauschprojekten oder Workshops für Schüler. Die genannten Kurse wie E-Commerce oder Logistik scheinen auf Studierende zugeschnitten zu sein. Der Teil über den Interkulturellen Führerschein könnte eventuell relevant sein, aber im Kontext steht nicht, dass Schüler daran teilnehmen können. Die ProPereTHWS und Promotionsförderung sind für Promovierende. Die THWS Business School Module sind ebenfalls für Studierende gedacht. 
+
+Da im gegebenen Text keine spezifischen Angebote für Schüler erwähnt werden, sollte die Antwort verneinen. Vielleicht gibt es solche Programme, die nicht im Kontext enthalten sind, aber aufgrund der vorliegenden Informationen kann ich nicht bestätigen. Also antworte ich entsprechend.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",0.95,0.1,0.95,0.35,0.25,0.85,0.0,0.25,0.95,0.25,0.0,0.65,0.95,0.05,0.05,0.0,0.0,0.0
+Ich habe eine Berufsausbildung und arbeite seit drei Jahren – kann ich an der THWS studieren?,"Ja, wenn Ausbildung und Berufspraxis fachlich zum gewünschten Studiengang passen und du ein Probestudium erfolgreich absolvierst sowie ein Beratungsgespräch führst, kannst du den fachgebundenen Hochschulzugang erhalten.",https://www.thws.de/studieninteressierte/beruflich-qualifizierte/,4.960085153579712,"Ja, die THWS bietet verschiedene Studiengänge an, die auch für Berufstätige geeignet sind. Informationen zu den Zulassungsvoraussetzungen und den Bewerbungsabläufen findest du auf der THWS-Website.",5.709350824356079,"Du kannst an der THWS studieren, wenn du die Voraussetzungen für die jeweilige Ausbildungsrichtung erfüllst. Es ist möglich, dass deine vorhandene Berufsausbildung und dein aktuelles Arbeitsverhältnis im Rahmen eines Dualen Studiums in Verbindung mit dem Unternehmen oder der Fachhochschule zusammengehen kann. Hierfür müssen die notwendigen Voraussetzungen für das Duales Studium erfüllt sein. Weitere Informationen findest du unter: https://www.thws.de/studienangebote/duales-studium/.",4.078474044799805,"Ja, du kannst als Berufsperson mit praktischer Erfahrung an der THWS studieren. Die meisten Studiengänge bieten Duales Studium an, das dich während der Ausbildungszeit in deinem Betrieb unterstützt und die Inhalte des Studiums auf deine Praxis einbringt. Um zu bewerben, muss du dich über unsere Online-Bewerbungssite (<https://go.thws.de/apply/>) zurechtnavigieren und die Bewerbungsfristen beachten. Wenn du weitere Fragen zum Studium oder der Wahl des passenden Studiengangs hast, helfen unsere Studienfachberatung dich weiter.",8.009185075759888,"Derzeit sind die Studiengänge der THWS nicht berufsbegleitend konzipiert. Es gibt jedoch die Möglichkeit eines dualen Studiums, das eine Kombination aus Berufsausbildung und Studium ermöglichen könnte. Du solltest die spezifischen Zulassungsanforderungen für den gewünschten Studiengang überprüfen, indem du dich an die allgemeinen Informationen zur Bewerbung auf der THWS-Website orientierst. Wenn du weitere Fragen hast oder Unterstützung bei der Wahl des richtigen Studiengangs benötigst, kann dir die Studienfachberatung gerne weiterhelfen.",10.593389749526978,"Die Möglichkeit eines berufsbegleitenden Studiums ist im gegebenen Kontext für die genannten Studiengänge nicht vorgesehen. Jedoch gibt es die Möglichkeit des Dualen Studiums, was ein kombiniertes Praxis- und Theorie-Studium sein kann. Es wäre ratsam, sich näher mit dem Begriff ""Duales Studium"" auseinanderzusetzen oder direkt bei der THWS zu erfragen, ob das gewünschte Studienprogramm diese Option anbietet.",9.130114078521729,"Ja, es ist möglich, dass du an der THWS studieren kannst. Du kannst die Möglichkeit des Dualen Studiums wählen, um deine berufliche Ausbildung und das Studium gleichzeitig abzuschließen. Du musst jedoch die spezifischen Zulassungsvoraussetzungen für den gewählten Studiengang erfüllen. Bitte prüfe die Allgemeine Informationen zur Bewerbung auf der THWS-Website, um weitere Details zu finden.",11.851701259613035,"Diese Frage kann ich leider nicht beantworten. Der Kontext liefert keine Informationen darüber, ob eine Berufsausbildung und Berufserfahrung als Zugangsvoraussetzung anerkannt werden. Es wird lediglich auf die ""Allgemeine Informationen zur Bewerbung"" verwiesen, um die Zulassungsvoraussetzungen zu prüfen.",45.704928159713745,"<think>
+Okay, ich soll die Frage beantworten: ""Ich habe eine Berufsausbildung und arbeite seit drei Jahren – kann ich an der THWS studieren?"" Basierend auf dem gegebenen Kontext.
+
+Zuerst lese ich den Context sorgfältig durch. Hierbei suche ich nach Informationen, die sich auf Studienmöglichkeiten für Personen mit Berufserfahrung beziehen oder auf berufsbegleitende Studiengänge. 
+
+In den Textabschnitten sehe ich, dass es keine berufsbegleitenden Studiengänge gibt: ""Sind die Studiengänge auch berufsbegleitend studierbar? Nein, dies ist leider in allen drei Studiengängen derzeit nicht vorgesehen."" 
+
+Doch wird erwähnt, dass es das Duales Studium gibt. Das Dual Studium bedeutet normalerweise eine Kombination aus theoretischem und praktischem Unterricht, oft im Zusammenhang mit einem Arbeitsplatz. Also könnte der Betreffende die Möglichkeit haben, ein Duales Studium zu beginnen.
+
+Weiterhin sind Zulassungs­voraussetzungen erwähnt: ""Die Zulassungsvoraussetzungen sind unterschiedlich."" Das bedeutet, dass jeder Fall individuell betrachtet wird und es wahrscheinlich nicht automatisch genehmigt ist, sondern eine Bewerbung mit den entsprechenden Unterlagen erforderlich ist.
+
+Der Bewerbungsprozess erfolgt online über die angegebene URL. Da der Betreffende bereits Berufserfahrung hat, könnte das in seiner Bewerbung einen Vorteil darstellen, je nach Studiengang.
+
+Zusammengefasst: Ob er studieren kann, hängt von den Zulassungs­voraussetzungen ab. Er sollte die Allgemeinen Informationen zur Bewerbung lesen und sich online bewerben.
+</think>
+
+Ja, es ist möglich, an der THWS zu studieren, auch wenn Sie eine Berufsausbildung haben und beruflich tätig sind. Die Studiengänge sind zwar nicht berufsbegleitend gestaltet, es gibt jedoch die Möglichkeit eines Dualen Studiums. Um Näheres über Zulassungs­voraussetzungen zu erfahren, sollten Sie die Allgemeinen Informationen zur Bewerbung konsultieren und sich online über [https://go.thws.de/apply/](https://go.thws.de/apply/) bewerben.",56.69969201087952,"<think>
+Okay, der User fragt, ob er an der THWS studieren kann, obwohl er eine Berufsausbildung und drei Jahre Berufserfahrung hat. Zuerst muss ich den gegebenen Kontext durchgehen. 
+
+Im Kontext steht, dass die Studiengänge nicht berufsbegleitend angeboten werden, zumindest derzeit nicht in den drei Studiengängen. Aber es wird auf Duales Studium hingewiesen. Das Duale Studium ist oft für Berufsbegannende gedacht, wo Studium und Praxis kombiniert werden. Vielleicht ist das eine Option für den User.
+
+Außerdem gibt es Hinweise auf Zulassungsbedingungen, die je nach Studiengang variieren. Der User soll sich die Allgemeinen Bewerbungsinfos ansehen. Da er eine Ausbildung hat, könnte es sein, dass er über den Hochschulzugangsbereich kommt, z.B. Fachhochschulreife oder vergleichbare Qualifikationen. 
+
+Die Frage ist, ob seine Berufsausbildung als Zulassungsberechtigung akzeptiert wird. In Deutschland sind Berufsausbildungsabschlüsse oft hinreichend für Fachhochschulen, je nach Studiengang. Aber der Kontext sagt, dass die Zulassungsbedingungen variieren, also muss er die spezifischen Anforderungen des gewünschten Studiengangs prüfen. 
+
+Weiterhin wird auf die Online-Bewerbung hingewiesen. Der User sollte sich informieren, ob sein Fall (Berufsausbildung + Erfahrung) zulässig ist und evtl. ECTS-Punkte aus der beruflichen Tätigkeit anrechnen lassen kann. 
+
+Da die Antwort nicht direkt im Kontext steht, aber Hinweise auf Dualstudium und Zulassungsbedingungen gegeben sind, sollte die Antwort darauf hinweisen, dass berufsbegleitend nicht möglich ist, aber das Duale Studium eine Option sein könnte. Zudem sollte er sich die Zulassungsbedingungen des gewünschten Studiengangs ansehen und bei der Studienberatung fragen.
+</think>
+
+Die THWS bietet die Studiengänge aktuell nicht als berufsbegleitendes Programm an. jedoch besteht die Möglichkeit des **Dualen Studiums**, bei dem das Studium mit einer beruflichen Tätigkeit kombiniert wird. 
+
+Zur Zulassung sind die Voraussetzungen je nach Studiengang unterschiedlich. Da Sie eine Berufsausbildung absolviert haben, sollten Sie die **allgemeinen Zulassungsbedingungen** des gewünschten Studiengangs prüfen (z. B. Vorlage des Ausbildungsabschlusses oder weiterer Qualifikationen). 
+
+Wenden Sie sich zur klaren Beurteilung Ihrer persönlichen Voraussetzungen an die **Studienfachberatung** der THWS. Sie können sich über die bereitgestellte Online-Plattform bewerben, sofern Sie die formalen Kriterien erfüllen.",0.25,0.65,0.05,0.75,0.0,0.65,0.85,0.65,0.75,0.35,0.85,0.75,0.25,0.35,0.25,0.75,0.25,0.85
+Was ist ein Probestudium und wie lange dauert es?,"Das Probestudium dauert mindestens ein Jahr. Es dient dazu, deine Eignung für das gewünschte Studium nachzuweisen.",https://www.thws.de/studieninteressierte/beruflich-qualifizierte/,4.895141839981079,"Die Frage ist nicht im gegebenen Text enthalten, so dass ich diese nicht beantworten kann.",3.061875820159912,"Ein Probestudium ist eine kurze Übungs- oder Schülerausbildung, die an Hochschulen, Berufsfachschulen oder anderen Bildungseinrichtungen angeboten wird. Es dient in der Regel dem Prüfungsvorbereitung oder der Vorauswahl für eine Ausbildungsstätte. Die Dauer eines Probestudiums kann variieren und ist nicht unbedingt festgeschrieben. In den meisten Fällen dauert es mehrere Wochen bis ein paar Monate, bei einigen Berufsfeldern auch länger.",6.691797971725464,"Ein Probestudium ist keine Bezeichnung, die in Ihrem gegebenen Kontext verwendet wird. Es gibt in diesem Kontext lediglich eine Praxisphase (Praktikum) mit einer Dauer von 20 bis maximal 26 Wochen, die als Pflichtpraktikum gemäß APO § 14 Abs. 1 und 2 festgelegt ist. Dieser Teil des Studiums ist kein Probestudium im üblichen Sinne. Ein Probestudium kann allerdings ein Vorstudium oder eine Probezeit sein, die man vor Beginn eines regulären Studiums absolvieren muss, um zu überprüfen, ob das Studienfach oder die Universität dem Interesse entsprechen. Die Dauer eines solchen Probestudiums ist variabel und kann von wenigen Wochen bis zu einem Semester reichen.",8.628788232803345,"Ein Probestudium wird im gegebenen Kontext nicht erwähnt. Diese Frage kann ich leider nicht beantworten. Der Text beschreibt eine Praxisphase für den Bachelor-Studiengang E-Commerce, aber keine Informationen zu einem Probestudium oder dessen Dauer werden bereitgestellt.",9.98900318145752,"Der gegebene Kontext enthält keine explizite Information über das Konzept eines ""Probestudiums"" in Bezug auf den Studiengang E-Commerce an der THWS oder eine dauernde Periode, die als solches bezeichnet wird. Daher kann ich die spezifische Frage nach einem Probestudium und seiner Dauer nicht aus dem bereitgestellten Text beantworten.
+
+Diese Frage kann ich leider nicht beantworten.",9.596896171569824,"Ein Probestudium ist eine Form der akademischen Betriebsübung, bei der Studierende in Unternehmen oder anderen Organisationen praktische Erfahrungen sammeln können. Es dient dazu, das theoretische Wissen zu vertiefen und die berufliche Ausbildung zu unterstützen. Das Probestudium dauert in der Regel 20 bis maximal 26 Wochen und ist durch die Studien- und Prüfungsordnung für den Bachelor-Studiengang E-Commerce in der jeweils aktuellen Fassung vorgeschrieben.",9.21917486190796,Diese Frage kann ich leider nicht beantworten.,27.279826879501343,"<think>
+Okay, ich muss die Frage ""Was ist ein Probestudium und wie lange dauert es?"" beantworten, basierend auf dem gegebenen Kontext. Zuerst lese ich den Text sorgfältig durch, um nach relevanten Informationen zu suchen.
+
+Der Kontext beschäftigt sich mit Praktikumsregeln, Sozialversicherungsfreiheit und Genehmigungsvoraussetzungen für ein Studium. Er erwähnt, dass die Praxisphase zwischen 20 bis maximal 26 Wochen dauert und eine Sozialversicherungsfreie Periode ist, falls bestimmte Bedingungen erfüllt werden.
+
+Doch nirgendwo im Text wird das Wort ""Probestudium"" oder ein ähnlicher Begriff erwähnt. Es handelt sich also um ein Thema, das nicht im gegebenen Material abgedeckt wird. Da ich keine Informationen dazu habe, muss ich klären, dass ich die Frage nicht beantworten kann.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",37.342583894729614,"<think>
+Okay, ich muss die Frage ""Was ist ein Probestudium und wie lange dauert es?"" beantworten, basierend auf dem gegebenen Kontext. 
+
+Zuerst lese ich mir den Kontext nochmal durch. Der Kontext beinhaltet Informationen über die Praxisphase im Bachelor-Studiengang E-Commerce, Sozialversicherungen, Genehmigungen und Prüfungsformen. Es gibt Punkte über Dauer der Praktikum (20 bis 26 Wochen), Versicherungsfragen, Genehmigungsvermerke und Prüfungsarten wie schriftliche Prüfungen von 90 Minuten.
+
+Nun suche ich nach Begriffen, die mit ""Probestudium"" zusammenhängen. ""Probestudium"" bezieht sich normalerweise auf die Zeit, in der Studierende verschiedene Studiengänge testen können, ohne sich binden zu müssen. Aber im gegebenen Kontext ist das nicht erwähnt. Alle Punkte sprechen von Praxisphase, Versicherungen, Prüfungen, aber nirgends steht etwas über ein Probestudium. 
+
+Es gibt keine Erwähnung von Probestudium in der Beschreibung der Lehrveranstaltungen oder den Bestimmungen zur Praxisphase. Die genannten Dauer von 20-26 Wochen bezieht sich auf die Praxisphase, nicht auf ein Probestudium. Die Frage nach dem Probestudium und seiner Dauer kann also nicht mit dem gegebenen Kontext beantwortet werden. 
+
+Daher muss ich antworten, dass ich die Frage nicht beantworten kann.
+</think>
+
+Diese Frage kann ich leider nicht beantworten.",0.75,0.05,0.75,0.65,0.65,0.65,0.75,0.05,0.95,0.15,0.85,0.35,0.85,0.0,0.65,0.0,0.0,0.0
+Gibt es Vorbereitungskurse für den Studienstart?,"Ja es Mathematik, Physik und Englischkurse.",https://www.thws.de/weiterbildung/weiterbildungen/vorbereitungskurse/,1.81148099899292,"Die Angabe in dem Text besagt, dass keine Vorbereitungskurse für den Studienstart angeboten werden.",4.36870002746582,"Nein, es gibt keine Vorbereitungskurse für den Studienstart an der Technischen Hochschule Würzburg-Schweinfurt. Die offizielle Informationen und Regeln finden Sie in den Studienplanen oder im Studierendenserviceportal (mai.thws.de/en).",3.739500999450683,"Ja, es gibt keine Vorbereitungskurse für den Studienstart. Die THWS bietet keine Vorbereitungslehrgänge oder alte Prüfungen als Selbsttests an.",5.871868848800659,"Es gibt keine Vorbereitungskurse für den Studienstart an der Hochschule THWS. Die Informationen aus dem Kontext machen deutlich, dass keine speziellen Vorlesungen oder Präparationskurse vor dem Studium angeboten werden und es auch nicht möglich ist, ältere Prüfungsunterlagen zur Selbstprüfung zu erhalten.",7.297706127166748,Es werden keine Vorbereitungskurse für den Studienbeginn angeboten. Die Hochschule THWS bietet auch keine älteren Exams für selbstständiges Lernen zur Verfügung.,7.313080787658691,"Nein, es gibt keine Vorbereitungskurse für den Studienstart bei der THWS. Du musst selbstverantwortlich deine Prüfungen und Leistungen vorbereiten. Wenn du möchtest, kannst du dich an die Programme der Studentenvertretung wenden, um Hilfe in Bezug auf das Studium zu erhalten.",8.19345211982727,"Nein, es gibt keine Vorbereitungskurse für eine Prüfung und auch keine älteren Prüfungen zum Selbsttest.",27.637337684631348,"<think>
+Okay, ich muss die Frage beantworten: ""Gibt es Vorbereitungskurse für den Studienstart?"" Dazu habe ich den gegebenen Kontext zu analysieren. 
+
+Zuerst lese ich durch, was im Kontext steht. Da sind verschiedene Punkte aufgeführt, unter anderem etwas über Prüfungen und Portfolioarbeiten. Einer der Punkt sagt: ""No prep-courses for an exam; we do not provide older exams for self-tests."" Das bedeutet, dass es keine Vorbereitungskurse gibt, die von der Hochschule angeboten werden. 
+
+Ich muss michergebnis sicherstellen, dass ich den Kontext korrekt verstehe. Die genaue Aussage ist klar: Keine Vorbereitungs-kurse und keine alten Prüfungen für Selbsttests. Also, wenn jemand fragt, ob es Vorbereitungskurse gibt, lautet die Antwort nein.
+
+Ich sollte auch sicherstellen, dass ich die Frage auf Deutsch beantworte und mich an das Format halte: klar, präzise und ohne unnötige Details. Da der Kontext eindeutig ist, bin ich mir sicher, dass diese Information korrekt ist.
+</think>
+
+Nein, es gibt keine Vorbereitungskurse für den Studienstart.",48.18040609359741,"<think>
+Okay, ich muss die Frage beantworten, ob es Vorbereitungskurse für den Studienstart an der THWS gibt. Lass ich mir den gegebenen Kontext durch.
+
+Im Kontext steht unter anderem: ""No prep-courses for an exam; we do not provide older exams for self-tests"". Hier wird ausdrücklich gesagt, dass es keine Vorbereitungen für Prüfungen gibt. Der Ausdruck ""prep-courses"" bezieht sich auf Vorbereitungskurse. Also würde das bedeuten, dass die THWS solche Kurse nicht anbietet. 
+
+Aber die Frage ist allgemeiner: ""Gibt es Vorbereitungskurse für den Studienstart?"" Vielleicht meint der Fragesteller Kurse, die vor dem Studium helfen, sich fit zu machen? Der Kontext erwähnt jedoch keine solchen Angebote. Es steht auch etwas über Bewerbungsphase und CampusPortal, aber keine Infos über Studienstart-Vorbereitungskurse. 
+
+Es gibt auch Hinweise auf die offiziellen Regelungen im SPO/APO und dass die THWS kein alte Prüfungen zur Selbstkontrolle anbietet. Aber das bezieht sich auf Prüfungen während des Studiums, nicht auf Vor Studium Kurse. 
+
+Vielleicht sollte ich prüfen, ob im Kontext etwas anderes steht. Im Teil mit ""Studienangebote"" wird auf das CampusPortal verwiesen, aber da ist keine genauer Info über Vorbereitungskurse. Es wird erwähnt, dass für das Sommersemester 2025 das CampusPortal benutzt werden soll, aber keine Vorbereitungen erwähnt. 
+
+Also, der Kontext sagt, es gibt keine Vorbereitungskurse für Prüfungen. Die Frage ist etwas anders, aber es könnte dasselbe sein. Vielleicht meint der Fragesteller Kurse, die vor Studienstart gehalten werden, um auf das Studium vorzubereiten. 
+
+Da im Kontext explizit ""No prep-courses for an exam"" steht, könnte das implizieren, dass generell keine solchen Angebote gemacht werden. Oder könnte es speziell für Prüfungen sein? 
+
+Wenn ich sicher antworten kann, basierend auf dem gegebenen Text, dann ja: Es gibt keine Vorbereitungskurse. Die Antwort sollte also negativ lauten.
+</think>
+
+Nein, die Technische Hochschule Würzburg-Schweinfurt (THWS) bietet keine Vorbereitungskurse für Prüfungen an. Dies ist ausdrücklich im Kontext erwähnt: „No prep-courses for an exam“. Somit gibt es keine speziellen Vorabinhalte oder Kurse, die dem Studienstart vorausgehen. Für weitere Fragen zur Studienanmeldung oder Regelungen sollte das CampusPortal oder die offiziellen Studienpläne (SPO/APO) konsultiert werden.",0.75,0.0,0.65,0.05,0.65,0.05,0.65,0.05,0.75,0.05,0.75,0.05,0.75,0.05,0.65,0.0,0.75,0.95
