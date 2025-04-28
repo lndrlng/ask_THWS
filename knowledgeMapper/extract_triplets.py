@@ -2,6 +2,8 @@
 import os
 import time
 from tqdm import tqdm
+import requests
+
 from coref import resolve_coreferences
 from triplet_utils import (
     load_json, save_json, enrich_with_ner, parse_triplets,
@@ -18,20 +20,7 @@ FILTERED_OUTPUT_FILE = "./../data/studiengaenge_triplets_filtered.json"
 MODEL_PATH = "D:/LLMS/mistral-7b-instruct-v0.2.Q6_K.gguf"
 CHUNK_GROUP_SIZE = 2
 MAX_TOKENS = 1024
-
-print("🚀 Loading models...")
-llm = Llama(
-    model_path=MODEL_PATH,
-    n_ctx=2048,
-    n_gpu_layers=30,
-    n_threads=8,
-    n_batch=128,
-    low_vram=True,
-    main_gpu=0,
-    verbose=False
-)
-nlp = spacy.load("de_core_news_md")
-print("✅ Models loaded.")
+OLLAMA_MODEL = "gemma:7b"
 
 # === Rule-based SpaCy Triplet Heuristic ===
 def spacy_extract_triplets(text):
@@ -54,45 +43,28 @@ def spacy_extract_triplets(text):
 def refine_with_llm(text: str, meta: dict):
     prompt_header = """Extrahiere Tripel im Format (Subjekt, Prädikat, Objekt).
 Beispiel:
-Prof. Kiesewetter startet als Stiftungsprofessorin für das TTZ Bad Kissingen.
-(Prof. Kiesewetter, ist, Stiftungsprofessorin)
-(Prof. Kiesewetter, arbeitet an, TTZ Bad Kissingen)
-"""
-    prompt_footer = "\n\nTripel:"
-    max_input_tokens = 2048 - MAX_TOKENS
-    max_input_chars = max_input_tokens * 3
-    title_hint = f"Titel: {meta.get('title', '')}\n" if 'title' in meta else ""
+(Das Projekt, untersucht, ethische Fragen)
+(Die THWS, führt durch, Forschungsinitiative)
 
-    doc = nlp(text)
-    char_total = 0
-    sents = []
-    for sent in doc.sents:
-        sent_len = len(sent.text)
-        if char_total + sent_len > max_input_chars:
-            break
-        sents.append(sent.text)
-        char_total += sent_len
-    truncated_text = " ".join(sents)
-    final_prompt = f"{prompt_header}{title_hint}{truncated_text}{prompt_footer}"
+Text:
+{text}
 
-    try:
-        output = llm(final_prompt, max_tokens=MAX_TOKENS, stop=["\n\n", "###"])
-        return output["choices"][0]["text"].strip() if "choices" in output else ""
-    except Exception as e:
-        print(f"❌ LLM refinement failed: {e}")
+Tripel:"""
+
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+    )
+
+    answer = response.json().get("response")
+    if answer:
+        return answer.strip()
+    else:
+        print("\n⚠️ Keine Antwort vom Modell.")
+        print("Raw response:", response.json())
         return ""
 
-# === NER Entity Validation ===
-def is_valid_ner_entity(e: str) -> bool:
-    if len(e) < 3 or len(e) > 100:
-        return False
-    if any(e.lower().startswith(x) for x in ("for example", "please", "known for", "such as", "who", "with whom")):
-        return False
-    if not any(char.isalpha() for char in e):
-        return False
-    return True
-
-# === Pipeline ===
+# === Load files ===
 chunks = load_json(INPUT_FILE)
 processed_ids = set(load_json(PROGRESS_FILE)) if os.path.exists(PROGRESS_FILE) else set()
 triplets_all = load_json(OUTPUT_FILE) if os.path.exists(OUTPUT_FILE) else []
@@ -158,9 +130,10 @@ for i in tqdm(range(0, len(chunks), CHUNK_GROUP_SIZE), desc="🔍 Extracting", u
     save_json(triplets_all, OUTPUT_FILE)
     save_json(list(processed_ids), PROGRESS_FILE)
 
-# === Optional Filtering Step ===
-triplets_filtered = [t for t in triplets_all if t["confidence"] >= 0.6 and t["origin"] != "ner"]
-save_json(triplets_filtered, FILTERED_OUTPUT_FILE)
+    except Exception as e:
+        print(f"❌ Error in group {group_ids}: {e}")
+        continue
 
-end = time.time()
-print(f"\n✅ Done. {len(triplets_all)} triplets saved in {end-start:.2f}s. Filtered: {len(triplets_filtered)}")
+duration = time.time() - start_time
+print(f"\n✅ Done. {len(triplets_all)} triplets extracted in {duration:.2f} seconds.")
+
