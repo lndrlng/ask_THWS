@@ -1,4 +1,3 @@
-
 import json
 import logging
 from tqdm import tqdm
@@ -18,13 +17,15 @@ driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 def create_constraints(tx):
     tx.run("CREATE CONSTRAINT IF NOT EXISTS FOR (e:Entity) REQUIRE e.name IS UNIQUE")
 
-# Triplet insertion with confidence and origin
+# Triplet insertion with dynamic relationship type
 def add_triplet(tx, subj, subj_type, rel, obj, obj_type, confidence, origin, metadata):
-    tx.run(f"""
+    date_updated = metadata.get("date_updated")
+    if date_updated is None:
+        date_updated = ""
+    query = f"""
         MERGE (a:{subj_type} {{name: $subj}})
         MERGE (b:{obj_type} {{name: $obj}})
-        MERGE (a)-[r:RELATION {{
-            type: $rel,
+        MERGE (a)-[r:`{rel}` {{
             confidence: $confidence,
             origin: $origin,
             title: $title,
@@ -33,18 +34,21 @@ def add_triplet(tx, subj, subj_type, rel, obj, obj_type, confidence, origin, met
             lang: $lang,
             date_updated: $date_updated
         }}]->(b)
-    """, subj=subj, obj=obj, rel=rel, confidence=confidence, origin=origin,
-        title=metadata.get("title", ""),
-        source=metadata.get("source", ""),
-        doc_type=metadata.get("type", ""),
-        lang=metadata.get("lang", ""),
-        date_updated=metadata.get("date_updated", "")
-    )
+    """
+    tx.run(query,
+           subj=subj, obj=obj, confidence=confidence, origin=origin,
+           title=metadata.get("title", ""),
+           source=metadata.get("source", ""),
+           doc_type=metadata.get("type", ""),
+           lang=metadata.get("lang", ""),
+           date_updated=date_updated
+           )
 
 with driver.session() as session:
     session.execute_write(create_constraints)
 
-with open("./../data/KgData/Triplets_labeled_final.json", "r", encoding="utf-8") as f:
+# ✅ Load triplets from your JSON file
+with open("./../data/studiengaenge_triplets.json", "r", encoding="utf-8") as f:
     triplets = json.load(f)
 
 logging.info(f"Loaded {len(triplets)} labeled triplets for Neo4j upload.")

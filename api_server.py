@@ -1,29 +1,31 @@
-import torch
 import time
-from fastapi import FastAPI
-from pydantic import BaseModel
-from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
+import torch
 import requests
-import uvicorn
 import warnings
 import subprocess
 import atexit
 import os
 import signal
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+from fastapi import FastAPI
+from pydantic import BaseModel
+from neo4j import GraphDatabase
+from qdrant_client import QdrantClient
+from sentence_transformers import SentenceTransformer
+import uvicorn
 
 # --- Config ---
-COLLECTION_NAME = "thws_data2_chunks"
+NEO4J_URI = "bolt://localhost:7687"
+NEO4J_USER = "neo4j"
+NEO4J_PASSWORD = "kg123lol!1"
 QDRANT_URL = "http://localhost:6333"
+COLLECTION_NAME = "thws_data2_chunks"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-# OLLAMA_MODEL = "gemma:7b"
-# OLLAMA_MODEL = "zephyr"
 OLLAMA_MODEL = "mixtral"
 TOP_K = 5
 
-# --- Load Embedding Model ---
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+# --- Device Setup ---
 if torch.cuda.is_available():
     device = "cuda"
 elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
@@ -31,18 +33,20 @@ elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
 else:
     device = "cpu"
 print(f"🔥 Using device: {device}")
+
 embedder = SentenceTransformer(EMBED_MODEL_NAME, device=device)
 
-# --- Init Qdrant ---
-client = QdrantClient(url=QDRANT_URL)
+# --- Clients ---
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+qdrant_client = QdrantClient(url=QDRANT_URL)
 
-# --- Launch Ollama Server ---
+# --- Ollama server startup ---
 ollama_process = subprocess.Popen(
-    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    ["ollama", "serve"],
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL
 )
 
-
-# Ensure Ollama server stops when FastAPI stops
 def shutdown_ollama():
     print("🛑 Stopping Ollama server...")
     if os.name == "nt":
@@ -50,86 +54,101 @@ def shutdown_ollama():
     else:
         os.killpg(os.getpgid(ollama_process.pid), signal.SIGTERM)
 
-
 atexit.register(shutdown_ollama)
 
-# --- FastAPI ---
+# --- FastAPI app ---
 app = FastAPI()
-
 
 class Question(BaseModel):
     query: str
 
+# --- Retrieval functions ---
+def search_graph_neo4j(query_text, top_k=TOP_K):
+    with driver.session() as session:
+        result = session.run("""
+            MATCH (n)
+            WHERE any(prop IN keys(n) WHERE toLower(n[prop]) CONTAINS toLower($query))
+            RETURN n.name AS name, labels(n) AS labels
+            LIMIT $top_k
+        """, query=query_text, top_k=top_k)
 
-@app.get("/metadata")
-def get_metadata():
-    commit_hash = subprocess.getoutput("git rev-parse HEAD")
-    return {
-        "model": OLLAMA_MODEL,
-        "embedding_model": EMBED_MODEL_NAME,
-        "commit_hash": commit_hash,
-        "device": device,
-    }
+        chunks = []
+        for record in result:
+            chunks.append(f"{', '.join(record['labels'])}: {record['name']}")
+    return chunks
 
-
-@app.post("/ask")
-def ask_question(data: Question):
-    start_time = time.time()
-    query = data.query
-
-    # --- Embed Query ---
-    query_vec = embedder.encode(query, device=device)
-
-    # --- Search Qdrant ---
-    search_results = client.search(
+def search_qdrant(query_text, top_k=TOP_K):
+    query_vec = embedder.encode(query_text, device=device)
+    search_results = qdrant_client.search(
         collection_name=COLLECTION_NAME,
         query_vector=query_vec.tolist(),
-        limit=TOP_K,
+        limit=top_k,
         with_payload=True,
     )
-
-    # --- Deduplicate by Source ---
-    unique_chunks = {}
+    chunks = []
     for res in search_results:
-        src = res.payload["source"]
-        if src not in unique_chunks:
-            unique_chunks[src] = res
+        chunks.append(res.payload.get("text", ""))
+    return chunks
 
-    context = "\n\n".join(res.payload["text"] for res in unique_chunks.values())
+def build_prompt(graph_chunks, vdb_chunks, query_text):
+    graph_context = "\n".join(graph_chunks) if graph_chunks else "Keine Graph-Informationen gefunden."
+    vdb_context = "\n".join(vdb_chunks) if vdb_chunks else "Keine Text-Informationen gefunden."
 
-    # --- Prompt ---
     prompt = f"""
 Du bist ein hilfreicher Assistent der Hochschule THWS.
-Beantworte die folgende Frage basierend auf dem gegebenen Kontext.
-Antworte ausschließlich auf Deutsch und fasse dich klar und präzise.
-Wenn du es nicht weißt, sag "Ich weiß es leider nicht."
+Nutze die folgenden Informationen aus dem Wissensgraphen und aus Textdokumenten, um die Frage zu beantworten.
+Wenn du keine ausreichenden Informationen hast, sage "Ich weiß es leider nicht."
 
-Kontext:
-{context}
+Graph-Kontext:
+{graph_context}
+
+Text-Kontext:
+{vdb_context}
 
 Frage:
-{query}
+{query_text}
 
 Antwort:
 """
+    return prompt
 
-    # --- Call Ollama ---
+def query_ollama(prompt):
     response = requests.post(
         "http://localhost:11434/api/generate",
         json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
     )
+    return response.json().get("response", "").strip()
 
-    answer = response.json().get("response", "").strip()
-    calc_time = round(time.time() - start_time, 2)
+# --- API Endpoints ---
+@app.post("/ask")
+def ask(data: Question):
+    start = time.time()
 
+    graph_chunks = search_graph_neo4j(data.query)
+    vdb_chunks = search_qdrant(data.query)
+
+    prompt = build_prompt(graph_chunks, vdb_chunks, data.query)
+    answer = query_ollama(prompt)
+
+    duration = round(time.time() - start, 2)
     return {
-        "question": query,
+        "question": data.query,
         "answer": answer,
-        "sources": list(unique_chunks.keys()),
-        "time_seconds": calc_time,
+        "graph_hits": graph_chunks,
+        "vdb_hits": vdb_chunks,
+        "duration_seconds": duration,
     }
 
+@app.get("/metadata")
+def metadata():
+    commit = subprocess.getoutput("git rev-parse HEAD")
+    return {
+        "embedding_model": EMBED_MODEL_NAME,
+        "llm_model": OLLAMA_MODEL,
+        "git_commit": commit,
+        "device": device
+    }
 
-# --- Run with: python api_server.py ---
+# --- Run if main ---
 if __name__ == "__main__":
-    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("graph_rag_combined:app", host="0.0.0.0", port=8000, reload=False)
