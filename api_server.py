@@ -65,16 +65,19 @@ class Question(BaseModel):
 # --- Graph Retrieval: Full-text index ---
 def search_graph_fulltext(query_text, top_k=TOP_K):
     with driver.session() as session:
-        result = session.run("""
-            CALL db.index.fulltext.queryNodes('entityIndex', $query)
+        cypher = """
+            CALL db.index.fulltext.queryNodes('entityIndex', $search_text)
             YIELD node, score
             RETURN node.name AS name, labels(node) AS labels, score
             ORDER BY score DESC
-            LIMIT $top_k
-        """, query=query_text)
+            LIMIT $limit
+        """
+        result = session.run(cypher, search_text=query_text, limit=top_k)
 
-        return [f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
-                for record in result]
+        return [
+            f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
+            for record in result
+        ]
 
 # --- Graph Retrieval: Embedding-based search ---
 def search_graph_by_embedding(query_text, top_k=TOP_K):
@@ -166,4 +169,4 @@ def metadata():
 
 # --- Run ---
 if __name__ == "__main__":
-    uvicorn.run("graph_rag_combined:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)

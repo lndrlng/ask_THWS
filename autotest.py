@@ -30,13 +30,16 @@ def get_metadata():
 
 # --- Write Header to Result File ---
 def write_header(f, metadata):
-    commit_link = f"[Version](/commit/{metadata['commit_hash']})"
+    commit_hash = metadata.get("commit_hash", metadata.get("git_commit", "unknown"))
+    commit_link = f"[Version](/commit/{commit_hash})"
     f.write(f"{commit_link}\n\n")
     f.write("# Automatischer Testlauf\n\n")
-    f.write(f"Modell: {metadata['model']}\n")
-    f.write(f"GPU/Device: {metadata['device']}\n")
+    f.write(f"Embedding-Modell: {metadata.get('embedding_model', 'unknown')}\n")
+    f.write(f"LLM-Modell: {metadata.get('llm_model', 'unknown')}\n")
+    f.write(f"GPU/Device: {metadata.get('device', 'unknown')}\n")
     f.write("Kein Cherry Picking, Antworten aus erstem Lauf\n\n")
     f.write("---\n")
+
 
 
 # --- Save Single Result Incrementally ---

@@ -12,7 +12,7 @@ langdetect==1.0.9
 pandas==2.2.3
 
 # Embedding
-sentence-transformers==4.0.2
+sentence-transformers==2.5.1
 tqdm==4.67.1
 qdrant-client==1.13.3
 
@@ -106,10 +106,12 @@ argcomplete~=3.5.3
 decli~=0.6.2
 questionary~=2.1.0
 six~=1.17.0
-tokenizers~=0.21.1
+transformers==4.39.3
+tokenizers
 safetensors~=0.5.3
 jsonpointer~=3.0.0
-transformers~=4.51.0
+
+
 Levenshtein~=0.27.1
 starlette~=0.46.1
 portalocker~=2.10.1
@@ -133,4 +135,4 @@ pyvis>=0.3.2
 # networkx is already in your list (networkx~=3.4.2) - ensure compatible version or update if needed
 # pandas is already in your list (pandas==2.2.3) - ensure compatible version or update if needed
 matplotlib>=3.7.0 # Often needed by pyvis/networkx backends
-seaborn>=0.13.0 # Often needed by pyvis/networkx backends
+seaborn>=0.13.0 # Often needed by pyvis/networkx backendstok
