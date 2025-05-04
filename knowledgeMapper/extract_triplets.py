@@ -1,26 +1,28 @@
-# === extract_triplets.py (final refined version) ===
+# === extract_triplets.py (Ollama version) ===
 import os
 import time
-from tqdm import tqdm
 import requests
-
+from tqdm import tqdm
 from coref import resolve_coreferences
 from triplet_utils import (
     load_json, save_json, enrich_with_ner, parse_triplets,
     generate_labeled_triplet_with_metadata, score_triplet
 )
 import spacy
-from llama_cpp import Llama
 
 # === CONFIG ===
 INPUT_FILE = "./../data/fiw_results_with_ids.json"
 OUTPUT_FILE = "./../data/studiengaenge_triplets.json"
 PROGRESS_FILE = "./../data/studiengaenge_progress.json"
 FILTERED_OUTPUT_FILE = "./../data/studiengaenge_triplets_filtered.json"
-MODEL_PATH = "D:/LLMS/mistral-7b-instruct-v0.2.Q6_K.gguf"
 CHUNK_GROUP_SIZE = 2
 MAX_TOKENS = 1024
-OLLAMA_MODEL = "gemma:7b"
+OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_MODEL = "mixtral"
+
+print("🚀 Loading models...")
+nlp = spacy.load("de_core_news_md")
+print("✅ Models loaded.")
 
 # === Rule-based SpaCy Triplet Heuristic ===
 def spacy_extract_triplets(text):
@@ -39,32 +41,57 @@ def spacy_extract_triplets(text):
             triplets.append((subj, pred, obj))
     return triplets
 
-# === LLM Triplet Refinement ===
+# === LLM Triplet Refinement using Ollama ===
 def refine_with_llm(text: str, meta: dict):
     prompt_header = """Extrahiere Tripel im Format (Subjekt, Prädikat, Objekt).
 Beispiel:
-(Das Projekt, untersucht, ethische Fragen)
-(Die THWS, führt durch, Forschungsinitiative)
+Prof. Kiesewetter startet als Stiftungsprofessorin für das TTZ Bad Kissingen.
+(Prof. Kiesewetter, ist, Stiftungsprofessorin)
+(Prof. Kiesewetter, arbeitet an, TTZ Bad Kissingen)
+"""
+    prompt_footer = "\n\nTripel:"
+    max_input_tokens = 2048 - MAX_TOKENS
+    max_input_chars = max_input_tokens * 3
+    title_hint = f"Titel: {meta.get('title', '')}\n" if 'title' in meta else ""
 
-Text:
-{text}
+    doc = nlp(text)
+    char_total = 0
+    sents = []
+    for sent in doc.sents:
+        sent_len = len(sent.text)
+        if char_total + sent_len > max_input_chars:
+            break
+        sents.append(sent.text)
+        char_total += sent_len
+    truncated_text = " ".join(sents)
+    final_prompt = f"{prompt_header}{title_hint}{truncated_text}{prompt_footer}"
 
-Tripel:"""
-
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
-    )
-
-    answer = response.json().get("response")
-    if answer:
-        return answer.strip()
-    else:
-        print("\n⚠️ Keine Antwort vom Modell.")
-        print("Raw response:", response.json())
+    try:
+        response = requests.post(OLLAMA_URL, json={
+            "model": OLLAMA_MODEL,
+            "prompt": final_prompt,
+            "stream": False
+        })
+        if response.status_code == 200:
+            return response.json().get("response", "").strip()
+        else:
+            print(f"❌ Ollama error: {response.status_code}, {response.text}")
+            return ""
+    except Exception as e:
+        print(f"❌ Ollama request failed: {e}")
         return ""
 
-# === Load files ===
+# === NER Entity Validation ===
+def is_valid_ner_entity(e: str) -> bool:
+    if len(e) < 3 or len(e) > 100:
+        return False
+    if any(e.lower().startswith(x) for x in ("for example", "please", "known for", "such as", "who", "with whom")):
+        return False
+    if not any(char.isalpha() for char in e):
+        return False
+    return True
+
+# === Pipeline ===
 chunks = load_json(INPUT_FILE)
 processed_ids = set(load_json(PROGRESS_FILE)) if os.path.exists(PROGRESS_FILE) else set()
 triplets_all = load_json(OUTPUT_FILE) if os.path.exists(OUTPUT_FILE) else []
@@ -130,10 +157,9 @@ for i in tqdm(range(0, len(chunks), CHUNK_GROUP_SIZE), desc="🔍 Extracting", u
     save_json(triplets_all, OUTPUT_FILE)
     save_json(list(processed_ids), PROGRESS_FILE)
 
-    except Exception as e:
-        print(f"❌ Error in group {group_ids}: {e}")
-        continue
+# === Optional Filtering Step ===
+triplets_filtered = [t for t in triplets_all if t["confidence"] >= 0.6 and t["origin"] != "ner"]
+save_json(triplets_filtered, FILTERED_OUTPUT_FILE)
 
-duration = time.time() - start_time
-print(f"\n✅ Done. {len(triplets_all)} triplets extracted in {duration:.2f} seconds.")
-
+end = time.time()
+print(f"\n✅ Done. {len(triplets_all)} triplets saved in {end-start:.2f}s. Filtered: {len(triplets_filtered)}")
