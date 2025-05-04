@@ -62,21 +62,34 @@ app = FastAPI()
 class Question(BaseModel):
     query: str
 
-# --- Retrieval functions ---
-def search_graph_neo4j(query_text, top_k=TOP_K):
+# --- Graph Retrieval: Full-text index ---
+def search_graph_fulltext(query_text, top_k=TOP_K):
     with driver.session() as session:
         result = session.run("""
-            MATCH (n)
-            WHERE any(prop IN keys(n) WHERE toLower(n[prop]) CONTAINS toLower($query))
-            RETURN n.name AS name, labels(n) AS labels
+            CALL db.index.fulltext.queryNodes('entityIndex', $query)
+            YIELD node, score
+            RETURN node.name AS name, labels(node) AS labels, score
+            ORDER BY score DESC
             LIMIT $top_k
-        """, query=query_text, top_k=top_k)
+        """, query=query_text)
 
-        chunks = []
-        for record in result:
-            chunks.append(f"{', '.join(record['labels'])}: {record['name']}")
-    return chunks
+        return [f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
+                for record in result]
 
+# --- Graph Retrieval: Embedding-based search ---
+def search_graph_by_embedding(query_text, top_k=TOP_K):
+    query_embedding = embedder.encode(query_text, device=device).tolist()
+    with driver.session() as session:
+        result = session.run("""
+            CALL db.index.vector.queryNodes('entityEmbeddingIndex', $top_k, $embedding)
+            YIELD node, score
+            RETURN node.name AS name, labels(node) AS labels, score
+        """, embedding=query_embedding, top_k=top_k)
+
+        return [f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
+                for record in result]
+
+# --- Vector DB Retrieval (Qdrant) ---
 def search_qdrant(query_text, top_k=TOP_K):
     query_vec = embedder.encode(query_text, device=device)
     search_results = qdrant_client.search(
@@ -85,11 +98,9 @@ def search_qdrant(query_text, top_k=TOP_K):
         limit=top_k,
         with_payload=True,
     )
-    chunks = []
-    for res in search_results:
-        chunks.append(res.payload.get("text", ""))
-    return chunks
+    return [res.payload.get("text", "") for res in search_results]
 
+# --- Prompt construction ---
 def build_prompt(graph_chunks, vdb_chunks, query_text):
     graph_context = "\n".join(graph_chunks) if graph_chunks else "Keine Graph-Informationen gefunden."
     vdb_context = "\n".join(vdb_chunks) if vdb_chunks else "Keine Text-Informationen gefunden."
@@ -112,6 +123,7 @@ Antwort:
 """
     return prompt
 
+# --- Ollama call ---
 def query_ollama(prompt):
     response = requests.post(
         "http://localhost:11434/api/generate",
@@ -124,7 +136,10 @@ def query_ollama(prompt):
 def ask(data: Question):
     start = time.time()
 
-    graph_chunks = search_graph_neo4j(data.query)
+    graph_chunks = list(set(
+        search_graph_fulltext(data.query) + search_graph_by_embedding(data.query)
+    ))
+
     vdb_chunks = search_qdrant(data.query)
 
     prompt = build_prompt(graph_chunks, vdb_chunks, data.query)
@@ -149,6 +164,6 @@ def metadata():
         "device": device
     }
 
-# --- Run if main ---
+# --- Run ---
 if __name__ == "__main__":
     uvicorn.run("graph_rag_combined:app", host="0.0.0.0", port=8000, reload=False)
