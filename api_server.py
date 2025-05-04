@@ -12,6 +12,8 @@ from neo4j import GraphDatabase
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
 import uvicorn
+from numpy import dot
+from numpy.linalg import norm
 
 # --- Config ---
 NEO4J_URI = "bolt://localhost:7687"
@@ -75,32 +77,63 @@ def search_graph_fulltext(query_text, top_k=TOP_K):
             LIMIT $limit
         """
         result = session.run(cypher, search_text=query_text, limit=top_k)
-
         return [
             f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
             for record in result
         ]
 
-
-# --- Graph Retrieval: Embedding-based search ---
+# --- Graph Retrieval: Node Embeddings ---
 def search_graph_by_embedding(query_text, top_k=TOP_K):
     query_embedding = embedder.encode(query_text, device=device).tolist()
+    labels = ["PER", "ORG", "PROGRAM"]
+    hits = []
+
     with driver.session() as session:
-        result = session.run(
-            """
-            CALL db.index.vector.queryNodes('entityEmbeddingIndex', $top_k, $embedding)
-            YIELD node, score
-            RETURN node.name AS name, labels(node) AS labels, score
-        """,
-            embedding=query_embedding,
-            top_k=top_k,
-        )
+        for label in labels:
+            index_name = f"entityEmbeddingIndex_{label}"
+            result = session.run("""
+                CALL db.index.vector.queryNodes($index_name, $top_k, $embedding)
+                YIELD node, score
+                RETURN node.name AS name, labels(node) AS labels, score
+            """, index_name=index_name, embedding=query_embedding, top_k=top_k)
+            hits.extend(result)
 
-        return [
-            f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
-            for record in result
-        ]
+    seen = set()
+    unique_hits = []
+    for record in hits:
+        key = (record['name'], tuple(record['labels']))
+        if key not in seen:
+            seen.add(key)
+            unique_hits.append(
+                f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
+            )
 
+    return unique_hits
+
+# --- Graph Retrieval: Relationship Embeddings ---
+def search_triplet_embeddings(query_text, top_k=TOP_K):
+    query_vec = embedder.encode(query_text, device=device).tolist()
+
+    with driver.session() as session:
+        result = session.run("""
+            MATCH (a)-[r]->(b)
+            WHERE r.triplet_embedding IS NOT NULL
+            RETURN r, a.name AS subj, type(r) AS rel, b.name AS obj, r.triplet_embedding AS emb
+        """)
+
+        scored = []
+        for record in result:
+            emb = record["emb"]
+            if not emb:
+                continue
+            sim = dot(query_vec, emb) / (norm(query_vec) * norm(emb) + 1e-5)
+            scored.append((
+                sim,
+                f"{record['subj']} -[{record['rel']}]-> {record['obj']} (Score: {sim:.2f})"
+            ))
+
+        top_matches = sorted(scored, key=lambda x: x[0], reverse=True)[:top_k]
+        return [x[1] for x in top_matches]
 
 # --- Vector DB Retrieval (Qdrant) ---
 def search_qdrant(query_text, top_k=TOP_K):
@@ -160,12 +193,13 @@ def query_ollama(prompt):
 def ask(data: Question):
     start = time.time()
 
-    graph_chunks = list(
-        set(search_graph_fulltext(data.query) + search_graph_by_embedding(data.query))
-    )
+    graph_chunks = list(set(
+        search_graph_fulltext(data.query)
+        + search_graph_by_embedding(data.query)
+        + search_triplet_embeddings(data.query)
+    ))
 
     vdb_chunks = search_qdrant(data.query)
-
     prompt = build_prompt(graph_chunks, vdb_chunks, data.query)
     answer = query_ollama(prompt)
 
@@ -187,6 +221,7 @@ def metadata():
         "llm_model": OLLAMA_MODEL,
         "git_commit": commit,
         "device": device,
+        "triplet_embeddings": True
     }
 
 
