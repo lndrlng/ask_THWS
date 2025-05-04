@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from tqdm import tqdm
 from neo4j import GraphDatabase
 from sentence_transformers import SentenceTransformer
@@ -84,30 +85,42 @@ if __name__ == "__main__":
         session.execute_write(create_constraints)
         session.execute_write(create_fulltext_index)
 
-    # Load triplets
-    with open(TRIPLET_FILE, "r", encoding="utf-8") as f:
-        triplets = json.load(f)
-    logging.info(f"📦 Loaded {len(triplets)} triplets for import.")
+with open("./../data/studiengaenge_triplets_converted.json", "r", encoding="utf-8") as f:
+    triplets = json.load(f)
 
-    with driver.session() as session:
-        for triplet in tqdm(triplets, desc="Uploading to Neo4j", unit="triplet"):
-            try:
-                session.execute_write(
-                    add_triplet,
-                    triplet["subject"],
-                    triplet.get("subject_type", "Entity"),
-                    triplet["relation"],
-                    triplet["object"],
-                    triplet.get("object_type", "Entity"),
-                    triplet.get("confidence", 1.0),
-                    triplet.get("origin", "llm"),
-                    triplet.get("source_metadata", {})
-                )
-            except Exception as e:
-                logging.warning(f"❌ Failed to insert triplet: {triplet} — {e}")
+logging.info(f"Loaded {len(triplets)} labeled triplets for Neo4j upload.")
 
-    logging.info(f"✅ Finished uploading triplets.")
+with driver.session() as session:
+    success_count = 0
+    failure_count = 0
+    for triplet in tqdm(triplets, desc="Uploading to Neo4j", unit="triplet"):
+        # Normalize list-structured triplets to dict form
+        if isinstance(triplet, list) and len(triplet) == 3:
+            triplet = {
+                "subject": triplet[0],
+                "relation": triplet[1],
+                "object": triplet[2],
+                "subject_type": "Entity",
+                "object_type": "Entity",
+                "confidence": 1.0,
+                "origin": "llm",
+                "source_metadata": {}
+            }
+        try:
+            session.execute_write(
+                add_triplet,
+                triplet["subject"],
+                triplet.get("subject_type", "Entity"),
+                triplet["relation"],
+                triplet["object"],
+                triplet.get("object_type", "Entity"),
+                triplet.get("confidence", 1.0),
+                triplet.get("origin", "llm"),
+                triplet.get("source_metadata", {})
+            )
+            success_count += 1
+        except Exception as e:
+            logging.warning(f"❌ Failed to insert triplet: {triplet} — {e}")
+            failure_count += 1
 
-    # Add embeddings
-    embed_and_store_nodes()
-    logging.info("✅ All relevant nodes have been embedded.")
+logging.info(f"✅ Finished uploading {success_count}/{len(triplets)} triplets successfully, {failure_count} failed.")

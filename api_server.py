@@ -20,7 +20,7 @@ NEO4J_PASSWORD = "kg123lol!1"
 QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "thws_data2_chunks"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-OLLAMA_MODEL = "mixtral"
+OLLAMA_MODEL = "mistral:latest"
 TOP_K = 5
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -65,31 +65,24 @@ class Question(BaseModel):
 # --- Graph Retrieval: Full-text index ---
 def search_graph_fulltext(query_text, top_k=TOP_K):
     with driver.session() as session:
-        result = session.run("""
-            CALL db.index.fulltext.queryNodes('entityIndex', $query)
-            YIELD node, score
-            RETURN node.name AS name, labels(node) AS labels, score
-            ORDER BY score DESC
+        print("DEBUG: running Cypher with query_text=", query_text)
+        print("DEBUG: first 5 nodes preview:", session.run("MATCH (n) RETURN n LIMIT 5").data())
+        
+        result = session.run(
+            """
+            MATCH (n)
+            WHERE any(prop IN keys(n) WHERE toLower(n[prop]) CONTAINS toLower($query))
+            RETURN n.name AS name, labels(n) AS labels
             LIMIT $top_k
-        """, query=query_text)
+            """,
+            {"query": query_text, "top_k": top_k}
+        )
 
-        return [f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
-                for record in result]
+        chunks = []
+        for record in result:
+            chunks.append(f"{', '.join(record['labels'])}: {record['name']}")
+    return chunks
 
-# --- Graph Retrieval: Embedding-based search ---
-def search_graph_by_embedding(query_text, top_k=TOP_K):
-    query_embedding = embedder.encode(query_text, device=device).tolist()
-    with driver.session() as session:
-        result = session.run("""
-            CALL db.index.vector.queryNodes('entityEmbeddingIndex', $top_k, $embedding)
-            YIELD node, score
-            RETURN node.name AS name, labels(node) AS labels, score
-        """, embedding=query_embedding, top_k=top_k)
-
-        return [f"{', '.join(record['labels'])}: {record['name']} (Score: {record['score']:.2f})"
-                for record in result]
-
-# --- Vector DB Retrieval (Qdrant) ---
 def search_qdrant(query_text, top_k=TOP_K):
     query_vec = embedder.encode(query_text, device=device)
     search_results = qdrant_client.search(
@@ -104,6 +97,8 @@ def search_qdrant(query_text, top_k=TOP_K):
 def build_prompt(graph_chunks, vdb_chunks, query_text):
     graph_context = "\n".join(graph_chunks) if graph_chunks else "Keine Graph-Informationen gefunden."
     vdb_context = "\n".join(vdb_chunks) if vdb_chunks else "Keine Text-Informationen gefunden."
+
+    print(graph_chunks)
 
     prompt = f"""
 Du bist ein hilfreicher Assistent der Hochschule THWS.
@@ -166,4 +161,4 @@ def metadata():
 
 # --- Run ---
 if __name__ == "__main__":
-    uvicorn.run("graph_rag_combined:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)
