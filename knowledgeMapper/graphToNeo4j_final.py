@@ -17,9 +17,10 @@ FALLBACK_MODEL = "all-MiniLM-L6-v2"
 
 # ------------------ Setup ------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-
 device = "cuda" if torch.cuda.is_available() else "cpu"
-embedder = None
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
+driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 def load_embedder(model_name: str):
     try:
@@ -29,19 +30,10 @@ def load_embedder(model_name: str):
         logging.warning(f"⚠️ Failed to load model '{model_name}': {e}")
         return None
 
-# Disable symlink warning if necessary
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-
-embedder = load_embedder(PRIMARY_MODEL)
-if embedder is None:
-    logging.warning(f"⛔ Falling back to safer model: {FALLBACK_MODEL}")
-    embedder = load_embedder(FALLBACK_MODEL)
-
+embedder = load_embedder(PRIMARY_MODEL) or load_embedder(FALLBACK_MODEL)
 if embedder is None:
     logging.critical("❌ Could not load any embedding model. Exiting.")
     sys.exit(1)
-
-driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # ------------------ Schema Setup ------------------
 def create_constraints(tx):
@@ -53,6 +45,19 @@ def create_fulltext_index(tx):
         FOR (n:PER|ORG|PROGRAM) ON EACH [n.name]
     """)
 
+def create_vector_index(tx):
+    labels = ["PER", "ORG", "PROGRAM"]
+    for label in labels:
+        tx.run(f"""
+            CREATE VECTOR INDEX entityEmbeddingIndex_{label} IF NOT EXISTS
+            FOR (n:{label}) ON (n.embedding)
+            OPTIONS {{
+                indexConfig: {{
+                    `vector.dimensions`: 1024,
+                    `vector.similarity_function`: 'cosine'
+                }}
+            }}
+        """)
 
 # ------------------ Triplet Insertion ------------------
 def add_triplet(tx, subj, subj_type, rel, obj, obj_type, confidence, origin, metadata):
@@ -84,30 +89,55 @@ def embed_and_store_nodes():
         result = session.run("""
             MATCH (n)
             WHERE n.name IS NOT NULL AND n.embedding IS NULL
-                AND any(lbl IN labels(n) WHERE lbl IN ['PER', 'ORG', 'PROGRAM'])
-            RETURN id(n) AS id, n.name AS name
+            RETURN elementId(n) AS eid, n.name AS name
         """)
-
         records = list(result)
-        logging.info(f"🧠 Embedding {len(records)} new graph nodes...")
+        total = len(records)
+        logging.info(f"🧠 Embedding {total} new graph nodes...")
 
-        for record in tqdm(records, desc="Embedding nodes"):
-            node_id = record["id"]
-            name = record["name"]
+        with tqdm(total=total, desc="Embedding nodes", unit="node", dynamic_ncols=True) as pbar:
+            for record in records:
+                eid = record["eid"]
+                name = record["name"]
+                try:
+                    embedding = embedder.encode(name, device=device).tolist()
+                    session.run("""
+                        MATCH (n) WHERE elementId(n) = $eid
+                        SET n.embedding = $embedding
+                    """, eid=eid, embedding=embedding)
+                except Exception as e:
+                    logging.warning(f"❌ Failed to embed '{name}': {e}")
+                pbar.update(1)
+
+# ------------------ Embedding Triplet Relations ------------------
+def embed_and_store_triplets():
+    with driver.session() as session:
+        result = session.run("""
+            MATCH (a)-[r]->(b)
+            WHERE r.triplet_embedding IS NULL AND a.name IS NOT NULL AND b.name IS NOT NULL
+            RETURN elementId(r) AS rid, a.name AS subj, type(r) AS rel, b.name AS obj
+        """)
+        records = list(result)
+        logging.info(f"🔗 Embedding {len(records)} relationships as triplets...")
+
+        for record in tqdm(records, desc="Embedding triplets", leave=False):
+            rid = record["rid"]
+            triplet_str = f"{record['subj']} {record['rel']} {record['obj']}"
             try:
-                embedding = embedder.encode(name, device=device).tolist()
+                embedding = embedder.encode(triplet_str, device=device).tolist()
                 session.run("""
-                    MATCH (n) WHERE id(n) = $id
-                    SET n.embedding = $embedding
-                """, id=node_id, embedding=embedding)
+                    MATCH ()-[r]->() WHERE elementId(r) = $rid
+                    SET r.triplet_embedding = $embedding
+                """, rid=rid, embedding=embedding)
             except Exception as e:
-                logging.warning(f"❌ Failed to embed '{name}': {e}")
+                logging.warning(f"❌ Failed to embed triplet '{triplet_str}': {e}")
 
 # ------------------ Main ------------------
 if __name__ == "__main__":
     with driver.session() as session:
         session.execute_write(create_constraints)
         session.execute_write(create_fulltext_index)
+        session.execute_write(create_vector_index)
 
     # Load triplets
     with open(TRIPLET_FILE, "r", encoding="utf-8") as f:
@@ -115,7 +145,7 @@ if __name__ == "__main__":
     logging.info(f"📦 Loaded {len(triplets)} triplets for import.")
 
     with driver.session() as session:
-        for triplet in tqdm(triplets, desc="Uploading to Neo4j", unit="triplet"):
+        for triplet in tqdm(triplets, desc="Uploading to Neo4j", unit="triplet", leave=False):
             try:
                 session.execute_write(
                     add_triplet,
@@ -132,7 +162,6 @@ if __name__ == "__main__":
                 logging.warning(f"❌ Failed to insert triplet: {triplet} — {e}")
 
     logging.info(f"✅ Finished uploading triplets.")
-
-    # Add embeddings
     embed_and_store_nodes()
-    logging.info("✅ All relevant nodes have been embedded.")
+    embed_and_store_triplets()
+    logging.info("✅ All embeddings complete.")
