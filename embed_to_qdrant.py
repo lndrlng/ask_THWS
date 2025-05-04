@@ -53,6 +53,9 @@ embeddings = model.encode(texts, show_progress_bar=True, device=device)
 
 for i, chunk in enumerate(chunks):
     vector = embeddings[i]
+    # Ensure vector is a Python list for Qdrant PointStruct
+    if hasattr(vector, "tolist"):
+        vector = vector.tolist()
     payload = {
         "text": chunk["text"],
         "source": chunk["metadata"]["source"],

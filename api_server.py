@@ -20,7 +20,7 @@ NEO4J_PASSWORD = "kg123lol!1"
 QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "thws_data2_chunks"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-OLLAMA_MODEL = "mixtral"
+OLLAMA_MODEL = "mistral:latest"
 TOP_K = 5
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -65,12 +65,18 @@ class Question(BaseModel):
 # --- Retrieval functions ---
 def search_graph_neo4j(query_text, top_k=TOP_K):
     with driver.session() as session:
-        result = session.run("""
+        print("DEBUG: running Cypher with query_text=", query_text)
+        print("DEBUG: first 5 nodes preview:", session.run("MATCH (n) RETURN n LIMIT 5").data())
+        
+        result = session.run(
+            """
             MATCH (n)
             WHERE any(prop IN keys(n) WHERE toLower(n[prop]) CONTAINS toLower($query))
             RETURN n.name AS name, labels(n) AS labels
             LIMIT $top_k
-        """, query=query_text, top_k=top_k)
+            """,
+            {"query": query_text, "top_k": top_k}
+        )
 
         chunks = []
         for record in result:
@@ -93,6 +99,8 @@ def search_qdrant(query_text, top_k=TOP_K):
 def build_prompt(graph_chunks, vdb_chunks, query_text):
     graph_context = "\n".join(graph_chunks) if graph_chunks else "Keine Graph-Informationen gefunden."
     vdb_context = "\n".join(vdb_chunks) if vdb_chunks else "Keine Text-Informationen gefunden."
+
+    print(graph_chunks)
 
     prompt = f"""
 Du bist ein hilfreicher Assistent der Hochschule THWS.
@@ -151,4 +159,4 @@ def metadata():
 
 # --- Run if main ---
 if __name__ == "__main__":
-    uvicorn.run("graph_rag_combined:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)

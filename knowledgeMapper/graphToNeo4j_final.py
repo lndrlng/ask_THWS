@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from tqdm import tqdm
 from neo4j import GraphDatabase
 
@@ -47,14 +48,27 @@ def add_triplet(tx, subj, subj_type, rel, obj, obj_type, confidence, origin, met
 with driver.session() as session:
     session.execute_write(create_constraints)
 
-# ✅ Load triplets from your JSON file
-with open("./../data/studiengaenge_triplets.json", "r", encoding="utf-8") as f:
+with open("./../data/studiengaenge_triplets_converted.json", "r", encoding="utf-8") as f:
     triplets = json.load(f)
 
 logging.info(f"Loaded {len(triplets)} labeled triplets for Neo4j upload.")
 
 with driver.session() as session:
+    success_count = 0
+    failure_count = 0
     for triplet in tqdm(triplets, desc="Uploading to Neo4j", unit="triplet"):
+        # Normalize list-structured triplets to dict form
+        if isinstance(triplet, list) and len(triplet) == 3:
+            triplet = {
+                "subject": triplet[0],
+                "relation": triplet[1],
+                "object": triplet[2],
+                "subject_type": "Entity",
+                "object_type": "Entity",
+                "confidence": 1.0,
+                "origin": "llm",
+                "source_metadata": {}
+            }
         try:
             session.execute_write(
                 add_triplet,
@@ -67,7 +81,9 @@ with driver.session() as session:
                 triplet.get("origin", "llm"),
                 triplet.get("source_metadata", {})
             )
+            success_count += 1
         except Exception as e:
             logging.warning(f"❌ Failed to insert triplet: {triplet} — {e}")
+            failure_count += 1
 
-logging.info(f"✅ Finished uploading {len(triplets)} triplets to Neo4j.")
+logging.info(f"✅ Finished uploading {success_count}/{len(triplets)} triplets successfully, {failure_count} failed.")
