@@ -5,19 +5,43 @@ from tqdm import tqdm
 from neo4j import GraphDatabase
 from sentence_transformers import SentenceTransformer
 import torch
+import os
+import sys
 
 # ------------------ Config ------------------
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "kg123lol!1"
 TRIPLET_FILE = "./../data/studiengaenge_triplets.json"
-EMBED_MODEL_NAME = "BAAI/bge-m3"  # Update this if using another model
+PRIMARY_MODEL = "BAAI/bge-m3"
+FALLBACK_MODEL = "all-MiniLM-L6-v2"
 
 # ------------------ Setup ------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-embedder = SentenceTransformer(EMBED_MODEL_NAME, device=device)
+embedder = None
+
+def load_embedder(model_name: str):
+    try:
+        logging.info(f"🔍 Loading embedding model: {model_name}")
+        return SentenceTransformer(model_name, device=device)
+    except Exception as e:
+        logging.warning(f"⚠️ Failed to load model '{model_name}': {e}")
+        return None
+
+# Disable symlink warning if necessary
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+
+embedder = load_embedder(PRIMARY_MODEL)
+if embedder is None:
+    logging.warning(f"⛔ Falling back to safer model: {FALLBACK_MODEL}")
+    embedder = load_embedder(FALLBACK_MODEL)
+
+if embedder is None:
+    logging.critical("❌ Could not load any embedding model. Exiting.")
+    sys.exit(1)
+
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
 # ------------------ Schema Setup ------------------
@@ -26,12 +50,10 @@ def create_constraints(tx):
 
 def create_fulltext_index(tx):
     tx.run("""
-        CALL db.index.fulltext.createNodeIndex(
-            "entityIndex", 
-            ["PER", "ORG", "PROGRAM"], 
-            ["name"]
-        )
+        CREATE FULLTEXT INDEX entityIndex IF NOT EXISTS
+        FOR (n:PER|ORG|PROGRAM) ON EACH [n.name]
     """)
+
 
 # ------------------ Triplet Insertion ------------------
 def add_triplet(tx, subj, subj_type, rel, obj, obj_type, confidence, origin, metadata):
@@ -62,22 +84,25 @@ def embed_and_store_nodes():
     with driver.session() as session:
         result = session.run("""
             MATCH (n)
-            WHERE n.name IS NOT NULL AND NOT exists(n.embedding)
-              AND any(lbl IN labels(n) WHERE lbl IN ['PER', 'ORG', 'PROGRAM'])
+            WHERE n.name IS NOT NULL AND n.embedding IS NULL
+                AND any(lbl IN labels(n) WHERE lbl IN ['PER', 'ORG', 'PROGRAM'])
             RETURN id(n) AS id, n.name AS name
         """)
+
         records = list(result)
         logging.info(f"🧠 Embedding {len(records)} new graph nodes...")
 
         for record in tqdm(records, desc="Embedding nodes"):
             node_id = record["id"]
             name = record["name"]
-            embedding = embedder.encode(name, device=device).tolist()
-
-            session.run("""
-                MATCH (n) WHERE id(n) = $id
-                SET n.embedding = $embedding
-            """, id=node_id, embedding=embedding)
+            try:
+                embedding = embedder.encode(name, device=device).tolist()
+                session.run("""
+                    MATCH (n) WHERE id(n) = $id
+                    SET n.embedding = $embedding
+                """, id=node_id, embedding=embedding)
+            except Exception as e:
+                logging.warning(f"❌ Failed to embed '{name}': {e}")
 
 # ------------------ Main ------------------
 if __name__ == "__main__":
