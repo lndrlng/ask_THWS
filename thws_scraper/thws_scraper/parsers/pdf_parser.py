@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 from typing import Optional
+from urllib.parse import urlparse
 
 import fitz  # PyMuPDF
 from scrapy.http import Response
@@ -41,7 +42,7 @@ def parse_pdf(response: Response) -> Optional[RawPageItem]:
     return RawPageItem(
         url=response.url,
         type="pdf",
-        title=metadata.get("title", ""),
+        title=metadata.get("title") or urlparse(response.url).path.split("/")[-1],
         text=text,
         date_scraped=datetime.utcnow().isoformat(),
         date_updated=None,

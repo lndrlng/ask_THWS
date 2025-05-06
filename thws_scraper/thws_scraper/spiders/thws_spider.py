@@ -144,7 +144,6 @@ class ThwsSpider(CrawlSpider):
         """
         domain = urlparse(response.url).netloc
         self.reporter.bump("bytes", domain, len(response.body))
-        ctype = response.headers.get("Content-Type", b"").decode().split(";")[0].lower()
         url_lower = response.url.lower()
 
         # only allow HTML pages, PDFs and iCal files

@@ -40,6 +40,19 @@ def parse_ical(response: Response) -> List[RawPageItem]:
                     lang=lang,
                 )
             )
-    except Exception:
-        return []
+    except Exception as e:
+        return [
+            RawPageItem(
+                url=response.url,
+                type="ical",
+                title="",
+                text="",
+                date_scraped=datetime.utcnow().isoformat(),
+                date_updated=None,
+                status=response.status,
+                lang=lang,
+                parse_error=str(e),
+            )
+        ]
+
     return events

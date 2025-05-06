@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from scrapy.http import Response
 
 from ..items import RawPageItem
+from ..utils.date_extractor import date_extractor
 from ..utils.lang import extract_lang_from_url
 from ..utils.text import clean_text
 
@@ -90,18 +91,9 @@ def parse_html(response: Response) -> Optional[Tuple[List[RawPageItem], List[str
             else response.css("title::text").get("").strip()
         )
 
-        # Try a few common date selectors
-        date_updated = None
-        for sel in (
-            'meta[property="article:published_time"]::attr(content)',
-            'meta[name="date"]::attr(content)',
-            "time::text",
-            ".date::text",
-        ):
-            d = response.css(sel).get()
-            if d:
-                date_updated = d.strip()
-                break
+        # Extract date_updated
+        html = response.text
+        date_updated = date_extractor(html)
 
         lang = extract_lang_from_url(response.url)
 

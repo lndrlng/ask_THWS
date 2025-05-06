@@ -85,8 +85,12 @@ DOWNLOADER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 ITEM_PIPELINES = {
+    # JSON Ouptut
     "thws_scraper.pipelines.RawOutputPipeline": 100,  # write raw pages first
     "thws_scraper.pipelines.ChunkingOutputPipeline": 200,  # then split & emit chunks
+    # Postgres Output
+    "thws_scraper.pipelines.RawPostgresPipeline": 100,  # write raw pages first
+    "thws_scraper.pipelines.ChunkingPostgresPipeline": 200,  # then split & emit chunks
 }
 
 

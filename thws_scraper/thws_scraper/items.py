@@ -18,6 +18,7 @@ class RawPageItem(scrapy.Item):
     status = scrapy.Field()
     lang = scrapy.Field()
     parse_error = scrapy.Field()
+    db_id = scrapy.Field()
 
 
 class DocumentChunkItem(scrapy.Item):
