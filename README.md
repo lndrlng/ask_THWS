@@ -33,6 +33,7 @@
      ➔ If we replace/update data:
 
      - Need to rechunk the updated documents.
+       \<>
 
      - Need to recreate embeddings for the changed chunks.
 

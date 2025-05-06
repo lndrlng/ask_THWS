@@ -121,7 +121,7 @@ class ThwsErrorMiddleware:
         if isinstance(exception, DNSLookupError):
             spider.logger.warning(f"[DNS] Could not resolve {request.url}")
         else:
-            spider.logger.error(f"[ERR] {request.url} failed: {exception!r}")
+            spider.logger.error(f"{request.url} failed: {exception!r}")
 
         if hasattr(spider, "reporter"):
             spider.reporter.bump("errors", domain)
@@ -140,13 +140,13 @@ class RobotsBypassMiddleware(RobotsTxtMiddleware):
     All other rules from robots.txt are still respected.
     """
 
-    def _allowed(self, robotstxt, request, spider):
+    def process_request(self, request, spider):
         parsed = urlparse(request.url)
 
-        # Allow /fileadmin/ paths
+        # Allow /fileadmin/ paths unconditionally
         if parsed.path.startswith("/fileadmin/"):
             spider.logger.debug(f"Bypassing robots.txt for: {request.url}")
-            return True
+            return None  # skip the rest of this middleware
 
-        # Fall back to default behavior for other URLs
-        return super()._allowed(robotstxt, request, spider)
+        # otherwise fall back to the normal robots.txt logic
+        return super().process_request(request, spider)

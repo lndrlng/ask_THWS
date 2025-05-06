@@ -32,7 +32,7 @@ NEWSPIDER_MODULE = "thws_scraper.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "thws-scraper-bot/0.3.2"
+USER_AGENT = "thws-scraper-bot/0.3.3"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -70,8 +70,9 @@ TELNETCONSOLE_ENABLED = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # default priority is 550
+    "scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware": None,  # disable the built-in # noqa: E501
+    "thws_scraper.middlewares.RobotsBypassMiddleware": 100,  # Enable the custom one
     "thws_scraper.middlewares.ThwsErrorMiddleware": 550,
-    # "thws_scraper.middlewares.RobotsBypassMiddleware": 100,
 }
 
 # Enable or disable extensions

@@ -147,14 +147,16 @@ class ThwsSpider(CrawlSpider):
         ctype = response.headers.get("Content-Type", b"").decode().split(";")[0].lower()
         url_lower = response.url.lower()
 
-        # Skip unwanted file types
-        IGNORED_EXTS = [
-            ".seb",  # online exam format
-            ".crt",
-            ".pkg",
-        ]
-        if any(url_lower.endswith(ext) for ext in IGNORED_EXTS):
-            self.logger.debug(f"Ignored filetype: {response.url}")
+        # only allow HTML pages, PDFs and iCal files
+        ctype = (
+            response.headers.get("Content-Type", b"").decode().split(";", 1)[0].lower()
+        )
+        if not (
+            url_lower.endswith(".pdf")
+            or url_lower.endswith(".ics")
+            or "text/html" in ctype
+        ):
+            self.logger.debug(f"Ignored non-html/pdf/ics: {response.url}")
             self.reporter.bump("ignored", domain)
             return
 
