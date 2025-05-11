@@ -1,6 +1,6 @@
 import json
 
-INPUT_FILE = "./../data/fiw_results.json"
+INPUT_FILE = "../data/lightrag/fiw_results.json"
 OUTPUT_FILE = "./../data/fiw_results_with_ids.json"  # You can overwrite input file if you want
 
 def load_json(path):

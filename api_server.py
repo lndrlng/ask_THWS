@@ -22,7 +22,7 @@ NEO4J_PASSWORD = "kg123lol!1"
 QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "thws_data2_chunks"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-OLLAMA_MODEL = "mixtral"
+OLLAMA_MODEL = "mistral"  # ← ersetzt 'mixtral' durch das ressourcenschonendere Modell
 TOP_K = 5
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -173,7 +173,9 @@ def query_ollama(prompt):
         "http://localhost:11434/api/generate",
         json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
     )
-    return response.json().get("response", "").strip()
+    data = response.json()
+    print("🧠 Ollama raw response:", data)  # <- Zum Debuggen
+    return data.get("response", "").strip() or "Ich weiß es leider nicht."
 
 # --- API Endpoints ---
 @app.post("/ask")
@@ -196,6 +198,7 @@ def ask(data: Question):
         "answer": answer,
         "graph_hits": graph_chunks,
         "vdb_hits": vdb_chunks,
+        "sources": graph_chunks + vdb_chunks,  # ✅ Always include sources
         "duration_seconds": duration,
     }
 
