@@ -14,7 +14,7 @@ async def main():
 
     print("[*] Initializing LightRAG and building knowledge graph...")
     rag = LightRAG(
-        working_dir="./rag_storage",
+        working_dir="./../rag_storage",
         embedding_func=HFEmbedFunc(),
         llm_model_func=OllamaLLM()
     )
