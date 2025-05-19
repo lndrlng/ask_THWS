@@ -128,6 +128,14 @@ langchain==0.0.310
 pydantic==1.10.8
 langsmith==0.0.83
 
+faiss-cpu
+pandas
+pypdf
+python-docx
+openai
+lightrag
+lightrag-hku
+
 # Visualization App Dependencies
 streamlit>=1.30.0
 plotly>=5.15.0
