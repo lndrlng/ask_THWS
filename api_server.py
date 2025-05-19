@@ -1,10 +1,7 @@
 # File: rag_server.py
 
-import asyncio
 import time
 import torch
-import requests
-import warnings
 import subprocess
 import atexit
 import os
@@ -65,9 +62,13 @@ async def ask(data: Question):
     start = time.time()
     result = await rag.aquery(data.query, param=QueryParam(mode="hybrid"))
     duration = round(time.time() - start, 2)
+
+    source_metadata = [doc.metadata for doc in result.source_documents]
+
     return {
         "question": data.query,
-        "answer": result,
+        "answer": result.output,
+        "sources": source_metadata,
         "mode": "lightrag+hybrid",
         "duration_seconds": duration,
     }
