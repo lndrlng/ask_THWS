@@ -17,7 +17,16 @@ def load_json(file_path):
         entries = data if isinstance(data, list) else [data]
         for entry in entries:
             if "text" in entry:
-                docs.append(Document(page_content=clean_text(entry["text"])))
+                content = clean_text(entry["text"])
+                metadata = {
+                    "source_file": str(file_path),
+                    "title": entry.get("title"),
+                    "url": entry.get("url"),
+                    "type": entry.get("type"),
+                    "date_scraped": entry.get("date_scraped"),
+                    "status": entry.get("status"),
+                }
+                docs.append(Document(page_content=content, metadata=metadata))
     return docs
 
 
