@@ -1,3 +1,6 @@
+# File: rag_server.py
+
+import asyncio
 import time
 import torch
 import requests
@@ -7,58 +10,69 @@ import atexit
 import os
 import signal
 from fastapi import FastAPI
-from pydantic import BaseModel
-from neo4j import GraphDatabase
-from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
-from lightrag.core import Component, Generator, DataClass
 from lightrag.components.model_client import OllamaClient
+from pydantic import BaseModel
+from lightrag import LightRAG, QueryParam
+from knowledgeMapper.local_models import HFEmbedFunc, OllamaLLM
+from lightrag.core import Component, Generator, DataClass
 from lightrag.components.output_parsers import JsonOutputParser
 from dataclasses import dataclass, field
 import uvicorn
 
 # --- Config ---
-NEO4J_URI = "bolt://localhost:7687"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "your_password"
-QDRANT_URL = "http://localhost:6333"
-COLLECTION_NAME = "thws_data2_chunks"
-EMBED_MODEL_NAME = "BAAI/bge-m3"
 OLLAMA_MODEL = "mistral"
-TOP_K = 5
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-# --- Device Setup ---
-if torch.cuda.is_available():
-    device = "cuda"
-elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
-    device = "mps"
-else:
-    device = "cpu"
+# --- Device Info ---
+device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"🔥 Using device: {device}")
 
-# --- Embedding model ---
-embedder = SentenceTransformer(EMBED_MODEL_NAME, device=device)
+# --- FastAPI ---
+app = FastAPI()
 
-# --- Database & Vector clients ---
-driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-qdrant_client = QdrantClient(url=QDRANT_URL)
+class Question(BaseModel):
+    query: str
 
-# --- Start Ollama server ---
+# --- Ollama Background Server (optional) ---
 ollama_process = subprocess.Popen(
     ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
 )
+
 def shutdown_ollama():
     if os.name == 'nt':
         ollama_process.terminate()
     else:
         os.killpg(os.getpgid(ollama_process.pid), signal.SIGTERM)
     print("🚓 Ollama server stopped.")
+
 atexit.register(shutdown_ollama)
 
-# --- LightRAG QA Component ---
+# --- LightRAG Setup ---
+rag = LightRAG(
+    working_dir="./rag_storage",
+    embedding_func=HFEmbedFunc(),
+    llm_model_func=OllamaLLM()
+)
+
+@app.on_event("startup")
+async def startup():
+    print("🚀 Initializing LightRAG storages...")
+    await rag.initialize_storages()
+
+# --- Default Endpoint: Full LightRAG (graph + vector) ---
+@app.post("/ask")
+async def ask(data: Question):
+    start = time.time()
+    result = await rag.aquery(data.query, param=QueryParam(mode="hybrid"))
+    duration = round(time.time() - start, 2)
+    return {
+        "question": data.query,
+        "answer": result,
+        "mode": "lightrag+hybrid",
+        "duration_seconds": duration,
+    }
+
+# --- Light Template-Based (Component) ---
 @dataclass
 class QAOutput(DataClass):
     explanation: str = field(metadata={"desc": "Eine kurze Erklärung."})
@@ -93,14 +107,8 @@ class QA(Component):
 
 qa_pipeline = QA()
 
-# --- FastAPI App ---
-app = FastAPI()
-class Question(BaseModel):
-    query: str
-
-# --- API Endpoints ---
-@app.post("/ask")
-def ask(data: Question):
+@app.post("/ask-simple")
+def ask_simple(data: Question):
     start = time.time()
     result = qa_pipeline.call(data.query)
     duration = round(time.time() - start, 2)
@@ -108,23 +116,30 @@ def ask(data: Question):
         "question": data.query,
         "answer": result.explanation,
         "example": result.example,
+        "mode": "template-component",
         "duration_seconds": duration,
     }
 
+# --- Raw Echo for Testing ---
+@app.post("/ask-raw")
+def ask_raw(data: Question):
+    return {
+        "question": data.query,
+        "echo": data.query,
+        "mode": "raw-debug"
+    }
 
 @app.get("/metadata")
 def metadata():
     commit = subprocess.getoutput("git rev-parse HEAD")
     return {
-        "embedding_model": EMBED_MODEL_NAME,
-        "llm_model": OLLAMA_MODEL,
+        "embedding_model": HFEmbedFunc.__name__,
+        "llm_model": f"ollama:{OLLAMA_MODEL}",
         "git_commit": commit,
         "device": device,
-        "triplet_embeddings": True,
-        "retriever": "LightRAG QA Component"
+        "retriever": "LightRAG Hybrid"
     }
 
-
-# --- Run ---
+# --- Run FastAPI Server ---
 if __name__ == "__main__":
-    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("rag_server:app", host="0.0.0.0", port=8000, reload=False)
