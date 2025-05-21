@@ -7,6 +7,7 @@ nav:
   - Developer Tools:
       - Precommit Hooks: dev-tools/precommit.md
       - Python: dev-tools/python.md
+      - Server: dev-tools/server.md
       - Jq: dev-tools/jq.md
   - Tests:
       - Testfragen: tests/fragen.md
