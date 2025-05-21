@@ -133,8 +133,7 @@ pandas
 pypdf
 python-docx
 openai
-lightrag
-lightrag-hku
+git+https://github.com/HKUDS/LightRAG.git
 
 # Visualization App Dependencies
 streamlit>=1.30.0
