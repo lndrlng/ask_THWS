@@ -1,79 +1,73 @@
+"""
+file_loader.py – JSON, JSONL, PDF, TXT, HTML loader returning LangChain Documents
+"""
+
 import json
 from pathlib import Path
 from langchain.docstore.document import Document
 from langchain.document_loaders import PyPDFLoader, TextLoader, UnstructuredHTMLLoader
 
-# ──────────────────────────────────────────────────────────────
-def clean_text(text: str) -> str:
+
+# ── helpers ─────────────────────────────────────────────────────────────
+def _clean(text: str) -> str:
     return text.replace("\n", " ").replace("read more", "").strip()
 
 
-def _entry_to_document(entry: dict, file_path: Path) -> Document | None:
-    """Convert one JSON object to a LangChain Document, or None if no 'text' field."""
-    text = entry.get("text")
-    if text is None:
+def _entry_to_doc(entry: dict, file_path: Path) -> Document | None:
+    if "text" not in entry:
         return None
-
-    content = clean_text(text)
-    metadata = {
+    md = {
         "source_file": str(file_path),
-        "title":        entry.get("title"),
-        "url":          entry.get("url"),
-        "type":         entry.get("type"),
+        "title": entry.get("title"),
+        "url": entry.get("url"),
+        "type": entry.get("type"),
         "date_scraped": entry.get("date_scraped"),
-        "status":       entry.get("status"),
+        "status": entry.get("status"),
     }
-    return Document(page_content=content, metadata=metadata)
+    return Document(page_content=_clean(entry["text"]), metadata=md)
 
 
-# ── JSON ARRAY (.json) ─────────────────────────────────────────
-def load_json(file_path: Path) -> list[Document]:
-    docs = []
-    with open(file_path, "r", encoding="utf-8") as f:
+# ── per-format loaders ──────────────────────────────────────────────────
+def load_json(path: Path) -> list[Document]:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
-        entries = data if isinstance(data, list) else [data]
-        for entry in entries:
-            doc = _entry_to_document(entry, file_path)
-            if doc:  # skip rows without 'text'
-                docs.append(doc)
-    return docs
+    entries = data if isinstance(data, list) else [data]
+    return [d for e in entries if (d := _entry_to_doc(e, path))]
 
 
-# ── JSON-LINES (.jsonl / .ndjson) NEW! ─────────────────────────
-def load_jsonl(file_path: Path) -> list[Document]:
+def load_jsonl(path: Path) -> list[Document]:
     docs = []
-    with open(file_path, "r", encoding="utf-8") as f:
-        for line_no, line in enumerate(f, start=1):
+    with open(path, encoding="utf-8") as f:
+        for ln, line in enumerate(f, 1):
             line = line.strip()
-            if not line:                # skip blank lines
+            if not line:
                 continue
             try:
                 entry = json.loads(line)
             except json.JSONDecodeError as err:
-                print(f"⚠️  {file_path}:{line_no} — bad JSON: {err}")
+                print(f"⚠️  {path}:{ln} bad JSON: {err}")
                 continue
-            doc = _entry_to_document(entry, file_path)
-            if doc:
+            if doc := _entry_to_doc(entry, path):
                 docs.append(doc)
     return docs
 
 
-# ── Master loader ──────────────────────────────────────────────
+# ── master dispatcher ───────────────────────────────────────────────────
 def load_documents(folder: str | Path) -> list[Document]:
-    docs = []
-    for file in Path(folder).glob("*"):
-        ext = file.suffix.lower()
+    docs: list[Document] = []
+    for fp in Path(folder).glob("*"):
+        ext = fp.suffix.lower()
         try:
             if ext == ".json":
-                docs.extend(load_json(file))
+                docs.extend(load_json(fp))
             elif ext in (".jsonl", ".ndjson"):
-                docs.extend(load_jsonl(file))
+                docs.extend(load_jsonl(fp))
             elif ext == ".pdf":
-                docs.extend(PyPDFLoader(str(file)).load())
+                docs.extend(PyPDFLoader(str(fp)).load())
             elif ext == ".txt":
-                docs.extend(TextLoader(str(file)).load())
+                docs.extend(TextLoader(str(fp)).load())
             elif ext == ".html":
-                docs.extend(UnstructuredHTMLLoader(str(file)).load())
-        except Exception as e:
-            print(f"Error loading {file}: {e}")
+                docs.extend(UnstructuredHTMLLoader(str(fp)).load())
+        except Exception as exc:
+            print(f"Error loading {fp}: {exc}")
     return docs
