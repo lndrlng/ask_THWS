@@ -24,8 +24,6 @@ OLLAMA_HOST = "http://localhost:11434"
 # keep prompt window reasonable for speed – fits easily in VRAM
 OLLAMA_NUM_CTX = 16384        # 16 k tokens (≈4 GB KV)
 OLLAMA_NUM_PREDICT = 4096     # up to 4 k tokens of completion
-OLLAMA_NUM_GPU_LAYERS = 41    # pin all layers on GPU
-OLLAMA_BATCH_SIZE = 128       # decode batch size
 
 # ── blocking HuggingFace embedder (initialised on CUDA) ────────────────
 _hf = HuggingFaceEmbeddings(
