@@ -46,7 +46,7 @@ class AsyncEmbedder:
         def _embed_chunked() -> list[list[float]]:
             vecs: list[list[float]] = []
             for i in range(0, len(texts), BATCH_SIZE):
-                vecs.extend(_hf.embed_documents(texts[i : i + BATCH_SIZE]))
+                vecs.extend(_hf.embed_documents(texts[i: i + BATCH_SIZE]))
             return vecs
 
         return await asyncio.to_thread(_embed_chunked)
@@ -101,8 +101,6 @@ class OllamaLLM:
                     "options": {
                         "num_ctx": OLLAMA_NUM_CTX,
                         "num_predict": OLLAMA_NUM_PREDICT,
-                        "batch_size": OLLAMA_BATCH_SIZE,
-                        "num_gpu_layers": OLLAMA_NUM_GPU_LAYERS,
                     },
                 },
                 timeout=10_000,
