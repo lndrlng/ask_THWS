@@ -1,11 +1,10 @@
 from __future__ import annotations
-
 """
-local_models.py – updated fix 22 May 2025
+local_models.py – updated 22 May 2025 (context tweak)
 
-• Async **BGE‑M3** embedder that really runs on the GPU (device="cuda")
-• Manual batching (128 docs) to stay compatible with older LangChain versions
-• Ollama wrapper with 8 k context + 2 k generation
+• Async **BGE‑M3** embedder lives on GPU (device="cuda")
+• Qwen‑3 14B‑Q4_K_M runner with 16 k context / 4 k output
+• All 41 layers pinned on GPU; moderate batch size for speed
 • Legacy alias `HFEmbedFunc` so older imports keep working
 """
 
@@ -15,13 +14,18 @@ from langchain.embeddings import HuggingFaceEmbeddings
 
 # ── configuration ───────────────────────────────────────────────────────
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-EMBEDDING_DEVICE = "cuda"  # run on your Tesla V100
-BATCH_SIZE = 128  # manual batch size (safe for LC <0.2.0)
+EMBEDDING_DEVICE = "cuda"   # run on your Tesla V100
+BATCH_SIZE = 128             # embed 128 docs per chunk
 
-OLLAMA_MODEL_NAME = "qwen3:14b-q4_K_M"
+# LLM runtime settings ---------------------------------------------------
+OLLAMA_MODEL_NAME = "qwen3:14b-q4_K_M"   # 14 B model, 4‑bit quant
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 32768     # ≈8 k tokens of prompt/context
-OLLAMA_NUM_PREDICT = 8192     # ≈2 k tokens of completion
+
+# keep prompt window reasonable for speed – fits easily in VRAM
+OLLAMA_NUM_CTX = 16384        # 16 k tokens (≈4 GB KV)
+OLLAMA_NUM_PREDICT = 4096     # up to 4 k tokens of completion
+OLLAMA_NUM_GPU_LAYERS = 41    # pin all layers on GPU
+OLLAMA_BATCH_SIZE = 128       # decode batch size
 
 # ── blocking HuggingFace embedder (initialised on CUDA) ────────────────
 _hf = HuggingFaceEmbeddings(
@@ -44,7 +48,7 @@ class AsyncEmbedder:
         def _embed_chunked() -> list[list[float]]:
             vecs: list[list[float]] = []
             for i in range(0, len(texts), BATCH_SIZE):
-                vecs.extend(_hf.embed_documents(texts[i: i + BATCH_SIZE]))
+                vecs.extend(_hf.embed_documents(texts[i : i + BATCH_SIZE]))
             return vecs
 
         return await asyncio.to_thread(_embed_chunked)
@@ -99,6 +103,8 @@ class OllamaLLM:
                     "options": {
                         "num_ctx": OLLAMA_NUM_CTX,
                         "num_predict": OLLAMA_NUM_PREDICT,
+                        "batch_size": OLLAMA_BATCH_SIZE,
+                        "num_gpu_layers": OLLAMA_NUM_GPU_LAYERS,
                     },
                 },
                 timeout=10_000,
