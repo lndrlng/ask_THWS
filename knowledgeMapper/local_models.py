@@ -18,10 +18,10 @@ EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
 EMBEDDING_DEVICE = "cuda"  # run on your Tesla V100
 BATCH_SIZE = 128  # manual batch size (safe for LC <0.2.0)
 
-OLLAMA_MODEL_NAME = "qwen3:32b-q8_0"
+OLLAMA_MODEL_NAME = "qwen3:14b-q4_K_M"
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 8192  # ≈8 k tokens of prompt/context
-OLLAMA_NUM_PREDICT = 2048  # ≈2 k tokens of completion
+OLLAMA_NUM_CTX = 32768     # ≈8 k tokens of prompt/context
+OLLAMA_NUM_PREDICT = 8192     # ≈2 k tokens of completion
 
 # ── blocking HuggingFace embedder (initialised on CUDA) ────────────────
 _hf = HuggingFaceEmbeddings(
