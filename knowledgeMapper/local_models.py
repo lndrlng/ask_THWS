@@ -1,74 +1,71 @@
 from __future__ import annotations
 """
-local_models.py – updated 22 May 2025 (context tweak)
+local_models.py – updated 26 May 2025 (OOM-safe version)
 
-• Async **BGE‑M3** embedder lives on GPU (device="cuda")
-• Qwen‑3 14B‑Q4_K_M runner with 16 k context / 4 k output
-• All 41 layers pinned on GPU; moderate batch size for speed
-• Legacy alias `HFEmbedFunc` so older imports keep working
+• BGE‑M3 embedder runs async on GPU with semaphore to prevent OOM
+• Qwen‑3 14B‑Q4_K_M LLM runs via Ollama API with 16 k context
+• Memory-managed: low batch size, no_grad, empty_cache per batch
 """
 
 import asyncio
 import requests
+import torch
 from langchain.embeddings import HuggingFaceEmbeddings
 
 # ── configuration ───────────────────────────────────────────────────────
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-EMBEDDING_DEVICE = "cuda"   # run on your Tesla V100
-BATCH_SIZE = 128             # embed 128 docs per chunk
+EMBEDDING_DEVICE = "cuda"    # GPU target
+BATCH_SIZE = 16              # reduced for memory stability
+_EMBED_SEMAPHORE = asyncio.Semaphore(2)  # throttle concurrency
 
 # LLM runtime settings ---------------------------------------------------
-OLLAMA_MODEL_NAME = "qwen3:14b-q4_K_M"   # 14 B model, 4‑bit quant
+OLLAMA_MODEL_NAME = "qwen3:14b-q4_K_M"
 OLLAMA_HOST = "http://localhost:11434"
+OLLAMA_NUM_CTX = 16384       # 16k tokens (≈4 GB KV)
+OLLAMA_NUM_PREDICT = 4096    # up to 4k tokens of completion
 
-# keep prompt window reasonable for speed – fits easily in VRAM
-OLLAMA_NUM_CTX = 16384        # 16 k tokens (≈4 GB KV)
-OLLAMA_NUM_PREDICT = 4096     # up to 4 k tokens of completion
-
-# ── blocking HuggingFace embedder (initialised on CUDA) ────────────────
+# ── HuggingFace embedder (on GPU) ───────────────────────────────────────
 _hf = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL_NAME,
     encode_kwargs={"normalize_embeddings": True},
     model_kwargs={"device": EMBEDDING_DEVICE},
 )
-EMBED_DIM = _hf.client.get_sentence_embedding_dimension()  # 1024 for BGE‑M3
+EMBED_DIM = _hf.client.get_sentence_embedding_dimension()  # 1024 for BGE-M3
 
 
-# ── async wrapper expected by LightRAG‑HKU ──────────────────────────────
+# ── async-safe embedding wrapper ────────────────────────────────────────
 class AsyncEmbedder:
-    """Callable object that exposes an `embedding_dim` attribute."""
+    """Callable embedder with memory-managed async behavior."""
 
     embedding_dim: int = EMBED_DIM
 
-    async def __call__(self, texts: list[str]) -> list[list[float]]:  # noqa: D401
-        """Embed `texts` in chunks so we stay version‑compatible."""
+    async def __call__(self, texts: list[str]) -> list[list[float]]:
+        """Async entry point with semaphore and background execution."""
+        async with _EMBED_SEMAPHORE:
+            return await asyncio.to_thread(self._embed_chunked, texts)
 
-        def _embed_chunked() -> list[list[float]]:
-            vecs: list[list[float]] = []
-            for i in range(0, len(texts), BATCH_SIZE):
-                vecs.extend(_hf.embed_documents(texts[i: i + BATCH_SIZE]))
-            return vecs
+    def _embed_chunked(self, texts: list[str]) -> list[list[float]]:
+        """Internal CPU-threaded embedding loop with memory control."""
+        vecs: list[list[float]] = []
+        for i in range(0, len(texts), BATCH_SIZE):
+            batch = texts[i:i + BATCH_SIZE]
+            with torch.no_grad():
+                vecs.extend(_hf.embed_documents(batch))
+            torch.cuda.empty_cache()  # help reduce fragmentation
+        return vecs
 
-        return await asyncio.to_thread(_embed_chunked)
 
-
-# Shared singleton keeps the model in memory once
+# ── embedding API expected by LightRAG ──────────────────────────────────
 _async_embedder_instance = AsyncEmbedder()
 
-
 async def embedding_wrapper_func(texts: list[str]) -> list[list[float]]:
-    """Public embedding entry point (function w/ attribute)."""
     return await _async_embedder_instance(texts)
 
-
-# Expose the attribute LightRAG inspects
 embedding_wrapper_func.embedding_dim = _async_embedder_instance.embedding_dim  # type: ignore[attr-defined]
-
-# Preferred import target
 embedding_func = embedding_wrapper_func
 
 
-# ── Ollama completion (async) ───────────────────────────────────────────
+# ── Ollama async wrapper (unchanged) ────────────────────────────────────
 class OllamaLLM:
     """Thin async wrapper around Ollama’s /api/generate endpoint."""
 
@@ -79,7 +76,6 @@ class OllamaLLM:
             history_messages: list[dict] | None = None,
             **kwargs,
     ) -> str:
-        # Drop LightRAG‑specific kwargs that Ollama ignores
         for k in ("hashing_kv", "max_tokens", "response_format"):
             kwargs.pop(k, None)
 
@@ -111,11 +107,9 @@ class OllamaLLM:
         return await asyncio.to_thread(_call)
 
 
-# ── legacy shim so old code keeps working ───────────────────────────────
+# ── legacy alias (keeps older imports working) ──────────────────────────
 class HFEmbedFunc:  # noqa: N801
-    """Deprecated alias – returns the singleton embedder function."""
-
-    def __new__(cls, *_, **__):  # noqa: D401
+    def __new__(cls, *_, **__):
         return embedding_func
 
 
