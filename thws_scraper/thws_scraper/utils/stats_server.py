@@ -42,6 +42,7 @@ class StatsHTTPServer:
                         "per_domain": {
                             k: dict(v) for k, v in stats_server_instance.reporter.per_domain.items()
                         },
+                        "start_time_iso": stats_server_instance.reporter.get_start_time_iso(),
                     }
                     self.wfile.write(json.dumps(stats_data, indent=2).encode("utf-8"))
                 elif self.path == "/live":

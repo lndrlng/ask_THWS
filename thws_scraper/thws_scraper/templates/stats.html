@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Live Crawler Stats</title>
     <style>
@@ -16,6 +17,15 @@
             border-bottom: 1px solid #504945;
             padding-bottom: 10px;
             margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #runningTimer {
+            font-size: 0.65em;
+            color: #928374;
+            font-weight: normal;
         }
 
         table {
@@ -69,6 +79,7 @@
 <body>
     <h1>
         Live Crawler Stats
+        <span id="runningTimer">Uptime: Fetching...</span>
     </h1>
     <table id="statsTable">
         <tbody id="statsTableBody"> {# Initial rows rendered by server, updated by JS #}
@@ -102,8 +113,11 @@
     <script>
         const statsTableBodyEl = document.getElementById("statsTableBody");
         const summaryRowElement = document.getElementById("summaryRow");
+        const runningTimerElement = document.getElementById('runningTimer');
 
         const statKeys = ["html", "pdf", "ical", "errors", "empty", "ignored", "bytes"];
+        let scraperStartTime = null;
+        let timerIntervalId = null;
 
         function formatBytes(bytes, decimals = 1) {
             if (bytes === 0) return '0 Bytes';
@@ -115,14 +129,51 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
 
+        function formatDuration(totalSeconds) {
+            if (totalSeconds < 0) totalSeconds = 0;
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+
+            const paddedMinutes = String(minutes).padStart(2, '0');
+            const paddedSeconds = String(seconds).padStart(2, '0');
+
+            if (hours > 0) {
+                return `${String(hours).padStart(2, '0')}:${paddedMinutes}:${paddedSeconds}`;
+            } else {
+                return `${paddedMinutes}:${paddedSeconds}`;
+            }
+        }
+
+        function updateRunningTimer() {
+            if (!scraperStartTime || !runningTimerElement) {
+                return;
+            }
+
+            const now = new Date();
+            const durationSeconds = Math.floor((now.getTime() - scraperStartTime.getTime()) / 1000);
+            runningTimerElement.textContent = `Uptime: ${formatDuration(durationSeconds)}`;
+        }
+
         async function fetchAndUpdateStats() {
             try {
                 const response = await fetch('/stats');
                 if (!response.ok) {
                     console.error('Failed to fetch stats:', response.status, await response.text());
+                    if (runningTimerElement) runningTimerElement.textContent = 'Uptime: Error';
                     return;
                 }
                 const statsData = await response.json();
+
+                if (!scraperStartTime && statsData.start_time_iso) {
+                    scraperStartTime = new Date(statsData.start_time_iso);
+                    if (timerIntervalId) clearInterval(timerIntervalId);
+                    timerIntervalId = setInterval(updateRunningTimer, 1000);
+                    updateRunningTimer();
+                } else if (!scraperStartTime && runningTimerElement) {
+                    runningTimerElement.textContent = 'Uptime: Waiting...';
+                }
+
                 const receivedDomains = new Set();
 
                 if (statsData.per_domain) {
@@ -204,6 +255,7 @@
 
             } catch (error) {
                 console.error('Error fetching or updating stats:', error);
+                if (runningTimerElement) runningTimerElement.textContent = 'Uptime: Error';
             }
         }
 
@@ -212,16 +264,22 @@
                 console.error("statsTableBodyEl not found!");
                 return;
             }
-            if (!summaryRowElement) {
-                console.error("summaryRowElement not found!");
-                return;
+            if (!runningTimerElement) {
+                console.warn("runningTimerElement with id 'runningTimer' not found in H1. Timer will not be displayed.");
             }
 
-            if (statsTableBodyEl.firstChild) {
-                statsTableBodyEl.insertBefore(summaryRowElement, statsTableBodyEl.firstChild);
+            if (summaryRowElement && summaryRowElement.parentNode === statsTableBodyEl) {
+                if (statsTableBodyEl.firstChild) {
+                    statsTableBodyEl.insertBefore(summaryRowElement, statsTableBodyEl.firstChild);
+                } else {
+                    statsTableBodyEl.appendChild(summaryRowElement);
+                }
+            } else if (summaryRowElement) {
+                statsTableBodyEl.prepend(summaryRowElement);
             } else {
-                statsTableBodyEl.appendChild(summaryRowElement);
+                console.warn("summaryRowElement not found! Table layout might be affected.");
             }
+
 
             const headerRow = document.createElement('tr');
             headerRow.classList.add('dynamic-header-row');
@@ -233,8 +291,14 @@
                 headerRow.appendChild(cell);
             });
 
-            if (summaryRowElement.nextSibling) {
-                statsTableBodyEl.insertBefore(headerRow, summaryRowElement.nextSibling);
+            if (summaryRowElement && summaryRowElement.parentNode === statsTableBodyEl) {
+                if (summaryRowElement.nextSibling) {
+                    statsTableBodyEl.insertBefore(headerRow, summaryRowElement.nextSibling);
+                } else {
+                    statsTableBodyEl.appendChild(headerRow);
+                }
+            } else if (statsTableBodyEl.firstChild) {
+                statsTableBodyEl.insertBefore(headerRow, statsTableBodyEl.firstChild);
             } else {
                 statsTableBodyEl.appendChild(headerRow);
             }

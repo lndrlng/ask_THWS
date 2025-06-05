@@ -30,15 +30,14 @@ def parse_pdf(response: Response) -> Optional[RawPageItem]:
                 if pdf_title and isinstance(pdf_title, str) and pdf_title.strip():
                     title_str = pdf_title.strip()
 
-                if lang == "unknown":
-                    for page_num in range(len(doc)):
-                        page = doc.load_page(page_num)
-                        pdf_text_for_lang_detect += page.get_text("text") + " "
+                for page_num in range(len(doc)):
+                    page = doc.load_page(page_num)
+                    pdf_text_for_lang_detect += page.get_text("text") + " "
 
-                    if pdf_text_for_lang_detect.strip():
-                        detected_lang_content = detect_lang_from_content(pdf_text_for_lang_detect)
-                        if detected_lang_content != "unknown":
-                            lang = detected_lang_content
+                if pdf_text_for_lang_detect.strip():
+                    detected_lang_content = detect_lang_from_content(pdf_text_for_lang_detect)
+                    if detected_lang_content != "unknown":
+                        lang = detected_lang_content
         except Exception as e:
             metadata_parse_error = f"PyMuPDF metadata or text extraction failed: {str(e)}"
 

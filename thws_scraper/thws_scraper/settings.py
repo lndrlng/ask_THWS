@@ -13,16 +13,8 @@ import os
 # Custom values; might be configureable via env tbd
 # ##################################################
 
-# Size of the chunks
-CHUNK_SIZE = 1000
-
-# Overlapping of the chunks
-CHUNK_OVERLAP = 100
-
 ENABLE_FILE_LOGGING = True
-
 EXPORT_CSV_STATS = True
-
 
 MONGO_HOST = os.getenv("MONGO_HOST")
 MONGO_PORT = os.getenv("MONGO_PORT")
@@ -168,7 +160,7 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 # How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOG_LEVEL = "WARNING"
+LOG_LEVEL = "INFO"
 
 # Turn on the retry middleware
 RETRY_ENABLED = True

@@ -126,11 +126,6 @@ class ThwsErrorMiddleware:
         if hasattr(spider, "reporter"):
             spider.reporter.bump("errors", domain)
 
-            try:
-                spider.update_rich_table()
-            except Exception:
-                pass
-
         return None
 
 

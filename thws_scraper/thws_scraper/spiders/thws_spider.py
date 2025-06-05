@@ -1,6 +1,6 @@
 import csv
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import List
@@ -60,7 +60,8 @@ class ThwsSpider(CrawlSpider):
         super().__init__(*args, **kwargs)
         self.settings = settings
         self.reporter = StatsReporter()
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
+        self.reporter.set_start_time(self.start_time)
         self._follow_links = True
 
     def spider_opened(self, spider):
