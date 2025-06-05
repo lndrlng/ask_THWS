@@ -7,6 +7,8 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import os
+
 # ##################################################
 # Custom values; might be configureable via env tbd
 # ##################################################
@@ -20,6 +22,39 @@ CHUNK_OVERLAP = 100
 ENABLE_FILE_LOGGING = True
 
 EXPORT_CSV_STATS = True
+
+
+MONGO_HOST = os.getenv("MONGO_HOST")
+MONGO_PORT = os.getenv("MONGO_PORT")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+MONGO_USER = os.getenv("MONGO_USER")
+MONGO_PASS = os.getenv("MONGO_PASS")
+
+MONGO_PAGES_COLLECTION = "pages"
+MONGO_FILES_COLLECTION = "files"
+
+SOFT_ERROR_STRINGS = [
+    "diese seite existiert nicht",
+    "this page does not exist",
+    "seite nicht gefunden",
+    "not found",
+    "404",
+    "sorry, there is no translation for this news-article.",
+    "studierende melden sich mit ihrer k-nummer als benutzername am e-learning system an.",
+    (
+        "falls sie die seitenadresse manuell in ihren browser eingegeben haben,"
+        "kontrollieren sie bitte die korrekte schreibweise."
+    ),
+    "aktuell keine einträge vorhanden",
+    "sorry, there are no translated news-articles in this archive period",
+]
+
+IGNORED_URL_PATTERNS_LIST = [
+    "tx_fhwsvideo_frontend",
+    "/videos/",
+    "/wp-content/uploads/",
+    "/login/",
+]
 
 # ##################################################
 
@@ -70,7 +105,7 @@ TELNETCONSOLE_ENABLED = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # default priority is 550
-    "scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware": None,  # disable the built-in # noqa: E501
+    "scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware": None,  # disable the built-in
     "thws_scraper.middlewares.RobotsBypassMiddleware": 100,  # Enable the custom one
     "thws_scraper.middlewares.ThwsErrorMiddleware": 550,
 }
@@ -85,12 +120,7 @@ DOWNLOADER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 ITEM_PIPELINES = {
-    # JSON Ouptut
-    "thws_scraper.pipelines.RawOutputPipeline": 100,  # write raw pages first
-    "thws_scraper.pipelines.ChunkingOutputPipeline": 200,  # then split & emit chunks
-    # Postgres Output
-    "thws_scraper.pipelines.RawPostgresPipeline": 100,  # write raw pages first
-    "thws_scraper.pipelines.ChunkingPostgresPipeline": 200,  # then split & emit chunks
+    "thws_scraper.pipelines.MongoPipeline": 100,
 }
 
 

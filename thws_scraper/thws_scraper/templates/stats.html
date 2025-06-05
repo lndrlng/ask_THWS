@@ -1,19 +1,96 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Live Stats</title>
-    <meta http-equiv="refresh" content="5">
+    <title>Live Crawler Stats (Dark - All Metrics)</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
-        tr:hover { background-color: #e6f7ff; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #282c34;
+            /* Dark background */
+            color: #abb2bf;
+            /* Light grey text */
+            font-size: 0.9em;
+            /* Slightly smaller base font for more data */
+        }
+
+        h1 {
+            color: #61afef;
+            /* Brighter color for heading */
+            border-bottom: 1px solid #444851;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #444851;
+        }
+
+        th,
+        td {
+            border: 1px solid #444851;
+            padding: 6px 8px;
+            /* Adjusted padding */
+            text-align: center;
+        }
+
+        th:first-child,
+        td:first-child {
+            /* Domain name left-aligned */
+            text-align: left;
+            min-width: 150px;
+            /* Give domain column some space */
+        }
+
+        th {
+            background-color: #353a43;
+            color: #e5c07b;
+        }
+
+        tr:hover {
+            background-color: #3e4451;
+        }
+
+        .domain-name {
+            color: #98c379;
+            font-weight: bold;
+        }
+
+        .stat-errors.has-errors {
+            color: #e06c75;
+            /* Light red for errors */
+            font-weight: bold;
+        }
+
+        .stat-errors.no-errors {
+            color: #56b6c2;
+            /* Or keep default color if 0, using a subtle color */
+        }
+
+        /* Summary row styling */
+        #summaryRow td {
+            font-weight: bold;
+            color: #c678dd;
+        }
+
+        #summaryRow .stat-errors.has-errors {
+            /* Ensure summary error color is consistent */
+            color: #e06c75;
+        }
+
+        #summaryRow .stat-errors.no-errors {
+            /* Ensure summary no-error color is consistent */
+            color: #56b6c2;
+        }
     </style>
 </head>
+
 <body>
     <h1>Live Crawler Stats</h1>
-    <table>
+    <table id="statsTable">
         <thead>
             <tr>
                 <th>Domain</th>
@@ -27,29 +104,175 @@
             </tr>
         </thead>
         <tbody>
+            {# Initial rows rendered by server, updated by JS #}
             {% for row in rows %}
-            <tr>
-                <td>{{ row.domain }}</td>
-                <td>{{ row.html }}</td>
-                <td>{{ row.pdf }}</td>
-                <td>{{ row.ical }}</td>
-                <td>{{ row.errors }}</td>
-                <td>{{ row.empty }}</td>
-                <td>{{ row.ignored }}</td>
-                <td>{{ row.bytes }}</td>
+            <tr data-domain="{{ row.domain }}">
+                <td class="domain-name">{{ row.domain }}</td>
+                <td class="stat-html">{{ row.html | default(0) }}</td>
+                <td class="stat-pdf">{{ row.pdf | default(0) }}</td>
+                <td class="stat-ical">{{ row.ical | default(0) }}</td>
+                <td class="stat-errors {% if row.errors > 0 %}has-errors{% else %}no-errors{% endif %}">{{ row.errors |
+                    default(0) }}</td>
+                <td class="stat-empty">{{ row.empty | default(0) }}</td>
+                <td class="stat-ignored">{{ row.ignored | default(0) }}</td>
+                <td class="stat-bytes">{{ row.bytes_str | default("0 Bytes") }}</td>
             </tr>
             {% endfor %}
-            <tr style="font-weight:bold;">
-                <td>SUMMARY</td>
-                <td>{{ summary.html }}</td>
-                <td>{{ summary.pdf }}</td>
-                <td>{{ summary.ical }}</td>
-                <td>{{ summary.errors }}</td>
-                <td>{{ summary.empty }}</td>
-                <td>{{ summary.ignored }}</td>
-                <td>{{ summary.bytes }}</td>
+            {# Summary Row #}
+            <tr id="summaryRow">
+                <td class="domain-name">SUMMARY</td>
+                <td id="summaryHtml">{{ summary.html | default(0) }}</td>
+                <td id="summaryPdf">{{ summary.pdf | default(0) }}</td>
+                <td id="summaryIcal">{{ summary.ical | default(0) }}</td>
+                <td id="summaryErrors"
+                    class="stat-errors {% if summary.errors > 0 %}has-errors{% else %}no-errors{% endif %}">{{
+                    summary.errors | default(0) }}</td>
+                <td id="summaryEmpty">{{ summary.empty | default(0) }}</td>
+                <td id="summaryIgnored">{{ summary.ignored | default(0) }}</td>
+                <td id="summaryBytes">{{ summary.bytes_str | default("0 Bytes") }}</td>
             </tr>
         </tbody>
     </table>
+
+    <script>
+        const statsTableBody = document.querySelector("#statsTable tbody");
+        const summaryRowElement = document.getElementById("summaryRow");
+
+        // Keys for stats, matching class names (stat-key) and JSON keys
+        const statKeys = ["html", "pdf", "ical", "errors", "empty", "ignored", "bytes"];
+
+        function formatBytes(bytes, decimals = 1) {
+            if (bytes === 0) return '0 Bytes';
+            if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return 'N/A'; // Handle non-numeric input gracefully
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        async function fetchAndUpdateStats() {
+            try {
+                const response = await fetch('/stats');
+                if (!response.ok) {
+                    console.error('Failed to fetch stats:', response.status, await response.text());
+                    return;
+                }
+                const statsData = await response.json();
+                const receivedDomains = new Set();
+
+                if (statsData.per_domain) {
+                    const sortedDomains = Object.keys(statsData.per_domain).sort();
+
+                    for (const domain of sortedDomains) {
+                        receivedDomains.add(domain);
+                        const domainData = statsData.per_domain[domain];
+                        let row = statsTableBody.querySelector(`tr[data-domain="${domain}"]`);
+
+                        if (!row) { // New domain
+                            row = document.createElement('tr');
+                            row.setAttribute('data-domain', domain);
+                            row.innerHTML = `
+                                <td class="domain-name">${domain}</td>
+                                <td class="stat-html">0</td>
+                                <td class="stat-pdf">0</td>
+                                <td class="stat-ical">0</td>
+                                <td class="stat-errors no-errors">0</td>
+                                <td class="stat-empty">0</td>
+                                <td class="stat-ignored">0</td>
+                                <td class="stat-bytes">0 Bytes</td>
+                            `;
+                            // Insert new rows alphabetically, before the summary row
+                            let inserted = false;
+                            const existingRows = statsTableBody.querySelectorAll("tr[data-domain]");
+                            for (let i = 0; i < existingRows.length; i++) {
+                                if (domain.localeCompare(existingRows[i].dataset.domain) < 0) {
+                                    statsTableBody.insertBefore(row, existingRows[i]);
+                                    inserted = true;
+                                    break;
+                                }
+                            }
+                            if (!inserted) {
+                                statsTableBody.insertBefore(row, summaryRowElement);
+                            }
+                        }
+
+                        // Update all stat cells for the domain
+                        statKeys.forEach(key => {
+                            const cell = row.querySelector(`.stat-${key}`);
+                            if (cell) {
+                                let newValue;
+                                const rawValue = domainData[key] || 0;
+
+                                if (key === "bytes") {
+                                    newValue = formatBytes(rawValue);
+                                } else {
+                                    newValue = String(rawValue);
+                                }
+
+                                if (cell.textContent !== newValue) {
+                                    cell.textContent = newValue;
+                                }
+
+                                if (key === "errors") {
+                                    if (rawValue > 0) {
+                                        cell.classList.add('has-errors');
+                                        cell.classList.remove('no-errors');
+                                    } else {
+                                        cell.classList.remove('has-errors');
+                                        cell.classList.add('no-errors');
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Remove domains that are no longer in stats
+                const currentRows = statsTableBody.querySelectorAll("tr[data-domain]");
+                currentRows.forEach(row => {
+                    if (!receivedDomains.has(row.dataset.domain)) {
+                        row.remove();
+                    }
+                });
+
+                // Update summary row
+                statKeys.forEach(key => {
+                    const summaryCellId = `summary${key.charAt(0).toUpperCase() + key.slice(1)}`;
+                    const summaryCell = document.getElementById(summaryCellId);
+                    if (summaryCell) {
+                        let newValue;
+                        const rawValue = statsData.global[key] || 0;
+
+                        if (key === "bytes") {
+                            newValue = formatBytes(rawValue, 2); // More precision for summary bytes
+                        } else {
+                            newValue = String(rawValue);
+                        }
+
+                        if (summaryCell.textContent !== newValue) {
+                            summaryCell.textContent = newValue;
+                        }
+                        if (key === "errors") {
+                            if (rawValue > 0) {
+                                summaryCell.classList.add('has-errors');
+                                summaryCell.classList.remove('no-errors');
+                            } else {
+                                summaryCell.classList.remove('has-errors');
+                                summaryCell.classList.add('no-errors');
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error fetching or updating stats:', error);
+            }
+        }
+
+        setInterval(fetchAndUpdateStats, 1000); // Update every 1 second
+        document.addEventListener('DOMContentLoaded', fetchAndUpdateStats); // Initial load
+    </script>
 </body>
+
 </html>
