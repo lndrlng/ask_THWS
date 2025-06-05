@@ -141,3 +141,9 @@ jq -r '
   | @csv
 ' data/thws_data3_raw.json > fiw_results.csv
 ```
+
+show the shortest 'text' field:
+
+```shell
+jq -r '. as $o | "\($o.text | length) chars\t\($o.text)"' data/thws_data3_raw.jsonl | sort -n
+```

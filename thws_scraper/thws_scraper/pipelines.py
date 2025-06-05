@@ -20,6 +20,7 @@ from sqlalchemy.orm import sessionmaker
 
 from .items import DocumentChunkItem, RawPageItem
 from .models import Base, Chunk, Job, RawPage
+from .utils.date import make_json_serializable
 
 # make langdetect deterministic
 DetectorFactory.seed = 42
@@ -75,12 +76,7 @@ class RawOutputPipeline:
 
     def process_item(self, item, spider):
         if isinstance(item, RawPageItem):
-            # Convert all datetime fields to ISO strings
-            serializable_item = {
-                k: (v.isoformat() if isinstance(v, datetime) else v)
-                for k, v in dict(item).items()
-            }
-            line = json.dumps(serializable_item, ensure_ascii=False)
+            line = json.dumps(make_json_serializable(dict(item)), ensure_ascii=False)
             self.raw_file.write(line + "\n")
         return item
 
@@ -90,6 +86,7 @@ class RawPostgresPipeline(SQLAlchemyPipelineBase):
         if not isinstance(item, RawPageItem):
             return item
 
+        cleaned_text = (item.get("text") or "").replace("\x00", "")
         lang = item.get("lang")
         if not lang:
             try:
@@ -102,7 +99,7 @@ class RawPostgresPipeline(SQLAlchemyPipelineBase):
             url=item["url"],
             type=item.get("type", "unknown"),
             title=item.get("title"),
-            text=item.get("text"),
+            text=cleaned_text,
             date_scraped=datetime.utcnow(),
             date_updated=item.get("date_updated"),
             status=item.get("status"),
@@ -181,11 +178,9 @@ class ChunkingOutputPipeline:
             )
 
             # Write out chunk
-            serializable_item = {
-                k: (v.isoformat() if isinstance(v, datetime) else v)
-                for k, v in dict(chunk_item).items()
-            }
-            line = json.dumps(serializable_item, ensure_ascii=False)
+            line = json.dumps(
+                make_json_serializable(dict(chunk_item)), ensure_ascii=False
+            )
             self.chunks_file.write(line + "\n")
 
         return item
@@ -226,6 +221,7 @@ class ChunkingPostgresPipeline(SQLAlchemyPipelineBase):
 
         chunks = self.splitter.split_text(text)
         for idx, chunk_text in enumerate(chunks):
+            cleaned_chunk_text = chunk_text.replace("\x00", "")
             digest = hashlib.sha256(
                 (str(self.job.id) + chunk_text).encode("utf-8")
             ).hexdigest()
@@ -238,7 +234,7 @@ class ChunkingPostgresPipeline(SQLAlchemyPipelineBase):
                 job_id=self.job.id,
                 raw_page_id=item["db_id"],
                 sequence_index=idx,
-                text=chunk_text,
+                text=cleaned_chunk_text,
                 lang=lang,
                 created_at=datetime.utcnow(),
             )

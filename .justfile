@@ -42,3 +42,7 @@ clean-logs FILE:
     echo "Remove Timeout Error" && \
     sed -i '/TimeoutError/d' {{FILE}} && \
     sed -i '/larger than download warn size/d' {{FILE}}
+
+# Get the size of the docker volume
+size VOL_NAME:
+    sudo du -sh $(docker volume inspect {{VOL_NAME}} -f '{{"{{"}} .Mountpoint {{"}}"}}')

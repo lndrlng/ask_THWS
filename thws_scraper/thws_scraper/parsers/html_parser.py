@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from scrapy.http import Response
 
 from ..items import RawPageItem
-from ..utils.date_extractor import date_extractor
+from ..utils.date import date_extractor
 from ..utils.lang import extract_lang_from_url
 from ..utils.text import clean_text
 
@@ -78,6 +78,12 @@ def parse_html(response: Response) -> Optional[Tuple[List[RawPageItem], List[str
                 "studierende melden sich mit ihrer k-nummer als benutzername "
                 "am e-learning system an."
             ),
+            (
+                "falls sie die seitenadresse manuell in ihren browser eingegeben haben,"
+                " kontrollieren sie bitte die korrekte schreibweise."
+            ),
+            "aktuell keine einträge vorhanden",
+            "sorry, there are no translated news-articles in this archive period",
         ]
 
         if not text or any(msg in text.lower() for msg in soft_error_skip):
