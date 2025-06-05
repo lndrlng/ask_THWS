@@ -20,7 +20,8 @@ services:
     volumes:
       - ./result:/app/result
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - askthws_net
 
@@ -36,7 +37,16 @@ services:
     volumes:
       - mongodb_data:/data/db
     networks:
-      - askthws_net
+      askthws_net:
+        aliases:
+          - mongo
+    healthcheck:
+      test: |
+        mongosh --host localhost --port 27017 --eval 'db.runCommand("ping").ok' --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   mongo-express:
      image: mongo-express:latest
@@ -47,13 +57,15 @@ services:
      environment:
        ME_CONFIG_MONGODB_SERVER: mongodb
        ME_CONFIG_MONGODB_PORT: 27017
+       ME_CONFIG_BASICAUTH: "false"
        ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
        ME_CONFIG_MONGODB_AUTH_USERNAME: ${MONGO_USER}
        ME_CONFIG_MONGODB_AUTH_PASSWORD: ${MONGO_PASS}
        ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER}
        ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASS}
      depends_on:
-       - mongodb
+       mongodb:
+        condition: service_healthy
      networks:
        - askthws_net
 

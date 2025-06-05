@@ -22,3 +22,6 @@ class RawPageItem(scrapy.Item):
     status = scrapy.Field()
     lang = scrapy.Field()
     parse_error = scrapy.Field()
+
+    gridfs_id = scrapy.Field()
+    file_size = scrapy.Field()

@@ -168,7 +168,7 @@ TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
 
 # How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "WARNING"
 
 # Turn on the retry middleware
 RETRY_ENABLED = True
