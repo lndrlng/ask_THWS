@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Live Crawler Stats (Dark - All Metrics)</title>
+    <title>Live Crawler Stats</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,29 +16,7 @@
             border-bottom: 1px solid #444851;
             padding-bottom: 10px;
             margin-top: 0;
-            display: flex;
-            /* For button alignment */
-            justify-content: space-between;
-            /* For button alignment */
-            align-items: center;
-            /* For button alignment */
         }
-
-        h1 button {
-            /* Style for the new button */
-            background-color: #61afef;
-            color: #282c34;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8em;
-        }
-
-        h1 button:hover {
-            background-color: #5298d8;
-        }
-
 
         table {
             border-collapse: collapse;
@@ -47,25 +24,27 @@
             border: 1px solid #444851;
         }
 
-        th,
         td {
             border: 1px solid #444851;
             padding: 6px 8px;
             text-align: center;
         }
 
-        th:first-child,
-        td:first-child {
+        tr td:first-child {
             text-align: left;
             min-width: 150px;
         }
 
-        th {
+        #statsTableBody tr.dynamic-header-row td {
             background-color: #353a43;
             color: #e5c07b;
+            font-weight: bold;
+        }
+        #statsTableBody tr.dynamic-header-row td:first-child {
+            text-align: left;
         }
 
-        tr:hover {
+        tr:not(.dynamic-header-row):hover {
             background-color: #3e4451;
         }
 
@@ -74,47 +53,26 @@
             font-weight: bold;
         }
 
-        /* REMOVED Color styling for .stat-errors.has-errors and .stat-errors.no-errors */
-        /* If you had .stat-errors.has-errors { font-weight: bold; } and want to keep it, add it back here without color */
-        .stat-errors.has-errors {
-            /* font-weight: bold; /* Example: Keep bolding if desired, but no color */
-        }
-
-
         #summaryRow td {
             font-weight: bold;
             color: #c678dd;
+            font-size: 1.1em;
         }
 
-        /* REMOVED Color styling for #summaryRow .stat-errors.has-errors and .stat-errors.no-errors */
-
-
-        /* CSS for collapsed table state */
-        #statsTable tbody.collapsed tr[data-domain] {
-            display: none;
+        #summaryRow td.domain-name {
+            color: #c678dd;
         }
+
     </style>
 </head>
 
 <body>
     <h1>
         Live Crawler Stats
-        <button id="toggleTableBtn">Collapse</button>
     </h1>
     <table id="statsTable">
-        <thead>
-            <tr>
-                <th>Domain</th>
-                <th>HTML</th>
-                <th>PDF</th>
-                <th>iCal</th>
-                <th>Errors</th>
-                <th>Empty</th>
-                <th>Ignored</th>
-                <th>Bytes</th>
-            </tr>
-        </thead>
         <tbody id="statsTableBody"> {# Initial rows rendered by server, updated by JS #}
+            {# Data rows will be populated here by JS or server, after summary and new header #}
             {% for row in rows %}
             <tr data-domain="{{ row.domain }}">
                 <td class="domain-name">{{ row.domain }}</td>
@@ -127,7 +85,7 @@
                 <td class="stat-bytes">{{ row.bytes_str | default("0 Bytes") }}</td>
             </tr>
             {% endfor %}
-            {# Summary Row #}
+            {# Summary Row - initially rendered here, will be moved by JS #}
             <tr id="summaryRow">
                 <td class="domain-name">SUMMARY</td>
                 <td id="summaryHtml">{{ summary.html | default(0) }}</td>
@@ -142,9 +100,8 @@
     </table>
 
     <script>
-        const statsTableBodyEl = document.getElementById("statsTableBody"); // Use the new tbody ID
+        const statsTableBodyEl = document.getElementById("statsTableBody");
         const summaryRowElement = document.getElementById("summaryRow");
-        const toggleTableBtn = document.getElementById('toggleTableBtn'); // Get the button
 
         const statKeys = ["html", "pdf", "ical", "errors", "empty", "ignored", "bytes"];
 
@@ -184,21 +141,22 @@
                                 <td class="stat-html">0</td>
                                 <td class="stat-pdf">0</td>
                                 <td class="stat-ical">0</td>
-                                <td class="stat-errors">0</td> <td class="stat-empty">0</td>
+                                <td class="stat-errors">0</td>
+                                <td class="stat-empty">0</td>
                                 <td class="stat-ignored">0</td>
                                 <td class="stat-bytes">0 Bytes</td>
                             `;
                             let inserted = false;
-                            const existingRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
-                            for (let i = 0; i < existingRows.length; i++) {
-                                if (domain.localeCompare(existingRows[i].dataset.domain) < 0) {
-                                    statsTableBodyEl.insertBefore(row, existingRows[i]);
+                            const existingDataRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
+                            for (let i = 0; i < existingDataRows.length; i++) {
+                                if (domain.localeCompare(existingDataRows[i].dataset.domain) < 0) {
+                                    statsTableBodyEl.insertBefore(row, existingDataRows[i]);
                                     inserted = true;
                                     break;
                                 }
                             }
                             if (!inserted) {
-                                statsTableBodyEl.insertBefore(row, summaryRowElement);
+                                statsTableBodyEl.appendChild(row);
                             }
                         }
 
@@ -207,26 +165,21 @@
                             if (cell) {
                                 let newValue;
                                 const rawValue = domainData[key] || 0;
-
                                 if (key === "bytes") {
                                     newValue = formatBytes(rawValue);
                                 } else {
                                     newValue = String(rawValue);
                                 }
-
                                 if (cell.textContent !== newValue) {
                                     cell.textContent = newValue;
                                 }
-
-                                // REMOVED logic for adding/removing 'has-errors'/'no-errors' classes for styling
-                                // if (key === "errors") { ... }
                             }
                         });
                     }
                 }
 
-                const currentRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
-                currentRows.forEach(row => {
+                const currentDataRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
+                currentDataRows.forEach(row => {
                     if (!receivedDomains.has(row.dataset.domain)) {
                         row.remove();
                     }
@@ -238,18 +191,14 @@
                     if (summaryCell) {
                         let newValue;
                         const rawValue = statsData.global[key] || 0;
-
                         if (key === "bytes") {
                             newValue = formatBytes(rawValue, 2);
                         } else {
                             newValue = String(rawValue);
                         }
-
                         if (summaryCell.textContent !== newValue) {
                             summaryCell.textContent = newValue;
                         }
-                        // REMOVED logic for adding/removing 'has-errors'/'no-errors' classes for styling from summary
-                        // if (key === "errors") { ... }
                     }
                 });
 
@@ -258,22 +207,40 @@
             }
         }
 
-        // Event listener for the toggle button
-        toggleTableBtn.addEventListener('click', () => {
-            const isCollapsed = statsTableBodyEl.classList.toggle('collapsed');
-            toggleTableBtn.textContent = isCollapsed ? 'Expand' : 'Collapse';
-        });
-
-        // Initial fetch and interval
-        setInterval(fetchAndUpdateStats, 1000);
         document.addEventListener('DOMContentLoaded', () => {
-            fetchAndUpdateStats();
-            // Set initial button text assuming table is expanded by default
-            if (statsTableBodyEl.classList.contains('collapsed')) {
-                toggleTableBtn.textContent = 'Expand';
-            } else {
-                toggleTableBtn.textContent = 'Collapse';
+            if (!statsTableBodyEl) {
+                console.error("statsTableBodyEl not found!");
+                return;
             }
+            if (!summaryRowElement) {
+                console.error("summaryRowElement not found!");
+                return;
+            }
+
+            if (statsTableBodyEl.firstChild) {
+                statsTableBodyEl.insertBefore(summaryRowElement, statsTableBodyEl.firstChild);
+            } else {
+                statsTableBodyEl.appendChild(summaryRowElement);
+            }
+
+            const headerRow = document.createElement('tr');
+            headerRow.classList.add('dynamic-header-row');
+            const headers = ["Domain", "HTML", "PDF", "iCal", "Errors", "Empty", "Ignored", "Bytes"];
+
+            headers.forEach(headerText => {
+                const cell = document.createElement('td');
+                cell.textContent = headerText;
+                headerRow.appendChild(cell);
+            });
+
+            if (summaryRowElement.nextSibling) {
+                statsTableBodyEl.insertBefore(headerRow, summaryRowElement.nextSibling);
+            } else {
+                statsTableBodyEl.appendChild(headerRow);
+            }
+
+            fetchAndUpdateStats();
+            setInterval(fetchAndUpdateStats, 1000);
         });
     </script>
 </body>

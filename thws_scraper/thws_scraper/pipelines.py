@@ -3,14 +3,12 @@ from datetime import datetime
 from gridfs import GridFS
 from gridfs.errors import GridFSError
 from itemadapter import ItemAdapter
-from langdetect import DetectorFactory, detect
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
 from scrapy.exceptions import CloseSpider, DropItem
 
 from .items import RawPageItem
 
-DetectorFactory.seed = 42
 MAX_EMBEDDED_FILE_SIZE = 15 * 1024 * 1024  # Mongo max 16mb, so 15 is safe
 
 
@@ -129,20 +127,6 @@ class MongoPipeline:
 
         if item_type == "html":
             collection_name = self.pages_collection_name
-            if not item_dict.get("lang") and item_dict.get("text"):
-                try:
-                    from bs4 import BeautifulSoup
-
-                    html_for_lang_detect = item_dict.get("text", "")
-                    soup_for_lang_detect = BeautifulSoup(html_for_lang_detect, "lxml")
-                    plain_text_for_lang_detect = soup_for_lang_detect.get_text(" ", strip=True)
-                    if plain_text_for_lang_detect:
-                        item_dict["lang"] = detect(plain_text_for_lang_detect)
-                    else:
-                        item_dict["lang"] = "unknown"
-                except Exception as e:
-                    spider.logger.warning(f"Language detection failed for {url}: {e}")
-                    item_dict["lang"] = "unknown"
 
             if "file_content" in item_dict and not item_dict.get("file_content"):
                 del item_dict["file_content"]

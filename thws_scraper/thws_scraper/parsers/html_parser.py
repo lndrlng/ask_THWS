@@ -8,7 +8,7 @@ from scrapy.http import Response
 
 from ..items import RawPageItem
 from ..utils.date import date_extractor
-from ..utils.lang import extract_lang_from_url
+from ..utils.lang import detect_lang_from_content, extract_lang_from_url
 
 module_logger = logging.getLogger(__name__)
 
@@ -40,7 +40,6 @@ def _clean_html_fragment_for_storage(html_string: str) -> str:
 
     for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
         comment.extract()
-
     return str(soup)
 
 
@@ -52,10 +51,7 @@ def parse_html(
     2) Extract its HTML structure.
     3) Clean the HTML fragment & wrap in a RawPageItem.
     4) Extract embedded .pdf/.ics links from the whole page.
-
-    Args:
-        response: The Scrapy HTTP response.
-        soft_error_strings: A list of lowercase strings that indicate a soft error.
+    5) Detect language from URL, then from content as fallback.
     """
     soup = BeautifulSoup(response.text, "lxml")
 
@@ -100,6 +96,15 @@ def parse_html(
     if not page_title:
         page_title = "Untitled Page"
 
+    lang = extract_lang_from_url(response.url)
+
+    if lang == "unknown":
+        text_for_lang_detect = temp_cleaned_soup.get_text(separator=" ", strip=True)
+        if text_for_lang_detect:
+            detected_lang_from_html = detect_lang_from_content(text_for_lang_detect)
+            if detected_lang_from_html != "unknown":
+                lang = detected_lang_from_html
+
     item = RawPageItem(
         url=response.url,
         type="html",
@@ -108,11 +113,10 @@ def parse_html(
         date_scraped=datetime.utcnow().isoformat(),
         date_updated=date_extractor(response.text),
         status=response.status,
-        lang=extract_lang_from_url(response.url),
+        lang=lang,
     )
 
     items: List[RawPageItem] = [item]
-
     embedded_links: List[str] = []
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"]
