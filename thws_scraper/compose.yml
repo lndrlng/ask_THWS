@@ -7,8 +7,8 @@ services:
     restart: "no"
     environment:
       LOG_LEVEL: INFO
-      EXPORT_CSV_STATS: False
-      ENABLE_FILE_LOGGING: False
+      EXPORT_CSV_STATS: True
+      ENABLE_FILE_LOGGING: True
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
       MONGO_DB_NAME: ${MONGO_DB}

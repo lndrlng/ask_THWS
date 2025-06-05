@@ -38,9 +38,7 @@ embedder = SentenceTransformer(EMBED_MODEL_NAME, device=device)
 client = QdrantClient(url=QDRANT_URL)
 
 # --- Launch Ollama Server ---
-ollama_process = subprocess.Popen(
-    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-)
+ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 # Ensure Ollama server stops when FastAPI stops

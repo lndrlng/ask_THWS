@@ -9,3 +9,9 @@ result/
 *.log
 
 .venv/
+.env
+.justfile
+README.md
+compose.yml
+dump_mongo.sh
+mongo_stats.py
