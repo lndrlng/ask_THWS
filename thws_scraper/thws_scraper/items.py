@@ -25,3 +25,5 @@ class RawPageItem(scrapy.Item):
 
     gridfs_id = scrapy.Field()
     file_size = scrapy.Field()
+
+    metadata_extracted = scrapy.Field()

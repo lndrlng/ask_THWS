@@ -47,18 +47,18 @@ class StatsHTTPServer:
                     self.wfile.write(json.dumps(stats_data, indent=2).encode("utf-8"))
                 elif self.path == "/live":
                     self.send_response(200)
-                    self.send_header("Content-Type", "text/html")
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
                     self.end_headers()
                     html = stats_server_instance._render_initial_html()
                     self.wfile.write(html.encode("utf-8"))
                 elif self.path == "/health":
                     self.send_response(200)
-                    self.send_header("Content-Type", "text/plain")
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
                     self.end_headers()
                     self.wfile.write(b"OK")
                 else:
                     self.send_response(404)
-                    self.send_header("Content-Type", "text/plain")
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
                     self.end_headers()
                     self.wfile.write(b"Not Found")
 

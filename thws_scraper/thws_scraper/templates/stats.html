@@ -2,6 +2,7 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
     <title>Live Crawler Stats</title>
     <style>
         body {
@@ -34,28 +35,26 @@
             border: 1px solid #504945;
         }
 
-        td {
+        td,
+        th {
             border: 1px solid #504945;
             padding: 6px 8px;
             text-align: center;
         }
 
-        tr td:first-child {
-            text-align: left;
-            min-width: 150px;
-        }
-
-        #statsTableBody tr.dynamic-header-row td {
+        #statsTable thead th {
             background-color: #3c3836;
             color: #fabd2f;
             font-weight: bold;
         }
 
-        #statsTableBody tr.dynamic-header-row td:first-child {
+        #statsTable thead th:first-child,
+        #statsTable tbody tr td:first-child {
             text-align: left;
+            min-width: 150px;
         }
 
-        tr:not(.dynamic-header-row):hover {
+        #statsTable tbody tr:not(#summaryRow):hover {
             background-color: #3c3836;
         }
 
@@ -73,6 +72,22 @@
         #summaryRow td.domain-name {
             color: #d3869b;
         }
+
+        .sortable {
+            cursor: pointer;
+        }
+
+        .sortable:hover {
+            background-color: #504945 !important;
+        }
+
+        .sortable.sort-asc::after {
+            content: " ▼";
+        }
+
+        .sortable.sort-desc::after {
+            content: " ▲";
+        }
     </style>
 </head>
 
@@ -82,8 +97,31 @@
         <span id="runningTimer">Uptime: Fetching...</span>
     </h1>
     <table id="statsTable">
-        <tbody id="statsTableBody"> {# Initial rows rendered by server, updated by JS #}
-            {# Data rows will be populated here by JS or server, after summary and new header #}
+        <thead>
+            <tr>
+                <th class="sortable" data-column-key="domain">Domain</th>
+                <th class="sortable" data-column-key="html">HTML</th>
+                <th class="sortable" data-column-key="pdf">PDF</th>
+                <th class="sortable" data-column-key="ical">iCal</th>
+                <th class="sortable" data-column-key="errors">Errors</th>
+                <th class="sortable" data-column-key="empty">Empty</th>
+                <th class="sortable" data-column-key="ignored">Ignored</th>
+                <th class="sortable" data-column-key="bytes">Bytes</th>
+            </tr>
+        </thead>
+        <tbody id="statsTableBody">
+            {# Summary Row - initially hidden, JS will manage visibility and position #}
+            <tr id="summaryRow" style="display: none;">
+                <td class="domain-name">SUMMARY</td>
+                <td id="summaryHtml">0</td>
+                <td id="summaryPdf">0</td>
+                <td id="summaryIcal">0</td>
+                <td id="summaryErrors" class="stat-errors">0</td>
+                <td id="summaryEmpty">0</td>
+                <td id="summaryIgnored">0</td>
+                <td id="summaryBytes">0 Bytes</td>
+            </tr>
+            {# Initial data rows (if any from server-side render) will be handled by JS #}
             {% for row in rows %}
             <tr data-domain="{{ row.domain }}">
                 <td class="domain-name">{{ row.domain }}</td>
@@ -96,17 +134,6 @@
                 <td class="stat-bytes">{{ row.bytes_str | default("0 Bytes") }}</td>
             </tr>
             {% endfor %}
-            {# Summary Row - initially rendered here, will be moved by JS #}
-            <tr id="summaryRow">
-                <td class="domain-name">SUMMARY</td>
-                <td id="summaryHtml">{{ summary.html | default(0) }}</td>
-                <td id="summaryPdf">{{ summary.pdf | default(0) }}</td>
-                <td id="summaryIcal">{{ summary.ical | default(0) }}</td>
-                <td id="summaryErrors" class="stat-errors">{{ summary.errors | default(0) }}</td>
-                <td id="summaryEmpty">{{ summary.empty | default(0) }}</td>
-                <td id="summaryIgnored">{{ summary.ignored | default(0) }}</td>
-                <td id="summaryBytes">{{ summary.bytes_str | default("0 Bytes") }}</td>
-            </tr>
         </tbody>
     </table>
 
@@ -114,10 +141,18 @@
         const statsTableBodyEl = document.getElementById("statsTableBody");
         const summaryRowElement = document.getElementById("summaryRow");
         const runningTimerElement = document.getElementById('runningTimer');
+        const tableElement = document.getElementById('statsTable');
 
+        // `statKeys` helps map JSON data keys to summary cell IDs and potentially data cell classes
         const statKeys = ["html", "pdf", "ical", "errors", "empty", "ignored", "bytes"];
         let scraperStartTime = null;
         let timerIntervalId = null;
+
+        // Global state for sorting
+        let currentSort = {
+            columnKey: 'domain', // Default sort column key
+            direction: 'asc'     // Default sort direction
+        };
 
         function formatBytes(bytes, decimals = 1) {
             if (bytes === 0) return '0 Bytes';
@@ -134,10 +169,8 @@
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = Math.floor(totalSeconds % 60);
-
             const paddedMinutes = String(minutes).padStart(2, '0');
             const paddedSeconds = String(seconds).padStart(2, '0');
-
             if (hours > 0) {
                 return `${String(hours).padStart(2, '0')}:${paddedMinutes}:${paddedSeconds}`;
             } else {
@@ -146,13 +179,78 @@
         }
 
         function updateRunningTimer() {
-            if (!scraperStartTime || !runningTimerElement) {
-                return;
-            }
-
+            if (!scraperStartTime || !runningTimerElement) return;
             const now = new Date();
             const durationSeconds = Math.floor((now.getTime() - scraperStartTime.getTime()) / 1000);
             runningTimerElement.textContent = `Uptime: ${formatDuration(durationSeconds)}`;
+        }
+
+        function applySort(columnKeyToSort, sortDirection) {
+            currentSort.columnKey = columnKeyToSort;
+            currentSort.direction = sortDirection;
+
+            const tBody = statsTableBodyEl;
+            const dataRows = Array.from(tBody.querySelectorAll("tr[data-domain]")); // Only sort data rows
+            const headerCells = Array.from(tableElement.tHead.rows[0].cells);
+
+            const columnIndex = headerCells.findIndex(th => th.dataset.columnKey === columnKeyToSort);
+            if (columnIndex === -1) {
+                console.error("Sort column key not found in headers:", columnKeyToSort);
+                return;
+            }
+
+            const dirModifier = currentSort.direction === 'asc' ? 1 : -1;
+
+            let isNumericSort = true;
+            if (currentSort.columnKey === "domain") {
+                isNumericSort = false;
+            }
+
+            dataRows.sort((a, b) => {
+                const cellA = a.cells[columnIndex];
+                const cellB = b.cells[columnIndex];
+                if (!cellA || !cellB) return 0;
+
+                let aVal = cellA.textContent.trim();
+                let bVal = cellB.textContent.trim();
+
+                if (isNumericSort) {
+                    const parseNumeric = (text) => {
+                        const multiplier = { 'Bytes': 1, 'KB': 1024, 'MB': 1024 * 1024, 'GB': 1024 * 1024 * 1024, 'TB': 1024 * 1024 * 1024 * 1024 };
+                        const parts = text.split(' ');
+                        let num = parseFloat(parts[0].replace(/,/g, '')) || 0;
+                        if (parts.length > 1 && multiplier[parts[1]]) {
+                            num *= multiplier[parts[1]];
+                        }
+                        return num;
+                    };
+                    aVal = parseNumeric(aVal);
+                    bVal = parseNumeric(bVal);
+                    return (aVal - bVal) * dirModifier;
+                } else {
+                    return aVal.localeCompare(bVal) * dirModifier;
+                }
+            });
+
+            // Remove and re-append sorted data rows
+            dataRows.forEach(row => tBody.removeChild(row));
+            dataRows.forEach(row => tBody.appendChild(row)); // Appends after summaryRow if it's first
+
+            // Update header visual cues
+            headerCells.forEach(th => {
+                th.classList.remove("sort-asc", "sort-desc");
+                if (th.dataset.columnKey === currentSort.columnKey) {
+                    th.classList.add(currentSort.direction === 'asc' ? "sort-asc" : "sort-desc");
+                }
+            });
+        }
+
+        function handleHeaderClick(clickedColumnKey) {
+            let newDirection = 'asc';
+            if (currentSort.columnKey === clickedColumnKey && currentSort.direction === 'asc') {
+                newDirection = 'desc';
+            }
+            applySort(clickedColumnKey, newDirection);
         }
 
         async function fetchAndUpdateStats() {
@@ -174,12 +272,17 @@
                     runningTimerElement.textContent = 'Uptime: Waiting...';
                 }
 
+                // Ensure summary row is the first child of tbody and visible
+                if (statsTableBodyEl.firstChild !== summaryRowElement) {
+                    statsTableBodyEl.insertBefore(summaryRowElement, statsTableBodyEl.firstChild);
+                }
+                summaryRowElement.style.display = ""; // Make it visible
+
                 const receivedDomains = new Set();
+                const headersOrder = Array.from(tableElement.tHead.rows[0].cells).map(th => th.dataset.columnKey);
 
                 if (statsData.per_domain) {
-                    const sortedDomains = Object.keys(statsData.per_domain).sort();
-
-                    for (const domain of sortedDomains) {
+                    for (const domain of Object.keys(statsData.per_domain)) {
                         receivedDomains.add(domain);
                         const domainData = statsData.per_domain[domain];
                         let row = statsTableBodyEl.querySelector(`tr[data-domain="${domain}"]`);
@@ -187,71 +290,53 @@
                         if (!row) {
                             row = document.createElement('tr');
                             row.setAttribute('data-domain', domain);
-                            row.innerHTML = `
-                                <td class="domain-name">${domain}</td>
-                                <td class="stat-html">0</td>
-                                <td class="stat-pdf">0</td>
-                                <td class="stat-ical">0</td>
-                                <td class="stat-errors">0</td>
-                                <td class="stat-empty">0</td>
-                                <td class="stat-ignored">0</td>
-                                <td class="stat-bytes">0 Bytes</td>
-                            `;
-                            let inserted = false;
-                            const existingDataRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
-                            for (let i = 0; i < existingDataRows.length; i++) {
-                                if (domain.localeCompare(existingDataRows[i].dataset.domain) < 0) {
-                                    statsTableBodyEl.insertBefore(row, existingDataRows[i]);
-                                    inserted = true;
-                                    break;
-                                }
-                            }
-                            if (!inserted) {
-                                statsTableBodyEl.appendChild(row);
-                            }
-                        }
-
-                        statKeys.forEach(key => {
-                            const cell = row.querySelector(`.stat-${key}`);
-                            if (cell) {
-                                let newValue;
-                                const rawValue = domainData[key] || 0;
-                                if (key === "bytes") {
-                                    newValue = formatBytes(rawValue);
+                            let cellsHtml = '';
+                            headersOrder.forEach(headerKey => {
+                                if (headerKey === 'domain') {
+                                    cellsHtml += `<td class="domain-name">${domain}</td>`;
+                                } else if (headerKey === 'bytes') {
+                                    cellsHtml += `<td class="stat-bytes">${formatBytes(domainData.bytes || 0)}</td>`;
                                 } else {
-                                    newValue = String(rawValue);
+                                    cellsHtml += `<td class="stat-${headerKey}">${domainData[headerKey] || 0}</td>`;
                                 }
-                                if (cell.textContent !== newValue) {
-                                    cell.textContent = newValue;
+                            });
+                            row.innerHTML = cellsHtml;
+                            statsTableBodyEl.appendChild(row);
+                        } else { // Update existing row
+                            headersOrder.forEach((headerKey, cellIdx) => {
+                                const cell = row.cells[cellIdx];
+                                if (cell) {
+                                    let newValue;
+                                    if (headerKey === 'domain') newValue = domain; // Domain name itself shouldn't change for an existing row
+                                    else if (headerKey === 'bytes') newValue = formatBytes(domainData.bytes || 0);
+                                    else newValue = String(domainData[headerKey] || 0);
+
+                                    if (cell.textContent !== newValue) cell.textContent = newValue;
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 }
 
-                const currentDataRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
+                const currentDataRows = Array.from(statsTableBodyEl.querySelectorAll("tr[data-domain]"));
                 currentDataRows.forEach(row => {
                     if (!receivedDomains.has(row.dataset.domain)) {
                         row.remove();
                     }
                 });
 
+                // Update summary row content
                 statKeys.forEach(key => {
                     const summaryCellId = `summary${key.charAt(0).toUpperCase() + key.slice(1)}`;
                     const summaryCell = document.getElementById(summaryCellId);
                     if (summaryCell) {
-                        let newValue;
-                        const rawValue = statsData.global[key] || 0;
-                        if (key === "bytes") {
-                            newValue = formatBytes(rawValue, 2);
-                        } else {
-                            newValue = String(rawValue);
-                        }
-                        if (summaryCell.textContent !== newValue) {
-                            summaryCell.textContent = newValue;
-                        }
+                        let newValue = (key === "bytes") ? formatBytes(statsData.global[key] || 0, 2) : String(statsData.global[key] || 0);
+                        if (summaryCell.textContent !== newValue) summaryCell.textContent = newValue;
                     }
                 });
+
+                // Re-apply the currently active sort after DOM updates
+                applySort(currentSort.columnKey, currentSort.direction);
 
             } catch (error) {
                 console.error('Error fetching or updating stats:', error);
@@ -260,51 +345,29 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (!statsTableBodyEl) {
-                console.error("statsTableBodyEl not found!");
+            if (!statsTableBodyEl || !runningTimerElement || !summaryRowElement || !tableElement) {
+                console.error("One or more essential table elements not found!");
                 return;
             }
-            if (!runningTimerElement) {
-                console.warn("runningTimerElement with id 'runningTimer' not found in H1. Timer will not be displayed.");
-            }
 
-            if (summaryRowElement && summaryRowElement.parentNode === statsTableBodyEl) {
-                if (statsTableBodyEl.firstChild) {
-                    statsTableBodyEl.insertBefore(summaryRowElement, statsTableBodyEl.firstChild);
-                } else {
-                    statsTableBodyEl.appendChild(summaryRowElement);
-                }
-            } else if (summaryRowElement) {
-                statsTableBodyEl.prepend(summaryRowElement);
-            } else {
-                console.warn("summaryRowElement not found! Table layout might be affected.");
-            }
-
-
-            const headerRow = document.createElement('tr');
-            headerRow.classList.add('dynamic-header-row');
-            const headers = ["Domain", "HTML", "PDF", "iCal", "Errors", "Empty", "Ignored", "Bytes"];
-
-            headers.forEach(headerText => {
-                const cell = document.createElement('td');
-                cell.textContent = headerText;
-                headerRow.appendChild(cell);
+            const headerCells = tableElement.tHead.rows[0].cells;
+            Array.from(headerCells).forEach(th => {
+                const key = th.dataset.columnKey; // Assumes data-column-key is set in HTML
+                th.classList.add('sortable');
+                th.addEventListener('click', () => handleHeaderClick(key));
             });
 
-            if (summaryRowElement && summaryRowElement.parentNode === statsTableBodyEl) {
-                if (summaryRowElement.nextSibling) {
-                    statsTableBodyEl.insertBefore(headerRow, summaryRowElement.nextSibling);
-                } else {
-                    statsTableBodyEl.appendChild(headerRow);
-                }
-            } else if (statsTableBodyEl.firstChild) {
-                statsTableBodyEl.insertBefore(headerRow, statsTableBodyEl.firstChild);
-            } else {
-                statsTableBodyEl.appendChild(headerRow);
+            // Ensure summaryRow is visible and correctly positioned before first sort/fetch
+            summaryRowElement.style.display = "";
+            if (statsTableBodyEl.firstChild !== summaryRowElement) {
+                statsTableBodyEl.insertBefore(summaryRowElement, statsTableBodyEl.firstChild);
             }
 
-            fetchAndUpdateStats();
-            setInterval(fetchAndUpdateStats, 1000);
+            // Apply initial default sort (will also set header arrows)
+            applySort(currentSort.columnKey, currentSort.direction);
+
+            fetchAndUpdateStats(); // Initial fetch which will also sort
+            setInterval(fetchAndUpdateStats, 2000);
         });
     </script>
 </body>
