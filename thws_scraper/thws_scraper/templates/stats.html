@@ -8,20 +8,38 @@
             font-family: Arial, sans-serif;
             padding: 20px;
             background-color: #282c34;
-            /* Dark background */
             color: #abb2bf;
-            /* Light grey text */
             font-size: 0.9em;
-            /* Slightly smaller base font for more data */
         }
 
         h1 {
             color: #61afef;
-            /* Brighter color for heading */
             border-bottom: 1px solid #444851;
             padding-bottom: 10px;
             margin-top: 0;
+            display: flex;
+            /* For button alignment */
+            justify-content: space-between;
+            /* For button alignment */
+            align-items: center;
+            /* For button alignment */
         }
+
+        h1 button {
+            /* Style for the new button */
+            background-color: #61afef;
+            color: #282c34;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        h1 button:hover {
+            background-color: #5298d8;
+        }
+
 
         table {
             border-collapse: collapse;
@@ -33,16 +51,13 @@
         td {
             border: 1px solid #444851;
             padding: 6px 8px;
-            /* Adjusted padding */
             text-align: center;
         }
 
         th:first-child,
         td:first-child {
-            /* Domain name left-aligned */
             text-align: left;
             min-width: 150px;
-            /* Give domain column some space */
         }
 
         th {
@@ -59,37 +74,33 @@
             font-weight: bold;
         }
 
+        /* REMOVED Color styling for .stat-errors.has-errors and .stat-errors.no-errors */
+        /* If you had .stat-errors.has-errors { font-weight: bold; } and want to keep it, add it back here without color */
         .stat-errors.has-errors {
-            color: #e06c75;
-            /* Light red for errors */
-            font-weight: bold;
+            /* font-weight: bold; /* Example: Keep bolding if desired, but no color */
         }
 
-        .stat-errors.no-errors {
-            color: #56b6c2;
-            /* Or keep default color if 0, using a subtle color */
-        }
 
-        /* Summary row styling */
         #summaryRow td {
             font-weight: bold;
             color: #c678dd;
         }
 
-        #summaryRow .stat-errors.has-errors {
-            /* Ensure summary error color is consistent */
-            color: #e06c75;
-        }
+        /* REMOVED Color styling for #summaryRow .stat-errors.has-errors and .stat-errors.no-errors */
 
-        #summaryRow .stat-errors.no-errors {
-            /* Ensure summary no-error color is consistent */
-            color: #56b6c2;
+
+        /* CSS for collapsed table state */
+        #statsTable tbody.collapsed tr[data-domain] {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-    <h1>Live Crawler Stats</h1>
+    <h1>
+        Live Crawler Stats
+        <button id="toggleTableBtn">Collapse</button>
+    </h1>
     <table id="statsTable">
         <thead>
             <tr>
@@ -103,16 +114,14 @@
                 <th>Bytes</th>
             </tr>
         </thead>
-        <tbody>
-            {# Initial rows rendered by server, updated by JS #}
+        <tbody id="statsTableBody"> {# Initial rows rendered by server, updated by JS #}
             {% for row in rows %}
             <tr data-domain="{{ row.domain }}">
                 <td class="domain-name">{{ row.domain }}</td>
                 <td class="stat-html">{{ row.html | default(0) }}</td>
                 <td class="stat-pdf">{{ row.pdf | default(0) }}</td>
                 <td class="stat-ical">{{ row.ical | default(0) }}</td>
-                <td class="stat-errors {% if row.errors > 0 %}has-errors{% else %}no-errors{% endif %}">{{ row.errors |
-                    default(0) }}</td>
+                <td class="stat-errors">{{ row.errors | default(0) }}</td>
                 <td class="stat-empty">{{ row.empty | default(0) }}</td>
                 <td class="stat-ignored">{{ row.ignored | default(0) }}</td>
                 <td class="stat-bytes">{{ row.bytes_str | default("0 Bytes") }}</td>
@@ -124,9 +133,7 @@
                 <td id="summaryHtml">{{ summary.html | default(0) }}</td>
                 <td id="summaryPdf">{{ summary.pdf | default(0) }}</td>
                 <td id="summaryIcal">{{ summary.ical | default(0) }}</td>
-                <td id="summaryErrors"
-                    class="stat-errors {% if summary.errors > 0 %}has-errors{% else %}no-errors{% endif %}">{{
-                    summary.errors | default(0) }}</td>
+                <td id="summaryErrors" class="stat-errors">{{ summary.errors | default(0) }}</td>
                 <td id="summaryEmpty">{{ summary.empty | default(0) }}</td>
                 <td id="summaryIgnored">{{ summary.ignored | default(0) }}</td>
                 <td id="summaryBytes">{{ summary.bytes_str | default("0 Bytes") }}</td>
@@ -135,15 +142,15 @@
     </table>
 
     <script>
-        const statsTableBody = document.querySelector("#statsTable tbody");
+        const statsTableBodyEl = document.getElementById("statsTableBody"); // Use the new tbody ID
         const summaryRowElement = document.getElementById("summaryRow");
+        const toggleTableBtn = document.getElementById('toggleTableBtn'); // Get the button
 
-        // Keys for stats, matching class names (stat-key) and JSON keys
         const statKeys = ["html", "pdf", "ical", "errors", "empty", "ignored", "bytes"];
 
         function formatBytes(bytes, decimals = 1) {
             if (bytes === 0) return '0 Bytes';
-            if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return 'N/A'; // Handle non-numeric input gracefully
+            if (isNaN(parseFloat(bytes)) || !isFinite(bytes)) return 'N/A';
             const k = 1024;
             const dm = decimals < 0 ? 0 : decimals;
             const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
@@ -167,9 +174,9 @@
                     for (const domain of sortedDomains) {
                         receivedDomains.add(domain);
                         const domainData = statsData.per_domain[domain];
-                        let row = statsTableBody.querySelector(`tr[data-domain="${domain}"]`);
+                        let row = statsTableBodyEl.querySelector(`tr[data-domain="${domain}"]`);
 
-                        if (!row) { // New domain
+                        if (!row) {
                             row = document.createElement('tr');
                             row.setAttribute('data-domain', domain);
                             row.innerHTML = `
@@ -177,27 +184,24 @@
                                 <td class="stat-html">0</td>
                                 <td class="stat-pdf">0</td>
                                 <td class="stat-ical">0</td>
-                                <td class="stat-errors no-errors">0</td>
-                                <td class="stat-empty">0</td>
+                                <td class="stat-errors">0</td> <td class="stat-empty">0</td>
                                 <td class="stat-ignored">0</td>
                                 <td class="stat-bytes">0 Bytes</td>
                             `;
-                            // Insert new rows alphabetically, before the summary row
                             let inserted = false;
-                            const existingRows = statsTableBody.querySelectorAll("tr[data-domain]");
+                            const existingRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
                             for (let i = 0; i < existingRows.length; i++) {
                                 if (domain.localeCompare(existingRows[i].dataset.domain) < 0) {
-                                    statsTableBody.insertBefore(row, existingRows[i]);
+                                    statsTableBodyEl.insertBefore(row, existingRows[i]);
                                     inserted = true;
                                     break;
                                 }
                             }
                             if (!inserted) {
-                                statsTableBody.insertBefore(row, summaryRowElement);
+                                statsTableBodyEl.insertBefore(row, summaryRowElement);
                             }
                         }
 
-                        // Update all stat cells for the domain
                         statKeys.forEach(key => {
                             const cell = row.querySelector(`.stat-${key}`);
                             if (cell) {
@@ -214,29 +218,20 @@
                                     cell.textContent = newValue;
                                 }
 
-                                if (key === "errors") {
-                                    if (rawValue > 0) {
-                                        cell.classList.add('has-errors');
-                                        cell.classList.remove('no-errors');
-                                    } else {
-                                        cell.classList.remove('has-errors');
-                                        cell.classList.add('no-errors');
-                                    }
-                                }
+                                // REMOVED logic for adding/removing 'has-errors'/'no-errors' classes for styling
+                                // if (key === "errors") { ... }
                             }
                         });
                     }
                 }
 
-                // Remove domains that are no longer in stats
-                const currentRows = statsTableBody.querySelectorAll("tr[data-domain]");
+                const currentRows = statsTableBodyEl.querySelectorAll("tr[data-domain]");
                 currentRows.forEach(row => {
                     if (!receivedDomains.has(row.dataset.domain)) {
                         row.remove();
                     }
                 });
 
-                // Update summary row
                 statKeys.forEach(key => {
                     const summaryCellId = `summary${key.charAt(0).toUpperCase() + key.slice(1)}`;
                     const summaryCell = document.getElementById(summaryCellId);
@@ -245,7 +240,7 @@
                         const rawValue = statsData.global[key] || 0;
 
                         if (key === "bytes") {
-                            newValue = formatBytes(rawValue, 2); // More precision for summary bytes
+                            newValue = formatBytes(rawValue, 2);
                         } else {
                             newValue = String(rawValue);
                         }
@@ -253,15 +248,8 @@
                         if (summaryCell.textContent !== newValue) {
                             summaryCell.textContent = newValue;
                         }
-                        if (key === "errors") {
-                            if (rawValue > 0) {
-                                summaryCell.classList.add('has-errors');
-                                summaryCell.classList.remove('no-errors');
-                            } else {
-                                summaryCell.classList.remove('has-errors');
-                                summaryCell.classList.add('no-errors');
-                            }
-                        }
+                        // REMOVED logic for adding/removing 'has-errors'/'no-errors' classes for styling from summary
+                        // if (key === "errors") { ... }
                     }
                 });
 
@@ -270,8 +258,23 @@
             }
         }
 
-        setInterval(fetchAndUpdateStats, 1000); // Update every 1 second
-        document.addEventListener('DOMContentLoaded', fetchAndUpdateStats); // Initial load
+        // Event listener for the toggle button
+        toggleTableBtn.addEventListener('click', () => {
+            const isCollapsed = statsTableBodyEl.classList.toggle('collapsed');
+            toggleTableBtn.textContent = isCollapsed ? 'Expand' : 'Collapse';
+        });
+
+        // Initial fetch and interval
+        setInterval(fetchAndUpdateStats, 1000);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndUpdateStats();
+            // Set initial button text assuming table is expanded by default
+            if (statsTableBodyEl.classList.contains('collapsed')) {
+                toggleTableBtn.textContent = 'Expand';
+            } else {
+                toggleTableBtn.textContent = 'Collapse';
+            }
+        });
     </script>
 </body>
 
