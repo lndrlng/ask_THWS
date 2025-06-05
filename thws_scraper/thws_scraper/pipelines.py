@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from gridfs import GridFS, GridFSError
+from gridfs import GridFS
+from gridfs.errors import GridFSError
 from itemadapter import ItemAdapter
 from langdetect import DetectorFactory, detect
 from pymongo import MongoClient
