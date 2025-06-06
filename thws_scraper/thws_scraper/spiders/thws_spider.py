@@ -59,9 +59,6 @@ class ThwsSpider(CrawlSpider):
     def spider_opened(self, spider):
         Path("result").mkdir(parents=True, exist_ok=True)
 
-        log_level_str = get_setting(self.settings, "LOG_LEVEL", "INFO", str).upper()
-        print(f"Log level (from settings, should be used by LOG_CONFIG): {log_level_str}")
-
         self.logger.info(
             f"Spider '{spider.name}' starting",
             extra={"spider_name": spider.name, "start_time_iso": self.start_time.isoformat()},

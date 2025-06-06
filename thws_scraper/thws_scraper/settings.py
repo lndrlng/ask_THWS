@@ -8,6 +8,45 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 import os
+from pathlib import Path
+
+RESULTS_DIR = Path(__file__).resolve().parent.parent / "result"
+RESULTS_DIR.mkdir(exist_ok=True)
+LOG_FILE_PATH = RESULTS_DIR / "scrapy_log.jsonl"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "level": "INFO",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": str(LOG_FILE_PATH),
+            "formatter": "json",
+            "level": "INFO",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "scrapy": {"propagate": True},
+        "thws": {"propagate": True},
+        "thws_scraper": {"propagate": True},
+    },
+}
+
 
 # ##################################################
 # Custom values; might be configureable via env tbd
@@ -152,70 +191,6 @@ ITEM_PIPELINES = {
 # (Optional) Respect HTTP headers like Cache-Control / Expires:
 # HTTPCACHE_POLICY = "scrapy.extensions.httpcache.RFC2616Policy"
 
-# Set settings whose default value is deprecated to a future-proof value
-TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
-FEED_EXPORT_ENCODING = "utf-8"
-
-# How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOG_LEVEL = "INFO"
-LOG_FILE = "result/scrapy_log.jsonl"
-LOG_FORMATTER = "scrapy.logformatter.JsonLinesFormatter"
-LOG_ENCODING = "utf-8"
-LOG_CONFIG_APPEND = False
-
-LOG_CONFIG = {
-    "version": 1,
-    "disable_existing_loggers": False,  # Usually False, unless you want to silence everything else
-    "formatters": {
-        "json": {
-            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            # Define the fields from the log record you want in your JSON.
-            # 'extra' fields passed to log calls will be added automatically.
-            "format": "%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(lineno)d %(message)s",
-            # Example of renaming a field:
-            # 'rename_fields': {'asctime': 'timestamp', 'levelname': 'level'},
-        },
-        "simple_console": {  # Optional: A simple text formatter for console if you prefer
-            "format": "%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "json_file_rotating": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "formatter": "json",  # Use the JSON formatter defined above
-            "filename": LOG_FILE,  # Uses the LOG_FILE setting defined above
-            "maxBytes": 10_000_000,  # 10MB
-            "backupCount": 5,
-            "encoding": "utf-8",
-            "level": LOG_LEVEL,  # Uses the LOG_LEVEL setting
-        },
-        "console_json": {  # Handler for console output, using JSON format
-            "class": "logging.StreamHandler",
-            "formatter": "json",  # Use JSON formatter for console
-            "level": LOG_LEVEL,  # Uses the LOG_LEVEL setting
-            "stream": "ext://sys.stderr",  # Default stream
-        },
-    },
-    "root": {
-        "handlers": ["json_file_rotating", "console_json"],  # Use 'console_text' for text console
-        "level": LOG_LEVEL,  # Set the root logger's level
-    },
-    "loggers": {
-        "scrapy": {
-            # Scrapy's own logs will use root handlers by default if propagate=True (default)
-            "level": LOG_LEVEL,  # Or set a different level e.g., 'INFO' or 'WARNING'
-            "propagate": True,  # Let Scrapy logs go through root handlers
-        },
-        "readability": {  # Example: quiet down a specific noisy library
-            "handlers": ["json_file_rotating", "console_json"],  # Or just send to file
-            "level": "ERROR",  # Only log errors from readability
-            "propagate": False,  # Don't pass readability logs to root
-        },
-    },
-}
-
-
 # Turn on the retry middleware
 RETRY_ENABLED = True
 
@@ -239,3 +214,13 @@ DOWNLOAD_TIMEOUT = 60
 
 # Default allowed length > 2083, 0 to disable it
 URLLENGTH_LIMIT = 0
+
+
+import logging  # noqa 402
+import logging.config  # noqa 402
+
+from scrapy.utils.log import configure_logging  # noqa 402
+
+configure_logging()
+logging.root.handlers.clear()
+logging.config.dictConfig(LOGGING)

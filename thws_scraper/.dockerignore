@@ -15,3 +15,4 @@ README.md
 compose.yml
 dump_mongo.sh
 mongo_stats.py
+*.gz

@@ -6,7 +6,6 @@ services:
     container_name: scraper
     restart: "no"
     environment:
-      LOG_LEVEL: INFO
       EXPORT_CSV_STATS: True
       ENABLE_FILE_LOGGING: True
       MONGO_HOST: mongodb
