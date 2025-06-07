@@ -16,6 +16,15 @@ from ..utils.lang import detect_lang_from_content, extract_lang_from_url
 module_logger = logging.getLogger(__name__)
 
 
+def deobfuscate_text(text: str) -> str:
+    """
+    Replaces common email obfuscation patterns in a block of text.
+    """
+    if not text:
+        return ""
+    return text.replace("[at]", "@").replace(" [@] ", "@").replace(" [at] ", "@")
+
+
 def _clean_html_fragment_for_storage(html_string: str) -> str:
     """
     Cleans an HTML fragment string using lxml.html.clean.Cleaner
@@ -109,125 +118,120 @@ def extract_metadata(soup_full_page: BeautifulSoup) -> dict:
     return metadata
 
 
+def _extract_raw_content(soup: BeautifulSoup, response_text: str, url: str) -> Tuple[Optional[str], Optional[str], str]:
+    """
+    Finds the main content by using a configured Readability instance.
+    """
+    raw_main_html = None
+    page_title = None
+    strategy_used = "Readability (configured)"
+
+    try:
+        positive_keywords = ["personDetail"]
+
+        readability_doc = ReadabilityDocument(response_text, positive_keywords=positive_keywords)
+
+        raw_main_html = readability_doc.summary()
+        page_title = readability_doc.title()
+
+    except Exception as e:
+        strategy_used = "Body Tag Fallback (on error)"
+        module_logger.warning(
+            "Readability processing failed, falling back to body tag.",
+            extra={
+                "url": url,
+                "error": str(e),
+                "response_body_preview": response_text[:2000],
+            },
+        )
+        raw_main_html = str(soup.body) if soup.body else ""
+
+    return raw_main_html, page_title, strategy_used
+
+
+def _finalize_title(current_title: Optional[str], soup: BeautifulSoup) -> str:
+    """Finds the best possible title if one hasn't been found yet."""
+    if current_title and current_title.strip():
+        return current_title
+
+    title_tag = soup.select_one("title")
+    if title_tag and title_tag.get_text(strip=True):
+        return title_tag.get_text(strip=True)
+
+    return "Untitled Page"
+
+
 def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) -> Optional[Tuple[List[RawPageItem], List[str]]]:
     """
-    1) Use Readability to extract main content and title.
-    2) Clean the extracted HTML fragment.
-    3) Extract embedded .pdf/.ics links from the whole page.
-    4) Extract common metadata from the whole page.
-    5) Detect language from URL, then from content as fallback.
-    6) Wrap in a RawPageItem.
+    Main coordinator function for parsing HTML pages.
     """
-    try:
-        readability_doc = ReadabilityDocument(response.text)
-        raw_main_html_from_readability = readability_doc.summary()
-        page_title_from_readability = readability_doc.title()
-    except Exception as e:
-        module_logger.warning(
-            "Readability processing failed, attempting fallback to full body",
-            extra={
-                "event_type": "readability_error",
-                "url": response.url,
-                "error": str(e),
-            },
-        )
-        soup_full_page_fallback = BeautifulSoup(response.text, "lxml")
-        raw_main_html_from_readability = str(soup_full_page_fallback.body) if soup_full_page_fallback.body else response.text
-        page_title_from_readability = soup_full_page_fallback.title.string if soup_full_page_fallback.title else ""
+    module_logger.debug("Starting HTML parsing.", extra={"url": response.url})
+    soup_full_page = BeautifulSoup(response.text, "lxml")
 
-    if not raw_main_html_from_readability:
+    # 1. Extract main content using the best strategy
+    raw_main_html, page_title, strategy_used = _extract_raw_content(soup_full_page, response.text, response.url)
+
+    if not raw_main_html or not raw_main_html.strip():
+        module_logger.error("All strategies failed to extract any main HTML content.", extra={"url": response.url})
+        return None
+
+    # 2. Clean the extracted HTML
+    cleaned_main_html = _clean_html_fragment_for_storage(raw_main_html)
+
+    # 3. Deobfuscate emails in the cleaned text
+    cleaned_main_html = deobfuscate_text(cleaned_main_html)
+
+    # 4. Validate the cleaned content
+    plain_text_from_cleaned_main = BeautifulSoup(cleaned_main_html, "lxml").get_text(strip=True).lower()
+
+    if not plain_text_from_cleaned_main:
+        details = {"strategy_used": strategy_used, "raw_html_before_cleaning": raw_main_html}
         module_logger.info(
-            "Readability yielded no main content, proceeding to full text check",
-            extra={"url": response.url, "event_type": "readability_empty_summary"},
-        )
-        temp_full_soup = BeautifulSoup(response.text, "lxml")
-        plain_text_for_check_full = temp_full_soup.get_text(separator="\n", strip=True).lower()
-
-        if not plain_text_for_check_full or any(msg in plain_text_for_check_full for msg in soft_error_strings):
-            reason_skip = "empty_full_text_and_readability_empty"
-            details = {"checked_full_text_length": len(plain_text_for_check_full)}
-            soft_error_matches = [s for s in soft_error_strings if s in plain_text_for_check_full]
-            if soft_error_matches:
-                reason_skip = "soft_error_in_full_text_and_readability_empty"
-                details["soft_errors_matched"] = soft_error_matches
-
-            module_logger.info(
-                "Skipped HTML: Readability empty & full text check failed",
-                extra={
-                    "event_type": "page_skipped_html",
-                    "url": response.url,
-                    "reason": reason_skip,
-                    "details": details,
-                },
-            )
-            return None
-
-    cleaned_main_html = _clean_html_fragment_for_storage(raw_main_html_from_readability)
-    temp_cleaned_soup = BeautifulSoup(cleaned_main_html, "lxml")
-    plain_text_from_cleaned_main = temp_cleaned_soup.get_text(separator="\n", strip=True).lower()
-
-    if not plain_text_from_cleaned_main or any(msg in plain_text_from_cleaned_main for msg in soft_error_strings):
-        reason_skip = "empty_content_after_cleaning"
-        details = {"cleaned_main_text_length": len(plain_text_from_cleaned_main)}
-        soft_error_matches = [s for s in soft_error_strings if s in plain_text_from_cleaned_main]
-        if soft_error_matches:
-            reason_skip = "soft_error_after_cleaning"
-            details["soft_errors_matched"] = soft_error_matches
-
-        module_logger.info(
-            "Skipped HTML: Content check after cleaning failed",
-            extra={
-                "event_type": "page_skipped_html",
-                "url": response.url,
-                "reason": reason_skip,
-                "details": details,
-            },
+            "Skipped HTML: Content is empty after cleaning.",
+            extra={"url": response.url, "details": details},
         )
         return None
 
-    soup_full_page = BeautifulSoup(response.text, "lxml")
-    page_title = page_title_from_readability
-    if not page_title:
-        h1_tag = soup_full_page.select_one("h1")
-        if h1_tag:
-            page_title = h1_tag.get_text(strip=True)
-    if not page_title:
-        title_tag_obj = soup_full_page.select_one("title")
-        if title_tag_obj:
-            page_title = title_tag_obj.get_text(strip=True)
-    if not page_title:
-        page_title = "Untitled Page"
+    matched_errors = [s for s in soft_error_strings if s in plain_text_from_cleaned_main]
+    if matched_errors:
+        details = {"strategy_used": strategy_used, "soft_errors_matched": matched_errors}
+        module_logger.info(
+            "Skipped HTML: Found soft error string(s) in content.",
+            extra={"url": response.url, "details": details},
+        )
+        return None
 
+    # 5. Finalize page details
+    final_title = _finalize_title(page_title, soup_full_page)
     lang = extract_lang_from_url(response.url)
     if lang == "unknown":
-        text_for_lang_detect = temp_cleaned_soup.get_text(separator=" ", strip=True)
+        text_for_lang_detect = BeautifulSoup(cleaned_main_html, "lxml").get_text(separator=" ", strip=True)
         if text_for_lang_detect:
-            detected_lang_from_html = detect_lang_from_content(text_for_lang_detect)
-            if detected_lang_from_html != "unknown":
-                lang = detected_lang_from_html
+            lang = detect_lang_from_content(text_for_lang_detect)
 
-    extracted_page_metadata = extract_metadata(soup_full_page)
-
+    # 6. Create the Scrapy Item
     item = RawPageItem(
         url=response.url,
         type="html",
-        title=page_title.replace("\x00", ""),
+        title=final_title.replace("\x00", ""),
         text=cleaned_main_html.replace("\x00", ""),
         date_scraped=datetime.now(tz).isoformat(),
         date_updated=date_extractor(response.text),
         status=response.status,
         lang=lang,
-        metadata_extracted=extracted_page_metadata,
+        metadata_extracted=extract_metadata(soup_full_page),
     )
 
-    items_list: List[RawPageItem] = [item]
-    embedded_links: List[str] = []
+    # 7. Extract embedded links
+    embedded_links = [urljoin(response.url, a_tag.get("href")) for a_tag in soup_full_page.find_all("a", href=True) if a_tag.get("href", "").lower().endswith((".pdf", ".ics"))]
 
-    for a_tag in soup_full_page.find_all("a", href=True):
-        href = a_tag.get("href")
-        if href and href.lower().endswith((".pdf", ".ics")):
-            abs_url = urljoin(response.url, href)
-            if abs_url not in embedded_links:
-                embedded_links.append(abs_url)
-
-    return items_list, embedded_links
+    details = {
+        "strategy_used": strategy_used,
+        "item_title": final_title,
+        "text_length": len(cleaned_main_html),
+    }
+    module_logger.info(
+        "Successfully parsed HTML page",
+        extra={"url": response.url, "details": details},
+    )
+    return [item], list(set(embedded_links))
