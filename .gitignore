@@ -1,5 +1,6 @@
 .direnv
 .venv
+.idea
 __pycache__
 *.json
 *jsonl

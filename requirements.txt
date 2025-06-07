@@ -29,5 +29,5 @@ jinja2
 fastapi==0.115.12
 uvicorn==0.34.0
 
-pymongo
-python-dotenv
+pymongo==4.13.0
+python-dotenv==1.1.0
