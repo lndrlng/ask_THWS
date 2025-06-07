@@ -12,6 +12,8 @@ result/
 .env
 .justfile
 README.md
+LOGS.md
+JQ_LOGS.md
 compose.yml
 dump_mongo.sh
 mongo_stats.py
