@@ -45,13 +45,13 @@ def _clean_html_fragment_for_storage(html_string: str) -> str:
         comments=True,
         style=True,
         inline_style=True,
-        links=False,
+        links=True,
         meta=False,
         page_structure=False,
         processing_instructions=True,
         embedded=True,
         frames=True,
-        forms=False,
+        forms=True,
         annoying_tags=True,
         remove_tags=[
             "noscript",
@@ -61,7 +61,7 @@ def _clean_html_fragment_for_storage(html_string: str) -> str:
             "dialog",
             "menu",
         ],
-        kill_tags=None,
+        kill_tags=["img", "audio", "video", "svg"],
         remove_unknown_tags=False,
         safe_attrs_only=False,
     )
@@ -79,6 +79,11 @@ def _clean_html_fragment_for_storage(html_string: str) -> str:
         cleaned_html_lxml = partially_cleaned_html
 
     final_soup = BeautifulSoup(cleaned_html_lxml, "lxml")
+
+    # This preserves the text content (like emails and phone numbers) while removing the hyperlink itself.
+    for a_tag in final_soup.find_all("a"):
+        a_tag.unwrap()
+
     for tag in final_soup.find_all(True):
         for attr_to_remove in ["class", "id", "style"]:
             if attr_to_remove in tag.attrs:
@@ -139,6 +144,7 @@ def _extract_raw_content(soup: BeautifulSoup, response_text: str, url: str) -> T
         module_logger.warning(
             "Readability processing failed, falling back to body tag.",
             extra={
+                "event_type": "readability_processing_failed",
                 "url": url,
                 "error": str(e),
                 "response_body_preview": response_text[:2000],
@@ -165,14 +171,17 @@ def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) 
     """
     Main coordinator function for parsing HTML pages.
     """
-    module_logger.debug("Starting HTML parsing.", extra={"url": response.url})
+    module_logger.debug("Starting HTML parsing.", extra={"event_type": "html_parsing_started", "url": response.url})
     soup_full_page = BeautifulSoup(response.text, "lxml")
 
     # 1. Extract main content using the best strategy
     raw_main_html, page_title, strategy_used = _extract_raw_content(soup_full_page, response.text, response.url)
 
     if not raw_main_html or not raw_main_html.strip():
-        module_logger.error("All strategies failed to extract any main HTML content.", extra={"url": response.url})
+        module_logger.error(
+            "All strategies failed to extract any main HTML content.",
+            extra={"event_type": "html_extraction_failed", "url": response.url},
+        )
         return None
 
     # 2. Clean the extracted HTML
@@ -188,7 +197,12 @@ def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) 
         details = {"strategy_used": strategy_used, "raw_html_before_cleaning": raw_main_html}
         module_logger.info(
             "Skipped HTML: Content is empty after cleaning.",
-            extra={"url": response.url, "details": details},
+            extra={
+                "event_type": "page_skipped_html",
+                "reason": "empty_content_after_cleaning",
+                "url": response.url,
+                "details": details,
+            },
         )
         return None
 
@@ -197,7 +211,12 @@ def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) 
         details = {"strategy_used": strategy_used, "soft_errors_matched": matched_errors}
         module_logger.info(
             "Skipped HTML: Found soft error string(s) in content.",
-            extra={"url": response.url, "details": details},
+            extra={
+                "event_type": "page_skipped_html",
+                "reason": "soft_error_after_cleaning",
+                "url": response.url,
+                "details": details,
+            },
         )
         return None
 
@@ -232,6 +251,10 @@ def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) 
     }
     module_logger.info(
         "Successfully parsed HTML page",
-        extra={"url": response.url, "details": details},
+        extra={
+            "event_type": "html_parsed_successfully",
+            "url": response.url,
+            "details": details,
+        },
     )
     return [item], list(set(embedded_links))
