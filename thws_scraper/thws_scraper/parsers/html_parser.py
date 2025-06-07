@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup, Comment
 from lxml.html.clean import Cleaner
-from readability import Document as ReadabilityDocument
 from scrapy.http import Response
 
 from ..items import RawPageItem
@@ -125,41 +124,43 @@ def extract_metadata(soup_full_page: BeautifulSoup) -> dict:
 
 def _extract_raw_content(soup: BeautifulSoup, response_text: str, url: str) -> Tuple[Optional[str], Optional[str], str]:
     """
-    Finds the main content by using a configured Readability instance.
+    Finds the main content by looking for common semantic tags like <main>
+    or divs with id='content'. Falls back to the entire body.
+    Readability is no longer used.
     """
-    raw_main_html = None
-    page_title = None
-    strategy_used = "Readability (configured)"
+    page_title = None  # Title is finalized later from the <title> tag
+    main_content_tag = None
+    strategy_used = "N/A"
 
-    try:
-        positive_keywords = ["personDetail", "person-indepth"]
+    # Prioritized list of selectors for the main content
+    selectors = [
+        "main",
+        "div[role='main']",
+        "div#content",
+        "div#main",
+        "div.content",
+        "div.main",
+        "article",
+    ]
 
-        readability_doc = ReadabilityDocument(response_text, positive_keywords=positive_keywords)
+    for selector in selectors:
+        main_content_tag = soup.select_one(selector)
+        if main_content_tag:
+            strategy_used = f"Selector: '{selector}'"
+            break
 
-        raw_main_html = readability_doc.summary()
-        page_title = readability_doc.title()
+    # If no specific container is found, fall back to the whole body
+    if not main_content_tag:
+        main_content_tag = soup.body
+        strategy_used = "<body> tag fallback"
 
-    except Exception as e:
-        strategy_used = "Body Tag Fallback (on error)"
-        module_logger.warning(
-            "Readability processing failed, falling back to body tag.",
-            extra={
-                "event_type": "readability_processing_failed",
-                "url": url,
-                "error": str(e),
-                "response_body_preview": response_text[:2000],
-            },
-        )
-        raw_main_html = str(soup.body) if soup.body else ""
+    raw_main_html = str(main_content_tag) if main_content_tag else ""
 
     return raw_main_html, page_title, strategy_used
 
 
 def _finalize_title(current_title: Optional[str], soup: BeautifulSoup) -> str:
     """Finds the best possible title if one hasn't been found yet."""
-    if current_title and current_title.strip():
-        return current_title
-
     title_tag = soup.select_one("title")
     if title_tag and title_tag.get_text(strip=True):
         return title_tag.get_text(strip=True)
@@ -174,7 +175,7 @@ def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) 
     module_logger.debug("Starting HTML parsing.", extra={"event_type": "html_parsing_started", "url": response.url})
     soup_full_page = BeautifulSoup(response.text, "lxml")
 
-    # 1. Extract main content using the best strategy
+    # 1. Extract main content
     raw_main_html, page_title, strategy_used = _extract_raw_content(soup_full_page, response.text, response.url)
 
     if not raw_main_html or not raw_main_html.strip():
