@@ -2,7 +2,7 @@
 
 This document provides a definitive reference for all possible keys present in the JSON log output of the `thws_scraper`.
 
-Logs are written as JSONL to `result/scrapy_log.jsonl`.
+Logs are written as JSONL to the `result/` directory in a file named `scrapy_log_YYYYMMDD_HHMMSS.jsonl`.
 
 ______________________________________________________________________
 
@@ -12,7 +12,7 @@ These keys are present in **every** log entry.
 
 | Key | Type | Description |
 | :--- | :--- | :--- |
-| `asctime` | `string` | Timestamp of the log entry (e.g., `"2025-06-06 18:04:14,214"`). |
+| `asctime` | `string` | Timestamp of the log entry (e.g., `"2025-06-07 15:30:00,123"`). |
 | `levelname` | `string` | Log level (`"INFO"`, `"WARNING"`, `"ERROR"`, `"DEBUG"`). |
 | `name` | `string` | The logger that created the entry (e.g., `"thws_scraper.spiders.thws"`). |
 | `message` | `string` | A human-readable description of the event. |
@@ -31,12 +31,11 @@ ______________________________________________________________________
 
 ## 3. Event-Specific Schemas
 
-Most logs include an `event_type` key. The tables below document all additional keys associated with a specific `event_type`.
+Most logs include an `event_type` key. The tables below document all additional keys associated with a specific `event_type`, sorted alphabetically.
 
 ### `event_type: downloader_exception_general` / `dns_error`
 
 An error occurred during the download of a request.
-
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL that failed to download. |
@@ -48,8 +47,7 @@ An error occurred during the download of a request.
 
 ### `event_type: file_content_missing_for_binary`
 
-A file item (`pdf`, `ical`) was processed by the pipeline but contained no binary data.
-
+A file item (`pdf`, `ical`) was processed by the pipeline but contained no binary data to store.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -58,8 +56,7 @@ A file item (`pdf`, `ical`) was processed by the pipeline but contained no binar
 
 ### `event_type: file_embedded_in_doc`
 
-A small file's binary content was embedded directly into its MongoDB document.
-
+A small file's binary content was embedded directly into its MongoDB document because it was under the `MAX_EMBEDDED_FILE_SIZE` limit.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -68,8 +65,7 @@ A small file's binary content was embedded directly into its MongoDB document.
 
 ### `event_type: gridfs_deleted_old_version`
 
-An old version of a file was deleted from GridFS before writing the new version.
-
+An old version of a file was deleted from GridFS before writing the new version to prevent duplicates.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -78,8 +74,7 @@ An old version of a file was deleted from GridFS before writing the new version.
 
 ### `event_type: gridfs_file_stored`
 
-A large file was successfully stored in GridFS.
-
+A large file was successfully stored in GridFS because its size exceeded the `MAX_EMBEDDED_FILE_SIZE` limit.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -90,7 +85,6 @@ A large file was successfully stored in GridFS.
 ### `event_type: gridfs_storage_error`
 
 An error occurred while trying to save a file to GridFS.
-
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -100,16 +94,14 @@ An error occurred while trying to save a file to GridFS.
 
 ### `event_type: html_cleaning_error`
 
-An error occurred in the lxml library while cleaning an HTML fragment.
-
+An error occurred in the `lxml.html.clean.Cleaner` library while cleaning an HTML fragment. The process falls back to a more basic cleaning method.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `error_details`| `string` | The exception message from the cleaning function. |
 
 ### `event_type: item_yield_empty_final`
 
-A non-HTML parser (`pdf`, `ical`) returned no item, and no further links were found to follow.
-
+A non-HTML parser (`pdf`, `ical`) returned no item, and no further links were found to follow from that response.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL of the processed response. |
@@ -118,8 +110,7 @@ A non-HTML parser (`pdf`, `ical`) returned no item, and no further links were fo
 
 ### `event_type: middleware_opened`
 
-A spider or downloader middleware was initialized.
-
+A spider or downloader middleware was initialized when the spider started.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `spider_name`| `string` | Name of the active spider. |
@@ -127,8 +118,7 @@ A spider or downloader middleware was initialized.
 
 ### `event_type: mongodb_connected`
 
-The MongoDB pipeline successfully established a connection.
-
+The MongoDB pipeline successfully established a connection at startup.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -139,15 +129,13 @@ The MongoDB pipeline successfully established a connection.
 ### `event_type: mongodb_connection_closed`
 
 The MongoDB connection was closed at the end of the crawl.
-
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
 
 ### `event_type: mongodb_connection_failure`
 
-The pipeline could not connect to MongoDB at startup.
-
+The pipeline could not connect to MongoDB at startup, causing the spider to close.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -157,8 +145,7 @@ The pipeline could not connect to MongoDB at startup.
 
 ### `event_type: mongodb_index_ensured`
 
-The pipeline verified that unique indexes exist on the `url` field for collections.
-
+The pipeline verified that unique indexes exist on the `url` field for the `pages` and `files` collections.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -166,8 +153,7 @@ The pipeline verified that unique indexes exist on the `url` field for collectio
 
 ### `event_type: mongodb_item_upserted`
 
-An item was successfully written to a MongoDB collection.
-
+An item was successfully written (inserted or updated) into a MongoDB collection.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -178,8 +164,7 @@ An item was successfully written to a MongoDB collection.
 
 ### `event_type: mongodb_not_initialized_drop`
 
-An item was dropped because the database connection was not available.
-
+An item was dropped because the database connection was not available when `process_item` was called.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -188,34 +173,31 @@ An item was dropped because the database connection was not available.
 
 ### `event_type: mongodb_operation_failure_setup`
 
-A database command failed during pipeline setup (e.g., creating indexes).
-
+A database command (like `ping` or `create_index`) failed during pipeline setup, causing the spider to close.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
 | `mongo_host` | `string` | The MongoDB host. |
 | `mongo_port` | `integer`| The MongoDB port. |
 | `mongo_db_name`| `string` | The database where the failure occurred. |
-| `error` | `string` | The detailed error from the database. |
+| `error` | `string` | The detailed error from the database (e.g., authentication). |
 
 ### `event_type: mongodb_upsert_operation_failure`
 
-An item could not be written to the database due to an operational error.
-
+An item could not be written to the database due to an operational error, causing the item to be dropped.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
 | `url` | `string` | The URL of the item that failed. |
 | `item_type`| `string` | The type of the failed item. |
 | `collection` | `string` | The target collection name. |
-| `error` | `string` | The error from the database (e.g., authentication, permissions). |
+| `error` | `string` | The error from the database (e.g., "document too large"). |
 | `reason`|`string`(Optional)| A specific reason if known (e.g., `"document_too_large"`). |
 | `approx_item_dict_str_len` | `integer`(Optional)| The approximate string length of the failed document. |
 
 ### `event_type: mongodb_upsert_unexpected_error` / `mongodb_unexpected_setup_error`
 
 An unexpected Python exception occurred during database interactions.
-
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
@@ -227,8 +209,7 @@ An unexpected Python exception occurred during database interactions.
 
 ### `event_type: page_skipped`
 
-A URL was deliberately not processed based on a predefined rule.
-
+A URL was deliberately not processed based on a predefined rule in the spider.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL that was skipped. |
@@ -238,22 +219,19 @@ A URL was deliberately not processed based on a predefined rule.
 
 ### `event_type: page_skipped_html`
 
-An HTML page was skipped after parsing because its content was invalid.
-
+An HTML page was skipped after parsing because its content was found to be invalid (e.g., empty or containing a soft error message).
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL of the skipped HTML page. |
-| `reason` | `string` | Reason for skipping (e.g., `"soft_error_after_cleaning"`). |
+| `reason` | `string` | Reason for skipping (`"empty_content_after_cleaning"`, `"soft_error_after_cleaning"`). |
 | `details` | `object` | An object containing detailed parsing metrics. |
-| `details.cleaned_main_text_length` | `integer` | Character count of the main content after cleaning. |
-| `details.raw_readability_text_length` | `integer` | Character count of the raw text from Readability. |
-| `details.raw_readability_preview` | `string` | A short preview of the raw extracted text. |
-| `details.soft_errors_matched`|`array[string]`| A list of the soft error strings found in the content.|
+| `details.strategy_used` | `string` | The strategy used to extract the main content (e.g., `"Readability (configured)"`). |
+| `details.soft_errors_matched`|`array[string]` (Optional) | A list of the soft error strings found in the content. |
+| `details.raw_html_before_cleaning`|`string` (Optional) | The raw HTML extracted by the strategy before it was cleaned and subsequently found to be empty. |
 
 ### `event_type: pdf_item_with_error`
 
-A PDF item was created, but an error was noted during its processing. The `parse_error` field in the final item will be set.
-
+A PDF item was created, but an error was noted during its processing (e.g., PyMuPDF failed). The `parse_error` field in the final item will be set.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL of the PDF. |
@@ -261,35 +239,16 @@ A PDF item was created, but an error was noted during its processing. The `parse
 
 ### `event_type: pdf_processing_error`
 
-A fatal error occurred in the PyMuPDF library while parsing a PDF.
-
+A fatal error occurred in the PyMuPDF library while parsing a PDF, preventing text or metadata extraction.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL of the PDF that failed to parse. |
 | `error_details`| `string` | The string representation of the Python exception. |
 | `traceback`| `string` | A full Python traceback for debugging. |
 
-### `event_type: readability_error`
-
-The Readability library failed to extract main content from an HTML page.
-
-| Key | Type | Description |
-| :--- | :--- | :--- |
-| `url` | `string` | The URL of the page that failed. |
-| `error` | `string` | The error message from the Readability library. |
-
-### `event_type: readability_empty_summary`
-
-Readability ran successfully but returned no main content.
-
-| Key | Type | Description |
-| :--- | :--- | :--- |
-| `url` | `string` | The URL of the page with no extracted content. |
-
 ### `event_type: robots_txt_bypass`
 
-The `robots.txt` rules were intentionally bypassed for a specific URL.
-
+The `robots.txt` rules were intentionally bypassed for a specific URL based on rules in `RobotsBypassMiddleware`.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL for which the rules were bypassed. |
@@ -298,8 +257,7 @@ The `robots.txt` rules were intentionally bypassed for a specific URL.
 
 ### `event_type: spider_exception`
 
-An unhandled exception occurred within the spider's processing logic.
-
+An unhandled exception occurred within the spider's processing logic (e.g., in `parse_item`).
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `url` | `string` | The URL of the response being processed when the error occurred. |
@@ -311,8 +269,7 @@ An unhandled exception occurred within the spider's processing logic.
 
 ### `event_type: unknown_item_type_pipeline`
 
-The database pipeline received an item of an unknown or unhandled type.
-
+The database pipeline received an item of an unknown or unhandled type and will ignore it.
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `pipeline_class`| `string` | Name of the pipeline class (`"MongoPipeline"`). |
