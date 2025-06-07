@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 import fitz
 from scrapy.http import Response
@@ -13,7 +14,7 @@ from ..utils.lang import detect_lang_from_content, extract_lang_from_url
 module_logger = logging.getLogger(__name__)
 
 
-def parse_pdf(response: Response) -> Optional[RawPageItem]:
+def parse_pdf(response: Response, tz: ZoneInfo) -> Optional[RawPageItem]:
     """
     Create a RawPageItem for a PDF, including its raw content.
     Language is detected first from URL, then from extracted text content as a fallback.
@@ -68,7 +69,7 @@ def parse_pdf(response: Response) -> Optional[RawPageItem]:
         title=title_str,
         text="",
         file_content=response.body,
-        date_scraped=datetime.utcnow().isoformat(),
+        date_scraped=datetime.now(tz).isoformat(),
         date_updated=None,
         status=response.status,
         lang=lang,

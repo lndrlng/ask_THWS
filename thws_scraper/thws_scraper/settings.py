@@ -10,10 +10,15 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+tz_name = os.getenv("APP_TIMEZONE", "Europe/Berlin")
+APP_TZ = ZoneInfo(tz_name)
+print(f"INFO: Using timezone: {tz_name}")
 
 RESULTS_DIR = Path(__file__).resolve().parent.parent / "result"
 RESULTS_DIR.mkdir(exist_ok=True)
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+timestamp = datetime.now(APP_TZ).strftime("%Y%m%d_%H%M%S")
 LOG_FILE_PATH = RESULTS_DIR / f"scrapy_log_{timestamp}.jsonl"
 
 LOGGING = {

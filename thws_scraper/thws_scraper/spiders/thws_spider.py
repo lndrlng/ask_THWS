@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import List
 from urllib.parse import urlparse
@@ -35,8 +35,9 @@ class ThwsSpider(CrawlSpider):
 
     @classmethod
     def from_crawler(cls, crawler):
-        spider = cls(settings=crawler.settings)
-        spider.crawler = crawler
+        spider = super().from_crawler(crawler)
+        spider.tz = crawler.settings.get("APP_TZ")
+
         crawler.signals.connect(spider.spider_opened, signal=signals.spider_opened)
         crawler.signals.connect(spider.spider_closed, signal=signals.spider_closed)
 
@@ -50,26 +51,24 @@ class ThwsSpider(CrawlSpider):
 
     def __init__(self, *args, settings=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.settings = settings
         self.reporter = StatsReporter()
-        self.start_time = datetime.now(timezone.utc)
-        self.reporter.set_start_time(self.start_time)
         self._follow_links = True
 
     def spider_opened(self, spider):
-        Path("result").mkdir(parents=True, exist_ok=True)
+        self.start_time = datetime.now(self.tz)
+        self.reporter.set_start_time(self.start_time)
 
+        Path("result").mkdir(parents=True, exist_ok=True)
         self.logger.info(
             f"Spider '{spider.name}' starting",
             extra={"spider_name": spider.name, "start_time_iso": self.start_time.isoformat()},
         )
-
         self.stats_server = StatsHTTPServer(self.reporter)
         self.stats_server.start()
         self.logger.info("Stats server started", extra={"url": "http://0.0.0.0:7000/live"})
 
     def spider_closed(self, reason):
-        total_runtime = datetime.now(timezone.utc) - self.start_time
+        total_runtime = datetime.now(self.tz) - self.start_time
         self.logger.info(
             "Spider closed",
             extra={"reason": reason, "runtime_seconds": total_runtime.total_seconds()},
@@ -149,14 +148,14 @@ class ThwsSpider(CrawlSpider):
 
         if is_pdf:
             self.reporter.bump("pdf", domain)
-            item = parse_pdf(response)
+            item = parse_pdf(response, self.tz)
             if item:
                 items_to_yield.append(item)
             else:
                 self.logger.warning("PDF parser returned no item", extra={"url": response.url})
         elif is_ics:
             self.reporter.bump("ical", domain)
-            item = parse_ical(response)
+            item = parse_ical(response, self.tz)
             if item:
                 items_to_yield.append(item)
             else:
@@ -171,7 +170,7 @@ class ThwsSpider(CrawlSpider):
             else:
                 current_soft_error_strings = self.soft_error_strings
 
-            parsed_output = parse_html(response, soft_error_strings=current_soft_error_strings)
+            parsed_output = parse_html(response, soft_error_strings=current_soft_error_strings, tz=self.tz)
             if parsed_output:
                 html_items, embedded_links = parsed_output
                 if html_items:

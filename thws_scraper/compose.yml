@@ -8,6 +8,7 @@ services:
     environment:
       EXPORT_CSV_STATS: True
       ENABLE_FILE_LOGGING: True
+      APP_TIMEZONE: Europe/Berlin
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
       MONGO_DB_NAME: ${MONGO_DB}

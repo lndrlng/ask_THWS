@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Tuple
 from urllib.parse import urljoin
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup, Comment
 from lxml.html.clean import Cleaner
@@ -108,7 +109,7 @@ def extract_metadata(soup_full_page: BeautifulSoup) -> dict:
     return metadata
 
 
-def parse_html(response: Response, soft_error_strings: List[str]) -> Optional[Tuple[List[RawPageItem], List[str]]]:
+def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) -> Optional[Tuple[List[RawPageItem], List[str]]]:
     """
     1) Use Readability to extract main content and title.
     2) Clean the extracted HTML fragment.
@@ -212,7 +213,7 @@ def parse_html(response: Response, soft_error_strings: List[str]) -> Optional[Tu
         type="html",
         title=page_title.replace("\x00", ""),
         text=cleaned_main_html.replace("\x00", ""),
-        date_scraped=datetime.utcnow().isoformat(),
+        date_scraped=datetime.now(tz).isoformat(),
         date_updated=date_extractor(response.text),
         status=response.status,
         lang=lang,
