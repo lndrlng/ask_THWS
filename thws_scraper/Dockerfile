@@ -28,4 +28,4 @@ COPY . .
 RUN mkdir -p result
 
 # Select `thws` or `thws_rescrape` (this needs a rescraple_urls.txt in the results dir)
-CMD ["scrapy", "crawl", "thws_rescrape"]
+CMD ["scrapy", "crawl", "thws"]
