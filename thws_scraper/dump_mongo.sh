@@ -17,7 +17,6 @@ log_message() {
   shift
   local message="$*"
   local color="${COLOR_OFF}"
-  local timestamp
 
   case "$level" in
     INFO) color="${COLOR_BLUE}" ;;
