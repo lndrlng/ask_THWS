@@ -69,7 +69,7 @@ class ThwsSpider(CrawlSpider):
         self.logger.info("Stats server started", extra={"url": "http://0.0.0.0:7000/live"})
 
     def spider_closed(self, reason):
-        total_runtime = datetime.utcnow() - self.start_time
+        total_runtime = datetime.now(timezone.utc) - self.start_time
         self.logger.info(
             "Spider closed",
             extra={"reason": reason, "runtime_seconds": total_runtime.total_seconds()},
