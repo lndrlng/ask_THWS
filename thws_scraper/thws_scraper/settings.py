@@ -8,11 +8,13 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 import os
+from datetime import datetime
 from pathlib import Path
 
 RESULTS_DIR = Path(__file__).resolve().parent.parent / "result"
 RESULTS_DIR.mkdir(exist_ok=True)
-LOG_FILE_PATH = RESULTS_DIR / "scrapy_log.jsonl"
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+LOG_FILE_PATH = RESULTS_DIR / f"scrapy_log_{timestamp}.jsonl"
 
 LOGGING = {
     "version": 1,
