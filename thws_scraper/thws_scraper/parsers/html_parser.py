@@ -132,7 +132,7 @@ def _extract_raw_content(soup: BeautifulSoup, response_text: str, url: str) -> T
     strategy_used = "Readability (configured)"
 
     try:
-        positive_keywords = ["personDetail"]
+        positive_keywords = ["personDetail", "person-indepth"]
 
         readability_doc = ReadabilityDocument(response_text, positive_keywords=positive_keywords)
 
