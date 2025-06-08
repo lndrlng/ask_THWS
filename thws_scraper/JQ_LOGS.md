@@ -11,11 +11,21 @@ Filter out common, high-volume, or less critical log entries to create a cleaner
 ```shell
 jq 'select(
     (.name != "readability.readability")
+    and (.message != "Successfully parsed HTML page")
+    and (.message != "Skipped page: Ignored URL pattern")
     and (.error != "Forbidden by robots.txt")
     and (.reason != "unhandled_content_type")
     and (.name != "scrapy.extensions.logstats")
     and (.reason != "soft_error_after_cleaning")
 )' result/scrapy_log_*.jsonl > scrapy_log_cleaned.jsonl
+```
+
+Show all skipped empty pages.
+
+```shell
+jq 'select(
+    (.message == "Skipped HTML: Content is empty after cleaning.")
+)' result/scrapy_log_*.jsonl > scrapy_skipped.jsonl
 ```
 
 ______________________________________________________________________
