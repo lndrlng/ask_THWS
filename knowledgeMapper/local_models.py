@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 local_models.py – updated 26 May 2025 (OOM-safe version)
 
@@ -16,13 +17,13 @@ from langchain.embeddings import HuggingFaceEmbeddings
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
 EMBEDDING_DEVICE = "cuda"    # GPU target
 BATCH_SIZE = 16              # reduced for memory stability
-_EMBED_SEMAPHORE = asyncio.Semaphore(2)  # throttle concurrency
+_EMBED_SEMAPHORE = asyncio.Semaphore(1)  # throttle concurrency
 
 # LLM runtime settings ---------------------------------------------------
-OLLAMA_MODEL_NAME = "qwen3:14b-q4_K_M"
+OLLAMA_MODEL_NAME = "mistral"
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 16384       # 16k tokens (≈4 GB KV)
-OLLAMA_NUM_PREDICT = 4096    # up to 4k tokens of completion
+OLLAMA_NUM_CTX = 16384  # 16k tokens (≈4 GB KV)
+OLLAMA_NUM_PREDICT = 4096  # up to 4k tokens of completion
 
 # ── HuggingFace embedder (on GPU) ───────────────────────────────────────
 _hf = HuggingFaceEmbeddings(
@@ -58,8 +59,10 @@ class AsyncEmbedder:
 # ── embedding API expected by LightRAG ──────────────────────────────────
 _async_embedder_instance = AsyncEmbedder()
 
+
 async def embedding_wrapper_func(texts: list[str]) -> list[list[float]]:
     return await _async_embedder_instance(texts)
+
 
 embedding_wrapper_func.embedding_dim = _async_embedder_instance.embedding_dim  # type: ignore[attr-defined]
 embedding_func = embedding_wrapper_func
