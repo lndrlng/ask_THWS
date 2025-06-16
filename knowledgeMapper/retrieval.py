@@ -13,6 +13,14 @@ PROTECTED_KEYWORDS = [
     "BIN", "BEC", "BWI", "E-Commerce", "Cybersecurity"
 ]
 
+#Specifies the retrieval mode:
+#- "local": Focuses on context-dependent information.
+#- "global": Utilizes global knowledge.
+#- "hybrid": Combines local and global retrieval methods.
+#- "naive": Performs a basic search without advanced techniques.
+#- "mix": Integrates knowledge graph and vector retrieval.
+
+MODE = "hybrid"
 # ==============================================================================
 # FINAL ROBUST SYSTEM PROMPT v5
 # This version uses direct, command-like instructions.
@@ -36,6 +44,7 @@ FINAL_SYSTEM_PROMPT_TEMPLATE = """
 {{context_data}}
 """
 
+
 def _hybrid_translate(text: str, keywords: List[str]) -> (str, Dict[str, str]):
     """Replaces keywords with placeholders for safe translation."""
     placeholders = {}
@@ -46,16 +55,17 @@ def _hybrid_translate(text: str, keywords: List[str]) -> (str, Dict[str, str]):
             placeholders[placeholder] = keyword
     return text, placeholders
 
+
 def _restore_keywords(text: str, placeholders: Dict[str, str]) -> str:
     """Restores original keywords from placeholders."""
     for placeholder, keyword in placeholders.items():
         text = text.replace(placeholder, keyword)
     return text
 
+
 def _post_process_answer(text: str) -> str:
     """Cleans up common LLM formatting errors."""
     # Removes the weirdly formatted "Sources are now included..." string
-    text = re.sub(r'🔗\s*Quellen\s*:\s*-\s*S\s*-\s*o\s*-\s*u\s*-\s*r\s*-\s*c\s*-\s*e\s*-\s*s.*', '', text, flags=re.DOTALL)
     # Fixes concatenated words like "WortWort" -> "Wort Wort"
     text = re.sub(r'([a-zäöüß])([A-ZÄÖÜ])', r'\1 \2', text)
     # Removes any remaining weirdly spaced out words like "L - M ."
@@ -70,36 +80,46 @@ async def prepare_and_execute_retrieval(
 ) -> str:
     """
     Orchestrates the retrieval process with keyword protection, robust prompting, and post-processing.
+    Optionally skips English translation for retrieval if direct German retrieval is desired.
     """
-    print("1. Preparing query with keyword protection...")
+    print("1. Preparing query (keywords will be restored if needed)...")
+    # Keywords werden immer noch geschützt, falls sie im generierten Prompt oder der Antwort erscheinen.
     query_with_placeholders, placeholders = _hybrid_translate(user_query, PROTECTED_KEYWORDS)
 
-    print("2. Translating query to English...")
-    translation_prompt = f"Translate the following German text to English. Respond with ONLY the translated text, without any explanation or introductory phrases. German text: \"{query_with_placeholders}\""
-    english_query_placeholders = await llm_instance(prompt=translation_prompt)
-    english_query = _restore_keywords(english_query_placeholders.strip(), placeholders)
-    print(f"   - Final English query for retrieval: '{english_query}'")
+    # --- START HIER DIE ÄNDERUNG ---
+    # Option 1: Beibehaltung der englischen Übersetzung für Retrieval (aktueller Ansatz)
+    # print("2. Translating query to English for retrieval...")
+    # translation_prompt = f"Translate the following German text to English. Respond with ONLY the translated text, without any explanation or introductory phrases. German text: \"{query_with_placeholders}\""
+    # english_query_placeholders = await llm_instance(prompt=translation_prompt)
+    # query_for_retrieval = _restore_keywords(english_query_placeholders.strip(), placeholders)
+    # print(f"   - Final English query for retrieval: '{query_for_retrieval}'")
+
+    # Option 2: Direkte Verwendung der deutschen Query für Retrieval (empfohlen zum Testen)
+    print("2. Using original German query for retrieval (skipping English translation)..")
+    query_for_retrieval = _restore_keywords(query_with_placeholders, placeholders)
+    print(f"   - Final German query for retrieval: '{query_for_retrieval}'")
+    # --- ENDE DER ÄNDERUNG ---
 
     print("3. Injecting dynamic context and crafting final prompt...")
     current_date = datetime.now().strftime("%d. %B %Y")
     final_system_prompt = FINAL_SYSTEM_PROMPT_TEMPLATE.format(
         current_date=current_date,
         location="Würzburg/Schweinfurt",
-        user_query=user_query
+        user_query=user_query  # Hier wird die originale deutsche Nutzerfrage verwendet
     )
 
-    print("4. Executing controlled query with LightRAG using 'hybrid' mode...")
-    # REVERTED: Back to the compatible QueryParam structure without 'return_citations'.
+    print(f"4. Executing controlled query with LightRAG using '{MODE}' mode...")
     params = QueryParam(
-        mode="hybrid",
+        mode=MODE,  # vector + BM25 + KG
         user_prompt=final_system_prompt,
-        top_k=7
+        top_k=20
     )
-    final_answer = await rag_instance.aquery(english_query, param=params)
+    # Die Query an LightRAG ist jetzt die deutsche Query
+    final_answer = await rag_instance.aquery(query_for_retrieval, param=params)  #
     print("   - Raw answer generated.")
 
     print("5. Post-processing the final answer...")
-    cleaned_answer = _post_process_answer(final_answer)
+    cleaned_answer = _post_process_answer(final_answer)  #
     print("   - Final answer cleaned and finalized.")
 
     return cleaned_answer
