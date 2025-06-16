@@ -18,12 +18,6 @@ from typing import Dict, Any
 # We are setting the environment variables directly in the code to bypass any
 # potential issues with the .env file.
 #
-# Replace "your_neo4j_password" with your actual password.
-# ==============================================================================
-os.environ["NEO4J_URI"] = "bolt://localhost:7687"
-os.environ["NEO4J_USERNAME"] = "neo4j"
-os.environ["NEO4J_PASSWORD"] = "kg123lol!1" # <-- IMPORTANT: SET YOUR PASSWORD HERE
-# ==============================================================================
 
 
 # --- Custom Module Imports (adapted for new local_models.py) ---
@@ -35,13 +29,12 @@ from knowledgeMapper.local_models import (
 
 )
 # Import the updated retrieval logic
-from knowledgeMapper.retrieval import prepare_and_execute_retrieval
+from knowledgeMapper.retrieval import (prepare_and_execute_retrieval, MODE)
 
 # --- LightRAG Library Imports ---
 import lightrag
 from lightrag import LightRAG
 from lightrag.kg.shared_storage import initialize_pipeline_status
-
 
 # --- Device Info ---
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -59,8 +52,8 @@ async def lifespan(app: FastAPI):
         embedding_func=HFEmbedFunc(),
         llm_model_func=OllamaLLM(),
         enable_llm_cache=False,
-        graph_storage="Neo4JStorage"
     )
+
     await app.state.rag.initialize_storages()
     print("✅ LightRAG storages initialized.")
     await initialize_pipeline_status()
@@ -74,7 +67,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="THWS KG-RAG API (Final Architecture)",
     description="Ein API-Server, der die stabile `aquery`-Methode mit einem intelligenten Prompt für maximale Antwortqualität und Transparenz verwendet.",
-    version="18.0.3_debug", # Version bumped for debug
+    version="18.0.3_debug",  # Version bumped for debug
     lifespan=lifespan
 )
 
@@ -134,7 +127,6 @@ async def ask(data: Question, request: Request):
         return {
             "question": data.query,
             "answer": final_answer,
-            "sources": "Sources are now included directly in the answer text by the LLM.",
             "mode": "controlled_aquery_pipeline",
             "duration_seconds": duration,
         }
@@ -151,12 +143,20 @@ def read_root():
     return {"message": "Welcome to the THWS KG-RAG API (Final Architecture)."}
 
 
-
 @app.get("/metadata")
-def metadata(request: Request) -> Dict[str, Any]:
-    """Provides metadata about the running service. Currently disabled."""
-    return {"status": "metadata_disabled"}
+def metadata(request: Request):
+    """Provides metadata about the running service."""
+    rag: LightRAG = request.app.state.rag
+    retriever_info = rag.vector_storage
 
+    from knowledgeMapper.local_models import EMBEDDING_MODEL_NAME, OLLAMA_MODEL_NAME
+
+    return {
+        "embedding_model": EMBEDDING_MODEL_NAME,
+        "llm_model": OLLAMA_MODEL_NAME,
+        "device": device,
+        "Retrieval MODE": MODE,
+    }
 
 
 # --- Run FastAPI Server ---
