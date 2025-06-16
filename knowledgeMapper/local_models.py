@@ -1,123 +1,169 @@
+# File: knowledgeMapper/local_models.py
+# WORKAROUND version: Added translation methods to handle the "Denglisch" KG.
+
 from __future__ import annotations
-
-"""
-local_models.py – updated 26 May 2025 (OOM-safe version)
-
-• BGE‑M3 embedder runs async on GPU with semaphore to prevent OOM
-• Qwen‑3 14B‑Q4_K_M LLM runs via Ollama API with 16 k context
-• Memory-managed: low batch size, no_grad, empty_cache per batch
-"""
-
 import asyncio
 import requests
 import torch
+from sentence_transformers import CrossEncoder
 from langchain.embeddings import HuggingFaceEmbeddings
+from typing import TypedDict, List, Any
 
-# ── configuration ───────────────────────────────────────────────────────
+
+# --- Document Structure for Type Hinting ---
+class Document(TypedDict):
+    text: str
+    metadata: dict
+
+
+# --- Configuration ---
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-EMBEDDING_DEVICE = "cuda"    # GPU target
-BATCH_SIZE = 16              # reduced for memory stability
-_EMBED_SEMAPHORE = asyncio.Semaphore(1)  # throttle concurrency
-
-# LLM runtime settings ---------------------------------------------------
-OLLAMA_MODEL_NAME = "mistral"
+RERANKER_MODEL_NAME = "BAAI/bge-reranker-base" # This might be used internally by LightRAG
+OLLAMA_MODEL_NAME = "llama3:8b"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 16384  # 16k tokens (≈4 GB KV)
-OLLAMA_NUM_PREDICT = 4096  # up to 4k tokens of completion
 
-# ── HuggingFace embedder (on GPU) ───────────────────────────────────────
-_hf = HuggingFaceEmbeddings(
-    model_name=EMBEDDING_MODEL_NAME,
-    encode_kwargs={"normalize_embeddings": True},
-    model_kwargs={"device": EMBEDDING_DEVICE},
-)
-EMBED_DIM = _hf.client.get_sentence_embedding_dimension()  # 1024 for BGE-M3
+# --- Device Config ---
+EMBEDDING_DEVICE_CONFIG = DEVICE
+RERANKER_DEVICE_CONFIG = "cpu"
+
+# --- Global State for Models ---
+MODELS = {}
+_EMBED_SEMAPHORE = asyncio.Semaphore(1)
 
 
-# ── async-safe embedding wrapper ────────────────────────────────────────
+# --- Model Classes (The Logic) ---
+
 class AsyncEmbedder:
-    """Callable embedder with memory-managed async behavior."""
+    def __init__(self):
+        print(f"Loading embedding model '{EMBEDDING_MODEL_NAME}' onto device '{EMBEDDING_DEVICE_CONFIG}'...")
+        self.hf = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL_NAME,
+            encode_kwargs={"normalize_embeddings": True},
+            model_kwargs={"device": EMBEDDING_DEVICE_CONFIG},
+        )
+        self.embedding_dim = self.hf.client.get_sentence_embedding_dimension()
+        print("Embedding model loaded.")
 
-    embedding_dim: int = EMBED_DIM
 
     async def __call__(self, texts: list[str]) -> list[list[float]]:
-        """Async entry point with semaphore and background execution."""
         async with _EMBED_SEMAPHORE:
-            return await asyncio.to_thread(self._embed_chunked, texts)
-
-    def _embed_chunked(self, texts: list[str]) -> list[list[float]]:
-        """Internal CPU-threaded embedding loop with memory control."""
-        vecs: list[list[float]] = []
-        for i in range(0, len(texts), BATCH_SIZE):
-            batch = texts[i:i + BATCH_SIZE]
-            with torch.no_grad():
-                vecs.extend(_hf.embed_documents(batch))
-            torch.cuda.empty_cache()  # help reduce fragmentation
-        return vecs
+            return await asyncio.to_thread(self.hf.embed_documents, texts)
 
 
-# ── embedding API expected by LightRAG ──────────────────────────────────
-_async_embedder_instance = AsyncEmbedder()
+class Reranker:
+    def __init__(self):
+        print(f"Loading reranker model '{RERANKER_MODEL_NAME}' onto device '{RERANKER_DEVICE_CONFIG}'...")
+        self.model = CrossEncoder(RERANKER_MODEL_NAME, max_length=512, device=RERANKER_DEVICE_CONFIG)
+        print("Reranker model loaded.")
+
+    def __call__(self, query: str, documents: List[Any]) -> List[Any]:
+        if not documents:
+            return []
+        pairs = [(query, doc.text) for doc in documents]
+        scores = self.model.predict(pairs, show_progress_bar=False)
+        scored_docs = list(zip(scores.tolist(), documents))
+        scored_docs.sort(key=lambda x: x[0], reverse=True)
+        return [doc for score, doc in scored_docs]
 
 
-async def embedding_wrapper_func(texts: list[str]) -> list[list[float]]:
-    return await _async_embedder_instance(texts)
-
-
-embedding_wrapper_func.embedding_dim = _async_embedder_instance.embedding_dim  # type: ignore[attr-defined]
-embedding_func = embedding_wrapper_func
-
-
-# ── Ollama async wrapper (unchanged) ────────────────────────────────────
 class OllamaLLM:
-    """Thin async wrapper around Ollama’s /api/generate endpoint."""
+    """ A wrapper for Ollama with added translation methods for the workaround. """
 
-    async def __call__(
-            self,
-            prompt: str,
-            system_prompt: str | None = None,
-            history_messages: list[dict] | None = None,
-            **kwargs,
-    ) -> str:
-        for k in ("hashing_kv", "max_tokens", "response_format"):
-            kwargs.pop(k, None)
-
-        parts: list[str] = []
-        if history_messages:
-            parts.append("\n".join(m.get("content", "") for m in history_messages))
-        if system_prompt:
-            parts.append(system_prompt)
-        parts.append(prompt)
-        full_prompt = "\n".join(parts)
-
+    async def _ollama_chat_call(self, messages: List[dict], temperature: float = 0.1) -> str:
+        """ Private helper to make calls to the Ollama API. """
         def _call() -> str:
             r = requests.post(
-                f"{OLLAMA_HOST}/api/generate",
+                f"{OLLAMA_HOST}/api/chat",
                 json={
                     "model": OLLAMA_MODEL_NAME,
-                    "prompt": full_prompt,
+                    "messages": messages,
                     "stream": False,
-                    "options": {
-                        "num_ctx": OLLAMA_NUM_CTX,
-                        "num_predict": OLLAMA_NUM_PREDICT,
-                    },
+                    "options": {"temperature": temperature},
                 },
-                timeout=10_000,
+                timeout=60_000,
             )
             r.raise_for_status()
-            return r.json()["response"]
+            response_data = r.json()
+            return response_data.get("message", {}).get("content", "")
 
         return await asyncio.to_thread(_call)
 
+    async def translate_to_english(self, text: str) -> str:
+        """ Translates a given German text to English. """
+        system_prompt = "You are an expert translator. Translate the following German text to English. Output only the translated text, without any additional comments, preambles, or explanations."
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": text}
+        ]
+        return await self._ollama_chat_call(messages, temperature=0.0)
 
-# ── legacy alias (keeps older imports working) ──────────────────────────
-class HFEmbedFunc:  # noqa: N801
-    def __new__(cls, *_, **__):
-        return embedding_func
+    async def translate_to_german(self, text: str) -> str:
+        """ Translates a given English text to German. """
+        system_prompt = "You are an expert translator. Translate the following English text to German. Ensure the translation is natural and fluent. Output only the translated text, without any additional comments, preambles, or explanations."
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": text}
+        ]
+        return await self._ollama_chat_call(messages, temperature=0.0)
 
+    async def __call__(self, context: str = None, question: str = None, system_prompt: str = None, **kwargs) -> str:
+        """
+        The main __call__ method, compatible with LightRAG's internal operations.
+        """
+        prompt_content = context or kwargs.get('prompt')
+        temperature = 0.1
 
-__all__ = [
-    "embedding_func",
-    "OllamaLLM",
-    "HFEmbedFunc",
-]
+        # Pattern 1: Internal keyword extraction call from LightRAG.
+        if prompt_content and ("---Goal---" in prompt_content and "---Examples---" in prompt_content):
+            print("   - (Info) Handling internal LightRAG keyword extraction call.")
+            system_prompt_for_keywords = "You are an assistant that extracts keywords. Your only task is to follow the user's instructions exactly and provide the output in the JSON format shown in the examples. Do not provide any additional explanation, clarification, or introductory sentences. Your entire response must be only the JSON code."
+            messages = [
+                {"role": "system", "content": system_prompt_for_keywords},
+                {"role": "user", "content": prompt_content}
+            ]
+            temperature = 0.0
+
+        # Pattern 2: Standard RAG call for final answer generation (called by `aquery` with a custom prompt).
+        else:
+            print("   - (Info) Handling final answer generation call.")
+            final_generation_prompt = prompt_content
+            if not final_generation_prompt:
+                raise ValueError("Received a generation call with no content.")
+
+            # The system prompt is now passed in directly from api_server.py via `user_prompt`
+            final_system_prompt = "You are a helpful AI assistant." # Generic fallback
+            if system_prompt:
+                final_system_prompt = system_prompt
+
+            messages = [
+                {"role": "system", "content": final_system_prompt},
+                {"role": "user", "content": final_generation_prompt}
+            ]
+
+        return await self._ollama_chat_call(messages, temperature=temperature)
+
+# --- Initializer and Getter Functions ---
+def load_models():
+    """Initializes all models and stores them in the global state."""
+    print("Initializing embedding, reranker, and LLM wrappers...")
+    MODELS["embedder"] = AsyncEmbedder()
+    MODELS["reranker"] = Reranker()
+    MODELS["llm"] = OllamaLLM()
+    print("✅ All models initialized.")
+
+def get_embedder() -> AsyncEmbedder:
+    return MODELS["embedder"]
+
+def get_reranker() -> Reranker:
+    return MODELS["reranker"]
+
+def get_llm() -> OllamaLLM:
+    return MODELS["llm"]
+
+# Legacy aliases for LightRAG initialization
+def HFEmbedFunc():
+    return get_embedder()
+
+def OllamaLLM_Func():
+    return get_llm()
