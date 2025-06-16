@@ -1,4 +1,5 @@
 # File: api_server.py
+# WORKAROUND version: Implements a Translate -> Query -> Translate pipeline to handle a mixed-language KG.
 
 import time
 import torch
@@ -8,169 +9,186 @@ import os
 import signal
 import uvicorn
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from requests.exceptions import HTTPError
+from typing import List
 
-# Assuming lightrag is installed from git+https://github.com/HKUDS/LightRAG.git
-# This version of LightRAG has a different structure, so we only import what's available.
-from lightrag import LightRAG, QueryParam
-# We assume these are your custom wrapper classes defined within your project
-# and are designed to work with HKUDS/LightRAG.
-from knowledgeMapper.local_models import HFEmbedFunc, OllamaLLM
+# --- Import components from our local_models ---
+from knowledgeMapper.local_models import (
+    load_models,
+    get_llm,
+    HFEmbedFunc,
+    OllamaLLM_Func,
+    OllamaLLM, # Import the class for type hinting
+)
+# --- Import components from the lightrag library ---
+from lightrag import LightRAG
+from lightrag.base import QueryParam # Correct import based on provided source
+# This import is required for the mandatory initialization step.
+from lightrag.kg.shared_storage import initialize_pipeline_status
+
 
 # --- Device Info ---
-# Determine the computation device based on availability
-device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"🔥 Using device: {device}")
 
 
-# --- LightRAG Setup ---
-# Initialize the main LightRAG object from the HKUDS library.
-# The model name (e.g., "mistral") must be configured inside your OllamaLLM class.
-print("🧠 Initializing LightRAG...")
-rag = LightRAG(
-    working_dir="./rag_storage",
-    embedding_func=HFEmbedFunc(),
-    llm_model_func=OllamaLLM() # OllamaLLM must be configured internally
-)
-
-# --- Lifespan for Startup and Shutdown Events ---
+# --- Lifespan to load all models and initialize LightRAG ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Handles startup and shutdown events for the FastAPI application.
-    Initializes LightRAG storages on startup.
+    Handles startup events. Initializes models first, then LightRAG.
     """
-    # Code to run on startup
-    print("🚀 Initializing LightRAG storages...")
+    print("🚀 Server starting up...")
+    load_models()
+    print("🧠 Initializing LightRAG framework...")
+    rag = LightRAG(
+        working_dir="./rag_storage",
+        embedding_func=HFEmbedFunc(),
+        llm_model_func=OllamaLLM_Func()
+    )
+    app.state.rag = rag
     await rag.initialize_storages()
     print("✅ LightRAG storages initialized.")
+    await initialize_pipeline_status()
+    print("✅ LightRAG pipeline status initialized.")
+    print("✅ Server is ready to accept requests.")
     yield
-    # Code to run on shutdown
-    print("FastAPI app is shutting down.")
+    print("🔌 Server shutting down.")
 
 
 # --- FastAPI App Initialization ---
-# We now use the lifespan context manager for startup events.
 app = FastAPI(
-    title="LightRAG API Server",
-    description="An API for querying a Retrieval-Augmented Generation system.",
-    version="1.0.0",
+    title="THWS KG-RAG API Server (Translation Workaround)",
+    description="Ein API-Server, der eine Übersetzungs-Pipeline verwendet, um deutsche Antworten aus einer gemischtsprachigen Wissensdatenbank zu liefern.",
+    version="5.5.0", # Version bump for workaround
     lifespan=lifespan
 )
 
+
 class Question(BaseModel):
-    """Pydantic model for the input question."""
     query: str
 
-# --- Ollama Background Server Management ---
-# Start the Ollama server in a background process.
-# Using DEVNULL to hide the verbose output from the server.
+
+# --- Ollama Background Server Management (Unchanged) ---
 print("🚓 Starting Ollama server in the background...")
 ollama_process = subprocess.Popen(
-    ["ollama", "serve"],
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL,
-    preexec_fn=os.setsid if os.name != 'nt' else None # Necessary for proper termination on Unix-like systems
+    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    preexec_fn=os.setsid if os.name != 'nt' else None
 )
 
+
+@atexit.register
 def shutdown_ollama():
-    """Function to gracefully shut down the Ollama server process."""
     print("Shutting down Ollama server...")
     if ollama_process:
         try:
-            # On Windows, terminate is sufficient.
             if os.name == 'nt':
                 ollama_process.terminate()
-            # On Unix-like systems, we kill the entire process group to ensure it's gone.
             else:
                 os.killpg(os.getpgid(ollama_process.pid), signal.SIGTERM)
             ollama_process.wait(timeout=5)
             print("🚓 Ollama server stopped successfully.")
         except (ProcessLookupError, OSError, subprocess.TimeoutExpired) as e:
-            print(f"Could not stop Ollama server gracefully: {e}. It might have already been stopped.")
+            print(f"Could not stop Ollama server gracefully: {e}")
 
-# Register the shutdown function to be called on script exit.
-atexit.register(shutdown_ollama)
 
 # --- API Endpoints ---
-
 @app.post("/ask")
-async def ask(data: Question):
+async def ask(data: Question, request: Request):
     """
-    Main endpoint to ask a question using the full LightRAG hybrid retrieval.
-    This combines knowledge graph and vector search capabilities.
+    Implements a Translate -> Query -> Translate pipeline.
     """
-    start = time.time()
-    print(f"Received query: '{data.query}'")
+    start_time = time.time()
+    print(f"\n--- New Request ---")
+    print(f"Received German query: '{data.query}'")
     try:
-        # Perform the query using the hybrid mode
-        result = await rag.aquery(data.query, param=QueryParam(mode="hybrid"))
-        duration = round(time.time() - start, 2)
+        rag: LightRAG = request.app.state.rag
+        llm: OllamaLLM = get_llm()
 
-        # The `rag.aquery` from this library version returns the answer directly as a string.
-        # It does not return a structured object with source documents.
-        answer_text = result if isinstance(result, str) else ""
+        # STEP 1: Translate German query to English for effective retrieval
+        print("1. Translating query to English...")
+        english_query = await llm.translate_to_english(data.query)
+        print(f"   - English query for retrieval: '{english_query}'")
 
-        # Since source documents are not returned, we provide an empty list.
-        source_metadata = []
+        # STEP 2: Prepare a custom ENGLISH prompt for the English KG context
+        english_system_prompt = f"""
+You are a specialized assistant for the THWS university.
+Your task is to answer the user's question precisely and ONLY based on the provided context from the knowledge graph.
+Ignore your general knowledge. Formulate a helpful, direct, and complete answer in ENGLISH.
 
-        print(f"Answer generated in {duration} seconds.")
+User's Question: "{english_query}"
+
+Knowledge Graph Context:
+{{context_data}}
+
+Instructions:
+- Analyze the context carefully.
+- Formulate a clear and direct answer to the user's question in English.
+- If the information is not in the context, respond ONLY with: "Based on the provided documents, I could not find an answer."
+- Append the sources, and add them to the final answer.
+
+Answer:
+"""
+
+        # STEP 3: Query the KG in English
+        print("2. Executing query with LightRAG in English...")
+        params = QueryParam(mode="hybrid", user_prompt=english_system_prompt)
+        english_answer = await rag.aquery(english_query, param=params)
+        print(f"   - Intermediate English answer: '{english_answer}'")
+
+        # Handle case where the model couldn't find an answer
+        if "could not find an answer" in english_answer:
+            print("   - No answer found in KG. Translating fallback message.")
+            final_answer = "Die angefragten Informationen konnte ich in meiner Wissensdatenbank leider nicht finden."
+        else:
+            # STEP 4: Translate the English answer back to German
+            print("3. Translating final answer to German...")
+            final_answer = await llm.translate_to_german(english_answer)
+            print(f"   - Final German answer: '{final_answer}'")
+
+
+        duration = round(time.time() - start_time, 2)
+        print(f"--- Request completed in {duration} seconds. ---")
+
         return {
             "question": data.query,
-            "answer": answer_text,
-            "sources": source_metadata,
-            "mode": "lightrag+hybrid",
+            "answer": final_answer,
+            "sources": [],
+            "mode": "translation_workaround_hybrid",
             "duration_seconds": duration,
         }
-    except HTTPError as e:
-        # This catches errors from the Ollama backend (like 404 Not Found)
-        print(f"ERROR: An HTTP error occurred while communicating with the LLM backend: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"The LLM backend is unavailable or could not find the requested model. Details: {e}"
-        )
     except Exception as e:
-        # This catches any other unexpected errors during the RAG process.
         print(f"ERROR: An unexpected error occurred: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"An internal server error occurred. Please check the server logs. Details: {e}"
-        )
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error. Details: {e}")
 
-@app.post("/ask-raw")
-def ask_raw(data: Question):
-    """A simple echo endpoint for debugging and testing connectivity."""
-    return {
-        "question": data.query,
-        "echo": data.query,
-        "mode": "raw-debug"
-    }
-
-@app.get("/metadata")
-def metadata():
-    """Returns metadata about the running service and models."""
-    try:
-        commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).strip().decode("utf-8")
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        commit = "N/A"
-
-    return {
-        "embedding_model": HFEmbedFunc.__name__,
-        "llm_model": OllamaLLM.__name__,
-        "git_commit": commit,
-        "device": device,
-        "retriever": "LightRAG Hybrid (from HKUDS/LightRAG)"
-    }
 
 @app.get("/")
 def read_root():
-    """Root endpoint providing basic information about the API."""
-    return {"message": "Welcome to the LightRAG API. Use the /docs endpoint to see the API documentation."}
+    return {"message": "Welcome to the THWS KG-RAG API (Translation Workaround)."}
+
+
+@app.get("/metadata")
+def metadata(request: Request):
+    """Provides metadata about the running service."""
+    rag: LightRAG = request.app.state.rag
+    retriever_info = rag.vector_storage
+
+    from knowledgeMapper.local_models import EMBEDDING_MODEL_NAME, RERANKER_MODEL_NAME, OLLAMA_MODEL_NAME
+
+    return {
+        "embedding_model": EMBEDDING_MODEL_NAME,
+        "reranker_model": RERANKER_MODEL_NAME,
+        "llm_model": OLLAMA_MODEL_NAME,
+        "device": device,
+        "retriever_class": retriever_info
+    }
+
 
 # --- Run FastAPI Server ---
 if __name__ == "__main__":
-    print("Starting FastAPI server...")
-    # The module name here must match the filename (api_server.py -> "api_server")
+    print("Starting FastAPI server with uvicorn...")
     uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)
