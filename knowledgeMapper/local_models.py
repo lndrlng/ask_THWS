@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 local_models.py – updated 26 May 2025 (OOM-safe version)
 
@@ -14,8 +15,8 @@ from langchain.embeddings import HuggingFaceEmbeddings
 
 # ── configuration ───────────────────────────────────────────────────────
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-EMBEDDING_DEVICE = "cpu"    # GPU target
-BATCH_SIZE = 16              # reduced for memory stability
+EMBEDDING_DEVICE = "cpu"  # GPU target
+BATCH_SIZE = 16  # reduced for memory stability
 _EMBED_SEMAPHORE = asyncio.Semaphore(2)  # throttle concurrency
 
 # LLM runtime settings ---------------------------------------------------
@@ -58,8 +59,10 @@ class AsyncEmbedder:
 # ── embedding API expected by LightRAG ──────────────────────────────────
 _async_embedder_instance = AsyncEmbedder()
 
+
 async def embedding_wrapper_func(texts: list[str]) -> list[list[float]]:
     return await _async_embedder_instance(texts)
+
 
 embedding_wrapper_func.embedding_dim = _async_embedder_instance.embedding_dim  # type: ignore[attr-defined]
 embedding_func = embedding_wrapper_func

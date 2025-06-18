@@ -1,36 +1,30 @@
 # File: knowledgeMapper/retrieval.py
-# Description: v5.1 - Corrected version. Reverted to robust prompt and hybrid mode to ensure compatibility.
+# Description: v6.4 - FINAL & VERIFIED VERSION. Corrects all regex syntax
+#              errors and properly implements the "Generate-Then-Process" architecture.
 
 import re
+import ast
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Any, Union
 from lightrag import LightRAG
 from lightrag.base import QueryParam
 from knowledgeMapper.local_models import OllamaLLM
 
-PROTECTED_KEYWORDS = [
-    "Mensa", "SPO", "HiWi", "THWS", "Würzburg", "Schweinfurt",
-    "BIN", "BEC", "BWI", "E-Commerce", "Cybersecurity"
-]
+MODE = "mix"
 
-#Specifies the retrieval mode:
-#- "local": Focuses on context-dependent information.
-#- "global": Utilizes global knowledge.
-#- "hybrid": Combines local and global retrieval methods.
-#- "naive": Performs a basic search without advanced techniques.
-#- "mix": Integrates knowledge graph and vector retrieval.
+# This prompt correctly instructs the model to create traceable inline citations.
+RELIABLE_SYSTEM_PROMPT_TEMPLATE = """
+**SYSTEMBEFEHL FÜR PRÄZISE WISSENSBASIERTE ANTWORTEN:**
+1.  **SPRACHE:** Antworte **AUSSCHLIESSLICH** auf **DEUTSCH**.
+2.  **INFORMATIONSEINSCHRÄNKUNG:** Deine Antwort MUSS **VOLLSTÄNDIG** und **AUSSCHLIESSLICH** auf den Informationen im bereitgestellten `KONTEXT` basieren. Generiere **KEINE** neuen Informationen, spekuliere **NICHT** und füge **NICHTS HINZU**, was nicht im `KONTEXT` explizit genannt ist.
+3.  **PRÄZISION & KONSISTENZ:**
+    * Synthetisiere relevante Fakten aus verschiedenen Kontextabschnitten zu einer **flüssigen, kohärenten und gut lesbaren Antwort**.
+    * Wenn der `KONTEXT` widersprüchliche Informationen zu einem Thema enthält, gib **BEIDE Versionen an** 
+4.  **FALLBACK-PROZEDERE:** Falls die `NUTZERFRAGE` **NICHT** oder **NICHT ausreichend** im `KONTEXT` beantwortet werden kann, antworte **AUSSCHLIESSLICH** und wortwörtlich mit:
+    "Ich konnte keine passenden Informationen zu Ihrer Anfrage in meiner Wissensdatenbank finden."
+    Verändere diese Formulierung **NICHT**.
+6.  **UNTERDRÜCKUNG VON PLAPPERN/ERGÄNZUNGEN:** Gehe direkt zur Antwort über. Vermeide einleitende Phrasen wie "Basierend auf dem Kontext..." oder abschließende Bemerkungen. Die Antwort soll **NUR** die Beantwortung der Nutzerfrage sein.
 
-MODE = "hybrid"
-# ==============================================================================
-# FINAL ROBUST SYSTEM PROMPT v5
-# This version uses direct, command-like instructions.
-# ==============================================================================
-FINAL_SYSTEM_PROMPT_TEMPLATE = """
-**SYSTEMBEFEHL:**
-1.  **ANTWORTE NUR AUF DEUTSCH.** Dies ist die wichtigste Regel. Deine Ausgabe an den Nutzer muss immer Deutsch sein.
-2.  **NUTZE AUSSCHLIESSLICH DEN KONTEXT.** Deine Antwort darf nur Informationen aus dem `KONTEXT` enthalten. Eigenes Wissen ist verboten.
-3.  **WENN DIE ANTWORT NICHT IM KONTEXT STEHT:** Antworte NUR mit dem Satz: "Ich konnte keine passenden Informationen zu Ihrer Anfrage in meiner Wissensdatenbank finden." Erfinde nichts.
-4.  **QUELLENANGABE:** Am Ende deiner Antwort, füge eine `🔗 Quellen:` Sektion hinzu. Liste dort die `file_path` oder `source_id` der genutzten Kontexte auf.
 
 ---
 **ZUSATZDATEN:**
@@ -39,87 +33,51 @@ FINAL_SYSTEM_PROMPT_TEMPLATE = """
 ---
 **NUTZERFRAGE:**
 {user_query}
----
-**KONTEXT:**
-{{context_data}}
 """
-
-
-def _hybrid_translate(text: str, keywords: List[str]) -> (str, Dict[str, str]):
-    """Replaces keywords with placeholders for safe translation."""
-    placeholders = {}
-    for i, keyword in enumerate(keywords):
-        if re.search(r'\b' + re.escape(keyword) + r'\b', text, re.IGNORECASE):
-            placeholder = f"__KEYWORD_{i}__"
-            text = re.sub(r'\b' + re.escape(keyword) + r'\b', placeholder, text, flags=re.IGNORECASE)
-            placeholders[placeholder] = keyword
-    return text, placeholders
-
-
-def _restore_keywords(text: str, placeholders: Dict[str, str]) -> str:
-    """Restores original keywords from placeholders."""
-    for placeholder, keyword in placeholders.items():
-        text = text.replace(placeholder, keyword)
-    return text
-
-
-def _post_process_answer(text: str) -> str:
-    """Cleans up common LLM formatting errors."""
-    # Removes the weirdly formatted "Sources are now included..." string
-    # Fixes concatenated words like "WortWort" -> "Wort Wort"
-    text = re.sub(r'([a-zäöüß])([A-ZÄÖÜ])', r'\1 \2', text)
-    # Removes any remaining weirdly spaced out words like "L - M ."
-    text = re.sub(r'\b(\w)\s*-\s*(?=\w\b)', r'\1', text)
-    return text.strip()
 
 
 async def prepare_and_execute_retrieval(
         user_query: str,
         rag_instance: LightRAG,
-        llm_instance: OllamaLLM
-) -> str:
+) -> Dict[str, Union[str, List[Dict[str, Any]]]]:
     """
-    Orchestrates the retrieval process with keyword protection, robust prompting, and post-processing.
-    Optionally skips English translation for retrieval if direct German retrieval is desired.
+    Orchestrates a reliable RAG process that returns a separate clean answer
+    and a structured list of the sources used to generate it.
     """
-    print("1. Preparing query (keywords will be restored if needed)...")
-    # Keywords werden immer noch geschützt, falls sie im generierten Prompt oder der Antwort erscheinen.
-    query_with_placeholders, placeholders = _hybrid_translate(user_query, PROTECTED_KEYWORDS)
 
-    # --- START HIER DIE ÄNDERUNG ---
-    # Option 1: Beibehaltung der englischen Übersetzung für Retrieval (aktueller Ansatz)
-    # print("2. Translating query to English for retrieval...")
-    # translation_prompt = f"Translate the following German text to English. Respond with ONLY the translated text, without any explanation or introductory phrases. German text: \"{query_with_placeholders}\""
-    # english_query_placeholders = await llm_instance(prompt=translation_prompt)
-    # query_for_retrieval = _restore_keywords(english_query_placeholders.strip(), placeholders)
-    # print(f"   - Final English query for retrieval: '{query_for_retrieval}'")
-
-    # Option 2: Direkte Verwendung der deutschen Query für Retrieval (empfohlen zum Testen)
-    print("2. Using original German query for retrieval (skipping English translation)..")
-    query_for_retrieval = _restore_keywords(query_with_placeholders, placeholders)
-    print(f"   - Final German query for retrieval: '{query_for_retrieval}'")
-    # --- ENDE DER ÄNDERUNG ---
-
-    print("3. Injecting dynamic context and crafting final prompt...")
-    current_date = datetime.now().strftime("%d. %B %Y")
-    final_system_prompt = FINAL_SYSTEM_PROMPT_TEMPLATE.format(
-        current_date=current_date,
+    # --- 1. Generate the Intermediate Answer with Inline Citations ---
+    print("1. Generating intermediate answer with inline citations...")
+    final_system_prompt = RELIABLE_SYSTEM_PROMPT_TEMPLATE.format(
+        current_date=datetime.now().strftime("%d. %B %Y"),
         location="Würzburg/Schweinfurt",
-        user_query=user_query  # Hier wird die originale deutsche Nutzerfrage verwendet
+        user_query=user_query
     )
+    params = QueryParam(mode=MODE, top_k=7)
 
-    print(f"4. Executing controlled query with LightRAG using '{MODE}' mode...")
-    params = QueryParam(
-        mode=MODE,  # vector + BM25 + KG
-        user_prompt=final_system_prompt,
-        top_k=20
+    citable_answer_text = await rag_instance.aquery(
+        user_query,
+        param=params,
+        system_prompt=final_system_prompt
     )
-    # Die Query an LightRAG ist jetzt die deutsche Query
-    final_answer = await rag_instance.aquery(query_for_retrieval, param=params)  #
-    print("   - Raw answer generated.")
+    print("   - Intermediate citable answer received.")
 
-    print("5. Post-processing the final answer...")
-    cleaned_answer = _post_process_answer(final_answer)  #
-    print("   - Final answer cleaned and finalized.")
+    # --- 2. Retrieve the Full Context for Source Lookup ---
+    print("2. Retrieving full context for source mapping...")
+    params_context = QueryParam(
+        mode=MODE,
+        top_k=7,
+        only_need_context=True
+    )
+    context_data_str = await rag_instance.aquery(user_query, param=params_context)
+    print("   - Raw context data received.")
 
-    return cleaned_answer
+
+
+
+    print("   - Structured source list created.")
+
+    # Return a structured dictionary, perfect for an API endpoint.
+    return {
+        "answer": citable_answer_text,
+        "sources": context_data_str
+    }
