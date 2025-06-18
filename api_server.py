@@ -118,7 +118,6 @@ async def ask(data: Question, request: Request):
         final_answer = await prepare_and_execute_retrieval(
             user_query=data.query,
             rag_instance=rag,
-            llm_instance=llm_instance
         )
 
         duration = round(time.time() - start_time, 2)
@@ -155,7 +154,7 @@ def metadata(request: Request):
         "embedding_model": EMBEDDING_MODEL_NAME,
         "llm_model": OLLAMA_MODEL_NAME,
         "device": device,
-        "Retrieval MODE": MODE,
+        "retrieval_mode": MODE,
     }
 
 
