@@ -23,6 +23,7 @@
         packages = [
           pkgs.python311
           pkgs.poetry
+          pkgs.poetryPlugins.poetry-plugin-shell
           pkgs.stdenv.cc.cc.lib
           pkgs.pre-commit
         ];
