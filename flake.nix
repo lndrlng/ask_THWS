@@ -1,9 +1,8 @@
 {
-  description = "Minimal LightRAG project dev shell";
+  description = "Minimal LightRAG project dev shell with venvShellHook";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
@@ -19,32 +18,16 @@
           cudaSupport = true;
         };
       };
-
-      pythonEnv = pkgs.python311.withPackages (ps:
-        with ps; [
-          langchain
-          sentence-transformers
-          faiss
-          torch
-          torchvision
-          torchaudio
-          fastapi
-          uvicorn
-          requests
-          pymongo
-          pypdf
-          (openai.overridePythonAttrs (_: {doCheck = false;}))
-        ]);
     in {
       devShells.default = pkgs.mkShell {
         packages = [
-          pythonEnv
-          pkgs.cudatoolkit
-          pkgs.git
-          pkgs.ollama
+          pkgs.python311
+          pkgs.poetry
+          pkgs.stdenv.cc.cc.lib
+          pkgs.pre-commit
         ];
         shellHook = ''
-          export LD_LIBRARY_PATH="${pkgs.cudaPackages.cudatoolkit}/lib:$LD_LIBRARY_PATH"
+          export LD_LIBRARY_PATH="${pkgs.cudatoolkit}/lib:${pkgs.stdenv.cc.cc.lib}/lib:/run/opengl-driver/lib:$LD_LIBRARY_PATH"
         '';
       };
     });

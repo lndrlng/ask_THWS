@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "knowledge-mapper"
+version = "0.1.0"
+description = "A RAG-based knowledge mapping application"
+authors = ["David <you@example.com>"]
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "~3.11"
+
+# --- Source configuration for PyTorch CUDA wheels ---
+langchain = "^0.3.26"
+langchain-community = "^0.3.26"
+langchain-huggingface = "^0.3.0"
+pymongo = "^4.13.2"
+pypdf = "^5.6.1"
+pandas = "^2.3.0"
+python-docx = "^1.2.0"
+pymupdf = "^1.26.1"
+sentence-transformers = "^4.1.0"
+faiss-cpu = "^1.11.0"
+fastapi = "^0.115.13"
+uvicorn = {extras = ["standard"], version = "^0.34.3"}
+requests = "^2.32.4"
+tqdm = "^4.67.1"
+openai = "^1.90.0"
+python-dotenv = "^1.1.0"
+streamlit = ">=1.30.0"
+plotly = "^6.1.2"
+pyvis = "^0.3.2"
+matplotlib = "^3.10.3"
+seaborn = "^0.13.2"
+lightrag-hku = {extras = ["api"], version = "^1.3.8"}
+
+[[tool.poetry.source]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu128"
+priority = "explicit"
+
+[tool.poetry.dependencies.torch]
+version = "^2.6.0"
+source = "pytorch-cu121"
+
+[tool.poetry.dependencies.torchvision]
+version = "^0.22.0"
+source = "pytorch-cu121"
+
+[tool.poetry.dependencies.torchaudio]
+version = "^2.6.0"
+source = "pytorch-cu121"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
