@@ -1,24 +1,23 @@
 import os
-
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import asyncio
 import logging
 import argparse
-from pathlib import Path
 from collections import defaultdict
 from typing import List, Dict
 
 from rich.logging import RichHandler
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn, SpinnerColumn
+from rich.progress import Progress
 
 from langchain.docstore.document import Document
 from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.lightrag import LightRAG
 
-from mongo_loader import load_documents_from_mongo
+import config
+from utils.mongo_loader import load_documents_from_mongo
 from utils.subdomain_utils import get_sanitized_subdomain
-from local_models import embedding_func, OllamaLLM
+from utils.local_models import embedding_func, OllamaLLM
 
 logging.basicConfig(
     level="INFO",
@@ -28,49 +27,33 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-BASE_STORAGE_DIR = Path("../RAG_STORAGE")
-
-MODE = os.getenv("MODE", "vectors").lower() # all,vectors
-
 
 async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]]):
     """
     MODE=vectors
-    Creates a separate vector database for each subdomain and reports the number of chunks and time taken.
+    Creates a separate vector database for each subdomain using settings from config.
     """
     log.info(f"--- Running in VECTOR mode: Creating {len(docs_by_subdomain)} separated vector databases ---")
     successful_builds, failed_builds = 0, 0
 
-    progress_columns = [
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TextColumn("[bold blue]{task.completed}/{task.total}"),
-        TextColumn("• Elapsed:"),
-        TimeElapsedColumn(),
-        TextColumn("• Remaining:"),
-        TimeRemainingColumn(),
-    ]
-
-    with Progress(*progress_columns) as progress:
+    with Progress(*config.PROGRESS_COLUMNS) as progress:
         task_id = progress.add_task("[bold green]Vector DB Progress", total=len(docs_by_subdomain))
         
         for subdomain, docs in sorted(docs_by_subdomain.items()):
             progress.update(task_id, description=f"Processing: [cyan]{subdomain}")
             rag_instance = None
-            
             start_time = asyncio.get_event_loop().time()
             
             try:
                 log.info(f"Building VECTOR DB for '{subdomain}' ({len(docs)} docs)...")
-                storage_dir = BASE_STORAGE_DIR / subdomain
+                storage_dir = config.BASE_STORAGE_DIR / subdomain
                 storage_dir.mkdir(parents=True, exist_ok=True)
 
                 rag_instance = LightRAG(
                     working_dir=storage_dir.resolve().as_posix(),
                     embedding_func=embedding_func,
                     llm_model_func=OllamaLLM(),
-                    entity_extract_max_gleaning=0,
+                    entity_extract_max_gleaning=config.ENTITY_EXTRACT_MAX_GLEANING,
                 )
                 await rag_instance.initialize_storages()
                 await initialize_pipeline_status()
@@ -83,8 +66,7 @@ async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]
                 
                 chunk_count = await rag_instance._kv_storage.count(namespace="text_chunks")
                 
-                end_time = asyncio.get_event_loop().time()
-                duration = end_time - start_time
+                duration = asyncio.get_event_loop().time() - start_time
                 log.info(
                     f"[bold green]✅ Finished '{subdomain}'. "
                     f"Processed {len(docs)} documents into {chunk_count} chunks in {duration:.2f} seconds.\n"
@@ -108,17 +90,13 @@ async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Docume
     log.info("--- Running in KG mode: Creating one unified knowledge graph ---")
     rag_instance = None
     try:
-        kg_storage_dir = BASE_STORAGE_DIR / "_UNIFIED_KG"
+        kg_storage_dir = config.UNIFIED_KG_DIR
         kg_storage_dir.mkdir(parents=True, exist_ok=True)
         log.info(f"All knowledge graph data will be stored in: {kg_storage_dir}")
         
-        all_texts = []
-        all_file_paths = []
-        total_docs = 0
-        for subdomain, docs in docs_by_subdomain.items():
-            total_docs += len(docs)
-            all_texts.extend([doc.page_content for doc in docs])
-            all_file_paths.extend([doc.metadata.get("url", "source_unknown") for doc in docs])
+        all_texts = [doc.page_content for docs in docs_by_subdomain.values() for doc in docs]
+        all_file_paths = [doc.metadata.get("url", "source_unknown") for docs in docs_by_subdomain.values() for doc in docs]
+        total_docs = len(all_texts)
         
         log.info(f"Processing {total_docs} total documents from {len(docs_by_subdomain)} subdomains...")
 
@@ -130,7 +108,7 @@ async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Docume
         await rag_instance.initialize_storages()
         await initialize_pipeline_status()
 
-        log.info("Enqueuing all documents... This may take a moment.")
+        log.info("Enqueuing all documents...")
         await rag_instance.apipeline_enqueue_documents(all_texts, file_paths=all_file_paths)
 
         log.info("Building the unified knowledge graph... This will be very slow.")
@@ -149,12 +127,12 @@ async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Docume
 
 async def main(args):
     """Main orchestrator that loads data and runs the selected build mode."""
-    if MODE not in ['vectors', 'kg']:
+    if config.MODE not in ['vectors', 'kg']:
         log.error("Invalid MODE. Please set the environment variable to 'vectors' or 'kg'.")
-        log.info("Example: MODE=vectors python your_script_name.py")
+        log.info("Example: MODE=vectors python build_dbs.py")
         return
 
-    log.info(f"--- Starting RAG Database Build Process in '{MODE.upper()}' MODE ---")
+    log.info(f"--- Starting RAG Database Build Process in '{config.MODE.upper()}' MODE ---")
     docs_from_mongo = load_documents_from_mongo()
     if not docs_from_mongo:
         log.warning("No documents loaded from MongoDB. Aborting build.")
@@ -175,12 +153,12 @@ async def main(args):
             return
 
     successful_builds, failed_builds = 0, 0
-    if MODE == 'vectors':
+    if config.MODE == 'vectors':
         successful_builds, failed_builds = await build_separated_vector_dbs(docs_by_subdomain)
-    elif MODE == 'kg':
+    elif config.MODE == 'kg':
         successful_builds, failed_builds = await build_unified_knowledge_graph(docs_by_subdomain)
     
-    log.info(f"--- Build Process Finished for MODE '{MODE.upper()}' ---")
+    log.info(f"--- Build Process Finished for MODE '{config.MODE.upper()}' ---")
     log.info(f"✅ Successful builds: {successful_builds}.")
     if failed_builds > 0:
         log.warning(f"❌ Failed builds: {failed_builds}.")
