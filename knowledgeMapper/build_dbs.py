@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-BASE_STORAGE_DIR = Path("../rag_storage_hku_separated")
+BASE_STORAGE_DIR = Path("../RAG_STORAGE")
 
 MODE = os.getenv("MODE", "vectors").lower() # all,vectors
 

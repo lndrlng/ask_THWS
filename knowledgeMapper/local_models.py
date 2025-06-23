@@ -1,37 +1,27 @@
 from __future__ import annotations
 
-"""
-local_models.py – updated 26 May 2025 (OOM-safe version)
-
-• BGE‑M3 embedder runs async on GPU with semaphore to prevent OOM
-• Qwen‑3 14B‑Q4_K_M LLM runs via Ollama API with 16 k context
-• Memory-managed: low batch size, no_grad, empty_cache per batch
-"""
-
 import asyncio
 import requests
 import torch
-from langchain.embeddings import HuggingFaceEmbeddings
 
-# ── configuration ───────────────────────────────────────────────────────
+from langchain_huggingface import HuggingFaceEmbeddings
+
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-EMBEDDING_DEVICE = "cpu"  # GPU target
+EMBEDDING_DEVICE = "cuda"  # GPU target
 BATCH_SIZE = 16  # reduced for memory stability
 _EMBED_SEMAPHORE = asyncio.Semaphore(2)  # throttle concurrency
 
-# LLM runtime settings ---------------------------------------------------
 OLLAMA_MODEL_NAME = "mistral"
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 16384       # 16k tokens (≈4 GB KV)
-OLLAMA_NUM_PREDICT = 4096    # up to 4k tokens of completion
+OLLAMA_NUM_CTX = 16384  # 16k tokens (≈4 GB KV)
+OLLAMA_NUM_PREDICT = 4096  # up to 4k tokens of completion
 
-# ── HuggingFace embedder (on GPU) ───────────────────────────────────────
 _hf = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL_NAME,
     encode_kwargs={"normalize_embeddings": True},
     model_kwargs={"device": EMBEDDING_DEVICE},
 )
-EMBED_DIM = _hf.client.get_sentence_embedding_dimension()  # 1024 for BGE-M3
+EMBED_DIM = len(_hf.embed_query("test"))  # A simple way to get the dimension
 
 
 # ── async-safe embedding wrapper ────────────────────────────────────────
@@ -49,7 +39,7 @@ class AsyncEmbedder:
         """Internal CPU-threaded embedding loop with memory control."""
         vecs: list[list[float]] = []
         for i in range(0, len(texts), BATCH_SIZE):
-            batch = texts[i:i + BATCH_SIZE]
+            batch = texts[i : i + BATCH_SIZE]
             with torch.no_grad():
                 vecs.extend(_hf.embed_documents(batch))
             torch.cuda.empty_cache()  # help reduce fragmentation
@@ -73,11 +63,11 @@ class OllamaLLM:
     """Thin async wrapper around Ollama’s /api/generate endpoint."""
 
     async def __call__(
-            self,
-            prompt: str,
-            system_prompt: str | None = None,
-            history_messages: list[dict] | None = None,
-            **kwargs,
+        self,
+        prompt: str,
+        system_prompt: str | None = None,
+        history_messages: list[dict] | None = None,
+        **kwargs,
     ) -> str:
         for k in ("hashing_kv", "max_tokens", "response_format"):
             kwargs.pop(k, None)
@@ -121,6 +111,5 @@ __all__ = [
     "OllamaLLM",
     "HFEmbedFunc",
     "EMBEDDING_MODEL_NAME",
-    "OLLAMA_MODEL_NAME"
-
+    "OLLAMA_MODEL_NAME",
 ]
