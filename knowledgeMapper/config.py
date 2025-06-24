@@ -8,15 +8,17 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-# --- Application Mode ---
-# Sets the primary operation mode: 'vectors' or 'kg'.
+# Application mode: either 'vectors' or 'kg'
 MODE = os.getenv("MODE", "vectors").lower()
 
-# --- Storage Configuration ---
+# Language selection for filtering documents (used in mongo_loader or processing)
+LANGUAGE = os.getenv("LANGUAGE", "de").lower()  # 'all', 'de', or 'en'
+
+# Directory for all vector/graph storage
 BASE_STORAGE_DIR = Path("../RAG_STORAGE")
 UNIFIED_KG_DIR = BASE_STORAGE_DIR / "_UNIFIED_KG"
 
-# --- MongoDB Configuration ---
+# MongoDB connection config
 MONGO_HOST = os.getenv("MONGO_HOST", "localhost")
 MONGO_PORT = int(os.getenv("MONGO_PORT", 27017))
 MONGO_DB_NAME = "askthws_scraper"
@@ -25,21 +27,22 @@ MONGO_PASS = os.getenv("MONGO_PASS", "password")
 MONGO_PAGES_COLLECTION = "pages"
 MONGO_FILES_COLLECTION = "files"
 
-# --- AI Model Configuration ---
+# Embedding model settings
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
 EMBEDDING_DEVICE = "cuda"
 EMBEDDING_BATCH_SIZE = 16
-EMBEDDING_CONCURRENCY = 2
+EMBEDDING_CONCURRENCY = 2  # Controls number of concurrent embedding jobs
 
+# LLM configuration (e.g., for Ollama server)
 OLLAMA_MODEL_NAME = "mistral"
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_NUM_CTX = 16384
 OLLAMA_NUM_PREDICT = 4096
 
-# --- LightRAG Processing Settings ---
-ENTITY_EXTRACT_MAX_GLEANING = 0 # Set to 0 to disable LLM-based entity extraction
+# Controls LightRAG's entity extraction feature (0 disables it)
+ENTITY_EXTRACT_MAX_GLEANING = 30
 
-# --- UI & Logging Configuration ---
+# Rich CLI progress bar formatting
 PROGRESS_COLUMNS = [
     SpinnerColumn(),
     TextColumn("[progress.description]{task.description}"),

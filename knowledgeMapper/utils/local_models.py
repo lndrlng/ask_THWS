@@ -15,41 +15,61 @@ from config import (
     OLLAMA_NUM_PREDICT,
 )
 
+# Semaphore to throttle concurrency of embedding requests (avoids OOM)
 _EMBED_SEMAPHORE = asyncio.Semaphore(EMBEDDING_CONCURRENCY)
 
+# HuggingFace embeddings wrapper using LangChain's integration
 _hf = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL_NAME,
-    encode_kwargs={"normalize_embeddings": True},
-    model_kwargs={"device": EMBEDDING_DEVICE},
+    encode_kwargs={"normalize_embeddings": True},  # Ensure unit-length vectors
+    model_kwargs={"device": EMBEDDING_DEVICE},     # e.g., "cuda" or "cpu"
 )
+
+# Calculate and expose the dimensionality of the embedding space
 EMBED_DIM = len(_hf.embed_query("test"))
 
-# ── async-safe embedding wrapper ────────────────────────────────────────
 class AsyncEmbedder:
-    """Callable embedder with memory-managed async behavior."""
+    """
+    Async-compatible, memory-safe wrapper for HuggingFace embedding generation.
+    Uses:
+    - semaphore to control parallelism,
+    - `to_thread()` to move blocking code out of the main event loop,
+    - torch.no_grad() and empty_cache() to reduce GPU pressure.
+    """
     embedding_dim: int = EMBED_DIM
+
     async def __call__(self, texts: list[str]) -> list[list[float]]:
         async with _EMBED_SEMAPHORE:
             return await asyncio.to_thread(self._embed_chunked, texts)
+
     def _embed_chunked(self, texts: list[str]) -> list[list[float]]:
+        # Split into batches and embed each chunk
         vecs: list[list[float]] = []
         for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
             batch = texts[i : i + EMBEDDING_BATCH_SIZE]
-            with torch.no_grad():
+            with torch.no_grad():  # No gradients needed for inference
                 vecs.extend(_hf.embed_documents(batch))
-            torch.cuda.empty_cache()
+            torch.cuda.empty_cache()  # Free VRAM after each batch (helps with OOM)
         return vecs
 
-# ── embedding API expected by LightRAG ──────────────────────────────────
+
 _async_embedder_instance = AsyncEmbedder()
+
 async def embedding_wrapper_func(texts: list[str]) -> list[list[float]]:
+    """Embedding API used by LightRAG (callable + exposes .embedding_dim)."""
     return await _async_embedder_instance(texts)
+
 embedding_wrapper_func.embedding_dim = _async_embedder_instance.embedding_dim
+
+# Exported function used by the rest of the app
 embedding_func = embedding_wrapper_func
 
-# ── Ollama async wrapper (unchanged) ────────────────────────────────────
+
 class OllamaLLM:
-    """Thin async wrapper around Ollama’s /api/generate endpoint."""
+    """
+    Async wrapper around Ollama's local LLM endpoint (`/api/generate`).
+    Suitable for fast interaction with locally running models.
+    """
     async def __call__(
         self,
         prompt: str,
@@ -57,8 +77,11 @@ class OllamaLLM:
         history_messages: list[dict] | None = None,
         **kwargs,
     ) -> str:
+        # Strip unused keys to avoid API incompatibilities
         for k in ("hashing_kv", "max_tokens", "response_format"):
             kwargs.pop(k, None)
+
+        # Concatenate prompt components in proper order
         parts: list[str] = []
         if history_messages:
             parts.append("\n".join(m.get("content", "") for m in history_messages))
@@ -66,6 +89,8 @@ class OllamaLLM:
             parts.append(system_prompt)
         parts.append(prompt)
         full_prompt = "\n".join(parts)
+
+        # Actual HTTP call is made in a background thread to avoid blocking
         def _call() -> str:
             r = requests.post(
                 f"{OLLAMA_HOST}/api/generate",
@@ -82,12 +107,15 @@ class OllamaLLM:
             )
             r.raise_for_status()
             return r.json()["response"]
+
         return await asyncio.to_thread(_call)
 
-# ── legacy alias (keeps older imports working) ──────────────────────────
+
 class HFEmbedFunc:
+    """Legacy alias to maintain compatibility with older imports."""
     def __new__(cls, *_, **__):
         return embedding_func
+
 
 __all__ = [
     "embedding_func",

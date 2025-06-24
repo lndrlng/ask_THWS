@@ -1,5 +1,5 @@
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Avoids excessive parallelism warnings from tokenizer libs
 
 import asyncio
 import logging
@@ -19,6 +19,7 @@ from utils.mongo_loader import load_documents_from_mongo
 from utils.subdomain_utils import get_sanitized_subdomain
 from utils.local_models import embedding_func, OllamaLLM
 
+# Setup logging format and output
 logging.basicConfig(
     level="INFO",
     format="%(message)s",
@@ -28,144 +29,168 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
+def flatten_documents(docs_by_subdomain: Dict[str, List[Document]]) -> tuple[list[str], list[str]]:
+    """
+    Flattens a nested dict of subdomain -> docs into two flat lists:
+    - all document texts
+    - all corresponding file paths (URLs).
+    Useful when building a unified knowledge graph.
+    """
+    texts = [doc.page_content for docs in docs_by_subdomain.values() for doc in docs]
+    paths = [doc.metadata.get("url", "source_unknown") for docs in docs_by_subdomain.values() for doc in docs]
+    return texts, paths
+
+
+async def init_rag_instance(
+    storage_dir: str,
+    use_entity_extraction: bool = False,
+) -> LightRAG:
+    """
+    Creates and initializes a LightRAG instance pointing to a specific directory.
+    Optionally enables entity extraction.
+    """
+    rag = LightRAG(
+        working_dir=storage_dir,
+        embedding_func=embedding_func,
+        llm_model_func=OllamaLLM(),
+        entity_extract_max_gleaning=config.ENTITY_EXTRACT_MAX_GLEANING if use_entity_extraction else 0,
+    )
+    await rag.initialize_storages()
+    await initialize_pipeline_status()
+    return rag
+
+
 async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]]):
     """
-    MODE=vectors
-    Creates a separate vector database for each subdomain using settings from config.
+    Builds one vector database per subdomain.
+    Each will be written to a separate folder under BASE_STORAGE_DIR.
     """
     log.info(f"--- Running in VECTOR mode: Creating {len(docs_by_subdomain)} separated vector databases ---")
-    successful_builds, failed_builds = 0, 0
+    successful, failed = 0, 0
 
     with Progress(*config.PROGRESS_COLUMNS) as progress:
         task_id = progress.add_task("[bold green]Vector DB Progress", total=len(docs_by_subdomain))
-        
+
         for subdomain, docs in sorted(docs_by_subdomain.items()):
             progress.update(task_id, description=f"Processing: [cyan]{subdomain}")
-            rag_instance = None
-            start_time = asyncio.get_event_loop().time()
-            
+            rag = None
+            start = asyncio.get_event_loop().time()
+
             try:
-                log.info(f"Building VECTOR DB for '{subdomain}' ({len(docs)} docs)...")
-                storage_dir = config.BASE_STORAGE_DIR / subdomain
-                storage_dir.mkdir(parents=True, exist_ok=True)
+                # Set up a storage directory for this subdomain
+                storage_path = (config.BASE_STORAGE_DIR / subdomain).resolve()
+                storage_path.mkdir(parents=True, exist_ok=True)
 
-                rag_instance = LightRAG(
-                    working_dir=storage_dir.resolve().as_posix(),
-                    embedding_func=embedding_func,
-                    llm_model_func=OllamaLLM(),
-                    entity_extract_max_gleaning=config.ENTITY_EXTRACT_MAX_GLEANING,
-                )
-                await rag_instance.initialize_storages()
-                await initialize_pipeline_status()
-                
+                # Initialize RAG pipeline for this subdomain
+                rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=True)
+
+                # Extract text + file paths for indexing
                 texts = [doc.page_content for doc in docs]
-                file_paths = [doc.metadata.get("url", "source_unknown") for doc in docs]
+                paths = [doc.metadata.get("url", "source_unknown") for doc in docs]
 
-                await rag_instance.apipeline_enqueue_documents(texts, file_paths=file_paths)
-                await rag_instance.apipeline_process_enqueue_documents()
-                
-                chunk_count = await rag_instance._kv_storage.count(namespace="text_chunks")
-                
-                duration = asyncio.get_event_loop().time() - start_time
+                # Enqueue & process documents into chunks
+                await rag.apipeline_enqueue_documents(texts, file_paths=paths)
+                await rag.apipeline_process_enqueue_documents()
+
+                # Count chunks written to vector store
+                chunk_count = await rag._kv_storage.count(namespace="text_chunks")
+                elapsed = asyncio.get_event_loop().time() - start
+
                 log.info(
-                    f"[bold green]✅ Finished '{subdomain}'. "
-                    f"Processed {len(docs)} documents into {chunk_count} chunks in {duration:.2f} seconds.\n"
+                    f"[bold green]✅ Finished '{subdomain}' — "
+                    f"{len(docs)} docs → {chunk_count} chunks in {elapsed:.2f}s\n"
                 )
-                successful_builds += 1
+                successful += 1
+
             except Exception as e:
                 log.exception(f"❌ FAILED to build vector DB for '{subdomain}': {e}")
-                failed_builds += 1
+                failed += 1
+
             finally:
-                if rag_instance:
-                    await rag_instance.finalize_storages()
+                if rag:
+                    await rag.finalize_storages()
                 progress.update(task_id, advance=1)
-    
-    return successful_builds, failed_builds
+
+    return successful, failed
+
 
 async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Document]]):
     """
-    MODE=kg
-    Builds one single, unified Knowledge Graph from ALL documents across ALL subdomains.
+    Builds a single knowledge graph from all documents across all subdomains.
+    Slower, but results in a unified KG.
     """
-    log.info("--- Running in KG mode: Creating one unified knowledge graph ---")
-    rag_instance = None
+    log.info("--- Running in KG mode: Creating unified knowledge graph ---")
+    rag = None
+
     try:
-        kg_storage_dir = config.UNIFIED_KG_DIR
-        kg_storage_dir.mkdir(parents=True, exist_ok=True)
-        log.info(f"All knowledge graph data will be stored in: {kg_storage_dir}")
-        
-        all_texts = [doc.page_content for docs in docs_by_subdomain.values() for doc in docs]
-        all_file_paths = [doc.metadata.get("url", "source_unknown") for docs in docs_by_subdomain.values() for doc in docs]
-        total_docs = len(all_texts)
-        
-        log.info(f"Processing {total_docs} total documents from {len(docs_by_subdomain)} subdomains...")
+        storage_path = config.UNIFIED_KG_DIR.resolve()
+        storage_path.mkdir(parents=True, exist_ok=True)
 
-        rag_instance = LightRAG(
-            working_dir=kg_storage_dir.resolve().as_posix(),
-            embedding_func=embedding_func,
-            llm_model_func=OllamaLLM(),
-        )
-        await rag_instance.initialize_storages()
-        await initialize_pipeline_status()
+        texts, paths = flatten_documents(docs_by_subdomain)
+        log.info(f"Processing {len(texts)} total documents from {len(docs_by_subdomain)} subdomains...")
 
-        log.info("Enqueuing all documents...")
-        await rag_instance.apipeline_enqueue_documents(all_texts, file_paths=all_file_paths)
+        rag = await init_rag_instance(storage_path.as_posix())
 
-        log.info("Building the unified knowledge graph... This will be very slow.")
-        await rag_instance.apipeline_process_enqueue_documents()
+        await rag.apipeline_enqueue_documents(texts, file_paths=paths)
+        await rag.apipeline_process_enqueue_documents()
 
-        log.info("[bold green]✅ Unified Knowledge Graph has been built successfully.")
+        log.info("[bold green]✅ Unified Knowledge Graph built successfully.")
         return 1, 0
-        
+
     except Exception as e:
-        log.exception(f"❌ FAILED to build the unified knowledge graph: {e}")
+        log.exception(f"❌ FAILED to build unified knowledge graph: {e}")
         return 0, 1
+
     finally:
-        if rag_instance:
-            await rag_instance.finalize_storages()
+        if rag:
+            await rag.finalize_storages()
 
 
 async def main(args):
-    """Main orchestrator that loads data and runs the selected build mode."""
+    """
+    Main entrypoint. Loads documents and dispatches either vector DB or KG build.
+    """
     if config.MODE not in ['vectors', 'kg']:
-        log.error("Invalid MODE. Please set the environment variable to 'vectors' or 'kg'.")
-        log.info("Example: MODE=vectors python build_dbs.py")
+        log.error("Invalid MODE. Use 'vectors' or 'kg'. Example: MODE=vectors python build_dbs.py")
         return
 
-    log.info(f"--- Starting RAG Database Build Process in '{config.MODE.upper()}' MODE ---")
+    log.info(f"--- Starting build in '{config.MODE.upper()}' mode ---")
+
     docs_from_mongo = load_documents_from_mongo()
     if not docs_from_mongo:
-        log.warning("No documents loaded from MongoDB. Aborting build.")
+        log.warning("No documents loaded from MongoDB. Aborting.")
         return
 
+    # Group documents by subdomain for isolated storage
     docs_by_subdomain: Dict[str, List[Document]] = defaultdict(list)
     for doc in docs_from_mongo:
         url = doc.metadata.get("url")
-        subdomain_name = get_sanitized_subdomain(url)
-        docs_by_subdomain[subdomain_name].append(doc)
+        subdomain = get_sanitized_subdomain(url)
+        docs_by_subdomain[subdomain].append(doc)
 
+    # Optional CLI filter: process only one subdomain if specified
     if args.subdomain:
         if args.subdomain in docs_by_subdomain:
-            log.info(f"Filtering to process only the specified subdomain: '{args.subdomain}'")
             docs_by_subdomain = {args.subdomain: docs_by_subdomain[args.subdomain]}
+            log.info(f"Filtering: only processing subdomain '{args.subdomain}'")
         else:
             log.error(f"Subdomain '{args.subdomain}' not found.")
             return
 
-    successful_builds, failed_builds = 0, 0
+    # Run the selected build mode
     if config.MODE == 'vectors':
-        successful_builds, failed_builds = await build_separated_vector_dbs(docs_by_subdomain)
-    elif config.MODE == 'kg':
-        successful_builds, failed_builds = await build_unified_knowledge_graph(docs_by_subdomain)
-    
-    log.info(f"--- Build Process Finished for MODE '{config.MODE.upper()}' ---")
-    log.info(f"✅ Successful builds: {successful_builds}.")
-    if failed_builds > 0:
-        log.warning(f"❌ Failed builds: {failed_builds}.")
+        success, fail = await build_separated_vector_dbs(docs_by_subdomain)
+    else:
+        success, fail = await build_unified_knowledge_graph(docs_by_subdomain)
+
+    log.info(f"✅ {success} build(s) succeeded.")
+    if fail > 0:
+        log.warning(f"❌ {fail} build(s) failed.")
 
 
 if __name__ == "__main__":
+    # CLI entrypoint with optional --subdomain filter
     parser = argparse.ArgumentParser(description="Build RAG databases from MongoDB.")
-    parser.add_argument("--subdomain", type=str, help="Optional: Process only a single specified subdomain.", default=None)
+    parser.add_argument("--subdomain", type=str, help="Process only one specific subdomain.", default=None)
     args = parser.parse_args()
     asyncio.run(main(args))
