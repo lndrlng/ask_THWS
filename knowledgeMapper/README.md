@@ -11,7 +11,7 @@ This project builds **vector databases** or a **unified knowledge graph** from *
 2. **Install dependencies**:
 
 ```bash
-poetry install
+poetry install --no-root
 ```
 
 ---
