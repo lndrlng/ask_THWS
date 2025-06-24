@@ -82,7 +82,7 @@ async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]
                 storage_path.mkdir(parents=True, exist_ok=True)
 
                 # Initialize RAG pipeline for this subdomain
-                rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=True)
+                rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=False)
 
                 # Extract text + file paths for indexing
                 texts = [doc.page_content for doc in docs]
@@ -129,7 +129,7 @@ async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Docume
         texts, paths = flatten_documents(docs_by_subdomain)
         log.info(f"Processing {len(texts)} total documents from {len(docs_by_subdomain)} subdomains...")
 
-        rag = await init_rag_instance(storage_path.as_posix())
+        rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=True)
 
         await rag.apipeline_enqueue_documents(texts, file_paths=paths)
         await rag.apipeline_process_enqueue_documents()
