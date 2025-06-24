@@ -168,14 +168,17 @@ async def main(args):
         subdomain = get_sanitized_subdomain(url)
         docs_by_subdomain[subdomain].append(doc)
 
-    # Optional CLI filter: process only one subdomain if specified
+    # Optional CLI filter
     if args.subdomain:
-        if args.subdomain in docs_by_subdomain:
-            docs_by_subdomain = {args.subdomain: docs_by_subdomain[args.subdomain]}
-            log.info(f"Filtering: only processing subdomain '{args.subdomain}'")
-        else:
-            log.error(f"Subdomain '{args.subdomain}' not found.")
+        filtered = {sd: docs_by_subdomain[sd] for sd in args.subdomain if sd in docs_by_subdomain}
+        missing = set(args.subdomain) - set(filtered.keys())
+        for m in missing:
+            log.warning(f"Subdomain '{m}' not found.")
+        if not filtered:
+            log.error("None of the requested subdomains were found. Aborting.")
             return
+        docs_by_subdomain = filtered
+        log.info(f"Filtering to {list(docs_by_subdomain.keys())}")
 
     # Run the selected build mode
     if config.MODE == 'vectors':
@@ -188,9 +191,10 @@ async def main(args):
         log.warning(f"❌ {fail} build(s) failed.")
 
 
+
 if __name__ == "__main__":
     # CLI entrypoint with optional --subdomain filter
     parser = argparse.ArgumentParser(description="Build RAG databases from MongoDB.")
-    parser.add_argument("--subdomain", type=str, help="Process only one specific subdomain.", default=None)
+    parser.add_argument("--subdomain", action="append", type=str, help="Process only one specific subdomain.", default=None)
     args = parser.parse_args()
     asyncio.run(main(args))
