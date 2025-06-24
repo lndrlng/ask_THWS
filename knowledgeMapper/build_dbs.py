@@ -11,10 +11,12 @@ from rich.logging import RichHandler
 from rich.progress import Progress
 
 from langchain.docstore.document import Document
+from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.lightrag import LightRAG
 
 import config
+from utils.chunker import create_structured_chunks
 from utils.mongo_loader import load_documents_from_mongo
 from utils.subdomain_utils import get_sanitized_subdomain
 from utils.local_models import embedding_func, OllamaLLM
@@ -62,8 +64,7 @@ async def init_rag_instance(
 
 async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]]):
     """
-    Builds one vector database per subdomain.
-    Each will be written to a separate folder under BASE_STORAGE_DIR.
+    Builds one vector database per subdomain using structured chunking.
     """
     log.info(f"--- Running in VECTOR mode: Creating {len(docs_by_subdomain)} separated vector databases ---")
     successful, failed = 0, 0
@@ -77,23 +78,21 @@ async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]
             start = asyncio.get_event_loop().time()
 
             try:
-                # Set up a storage directory for this subdomain
                 storage_path = (config.BASE_STORAGE_DIR / subdomain).resolve()
                 storage_path.mkdir(parents=True, exist_ok=True)
-
-                # Initialize RAG pipeline for this subdomain
                 rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=False)
 
-                # Extract text + file paths for indexing
-                texts = [doc.page_content for doc in docs]
-                paths = [doc.metadata.get("url", "source_unknown") for doc in docs]
+                log.info(f"Applying structured chunking for '{subdomain}'...")
+                structured_chunks = create_structured_chunks(docs)
+                log.info(f"Split {len(docs)} documents into {len(structured_chunks)} structured chunks.")
 
-                # Enqueue & process documents into chunks
+                texts = [chunk.page_content for chunk in structured_chunks]
+                paths = [chunk.metadata.get("url", "source_unknown") for chunk in structured_chunks]
+                
                 await rag.apipeline_enqueue_documents(texts, file_paths=paths)
                 await rag.apipeline_process_enqueue_documents()
 
-                # Count chunks written to vector store
-                chunk_count = await rag._kv_storage.count(namespace="text_chunks")
+                chunk_count = len(structured_chunks)
                 elapsed = asyncio.get_event_loop().time() - start
 
                 log.info(
@@ -116,8 +115,7 @@ async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]
 
 async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Document]]):
     """
-    Builds a single knowledge graph from all documents across all subdomains.
-    Slower, but results in a unified KG.
+    Builds a single knowledge graph from all documents using structured chunking.
     """
     log.info("--- Running in KG mode: Creating unified knowledge graph ---")
     rag = None
@@ -125,11 +123,17 @@ async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Docume
     try:
         storage_path = config.UNIFIED_KG_DIR.resolve()
         storage_path.mkdir(parents=True, exist_ok=True)
-
-        texts, paths = flatten_documents(docs_by_subdomain)
-        log.info(f"Processing {len(texts)} total documents from {len(docs_by_subdomain)} subdomains...")
-
         rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=True)
+
+        all_docs = flatten_documents(docs_by_subdomain)
+        log.info(f"Processing {len(all_docs)} total documents from {len(docs_by_subdomain)} subdomains...")
+
+        log.info("Applying structured chunking for unified KG...")
+        structured_chunks = create_structured_chunks(all_docs)
+        log.info(f"Split {len(all_docs)} documents into {len(structured_chunks)} structured chunks.")
+
+        texts = [chunk.page_content for chunk in structured_chunks]
+        paths = [chunk.metadata.get("url", "source_unknown") for chunk in structured_chunks]
 
         await rag.apipeline_enqueue_documents(texts, file_paths=paths)
         await rag.apipeline_process_enqueue_documents()
@@ -161,14 +165,12 @@ async def main(args):
         log.warning("No documents loaded from MongoDB. Aborting.")
         return
 
-    # Group documents by subdomain for isolated storage
     docs_by_subdomain: Dict[str, List[Document]] = defaultdict(list)
     for doc in docs_from_mongo:
         url = doc.metadata.get("url")
         subdomain = get_sanitized_subdomain(url)
         docs_by_subdomain[subdomain].append(doc)
 
-    # Optional CLI filter
     if args.subdomain:
         filtered = {sd: docs_by_subdomain[sd] for sd in args.subdomain if sd in docs_by_subdomain}
         missing = set(args.subdomain) - set(filtered.keys())
@@ -180,7 +182,6 @@ async def main(args):
         docs_by_subdomain = filtered
         log.info(f"Filtering to {list(docs_by_subdomain.keys())}")
 
-    # Run the selected build mode
     if config.MODE == 'vectors':
         success, fail = await build_separated_vector_dbs(docs_by_subdomain)
     else:
@@ -191,9 +192,7 @@ async def main(args):
         log.warning(f"❌ {fail} build(s) failed.")
 
 
-
 if __name__ == "__main__":
-    # CLI entrypoint with optional --subdomain filter
     parser = argparse.ArgumentParser(description="Build RAG databases from MongoDB.")
     parser.add_argument("--subdomain", action="append", type=str, help="Process only one specific subdomain.", default=None)
     args = parser.parse_args()

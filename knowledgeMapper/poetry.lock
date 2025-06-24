@@ -1702,6 +1702,25 @@ scikit-learn = ">=0.19.1"
 scipy = ">=1.4.0"
 
 [[package]]
+name = "icalendar"
+version = "6.3.1"
+description = "iCalendar parser/generator"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "icalendar-6.3.1-py3-none-any.whl", hash = "sha256:7ea1d1b212df685353f74cdc6ec9646bf42fa557d1746ea645ce8779fdfbecdd"},
+    {file = "icalendar-6.3.1.tar.gz", hash = "sha256:a697ce7b678072941e519f2745704fc29d78ef92a2dc53d9108ba6a04aeba466"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
+tzdata = "*"
+
+[package.extras]
+test = ["coverage", "hypothesis", "pytest", "pytz"]
+
+[[package]]
 name = "idna"
 version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -6453,4 +6472,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.11"
-content-hash = "0adaed5ddc1142d8cda290d313844a2b5db914e73bf7afe13aa48d8ef54a0384"
+content-hash = "f0739b14adccf0b7c81577dbaab8bd78567ea2cba3fd7b2d2e2e16b92029f9b6"
