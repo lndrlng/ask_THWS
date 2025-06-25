@@ -52,6 +52,12 @@ You need to replace all `dots` with an `underscore` for the subdomains.
 MODE=vectors poetry run python build_dbs.py --subdomain thws_de --subdomain www_thws_de
 ```
 
+### Check the progress for a specific subdomain
+
+```bash
+watch -n 5 "jq '(([.[] | select(.status != \"pending\")] | length) as \$processed | (keys | length) as \$total | \"\( \$processed ) / \( \$total ) Dokumente verarbeitet\")' ../RAG_STORAGE/autonomie-im-gesundheitswesen_thws_de/kv_store_doc_status.json"
+```
+
 ---
 
 ## 🧹 What the pipeline does
