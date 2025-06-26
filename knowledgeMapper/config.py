@@ -50,4 +50,6 @@ PROGRESS_COLUMNS = [
     TextColumn("[bold blue]{task.completed}/{task.total}"),
     TextColumn("• Elapsed:"),
     TimeElapsedColumn(),
+    TextColumn("• Remaining:"),
+    TimeRemainingColumn(),
 ]
