@@ -26,6 +26,7 @@ MONGO_USER = os.getenv("MONGO_USER", "scraper")
 MONGO_PASS = os.getenv("MONGO_PASS", "password")
 MONGO_PAGES_COLLECTION = "pages"
 MONGO_FILES_COLLECTION = "files"
+MONGO_EXTRACTED_CONTENT_COLLECTION = "extracted_content"
 
 # Embedding model settings
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"

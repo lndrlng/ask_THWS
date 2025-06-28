@@ -27,6 +27,7 @@
           pkgs.stdenv.cc.cc.lib
           pkgs.pre-commit
           pkgs.git-lfs
+          pkgs.tesseract
         ];
         shellHook = ''
           export LD_LIBRARY_PATH="${pkgs.cudatoolkit}/lib:${pkgs.stdenv.cc.cc.lib}/lib:/run/opengl-driver/lib:$LD_LIBRARY_PATH"
