@@ -5,7 +5,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import asyncio
 import logging
 import argparse
-import json
 from pathlib import Path
 from collections import defaultdict
 from typing import List, Dict
@@ -46,7 +45,7 @@ async def init_rag_instance(storage_dir: str) -> LightRAG:
 
 
 async def build_knowledge_graph(docs_to_process: List[Document]):
-    """Builds a single knowledge graph with the new, enhanced progress bar."""
+    """Builds a single knowledge graph with the enhanced progress bar."""
     log.info(f"--- Building Knowledge Graph from {len(docs_to_process)} documents ---")
     rag = None
     try:
@@ -64,14 +63,14 @@ async def build_knowledge_graph(docs_to_process: List[Document]):
         await rag.apipeline_enqueue_documents(texts, file_paths=paths)
 
         with get_kg_progress_bar() as progress:
-            task_id = progress.add_task("main_build", total=chunk_count)
+            task_id = progress.add_task("[green]Building KG", total=chunk_count)
             status_file_path = Path(rag.working_dir) / "kv_store_doc_status.json"
 
             main_processing_task = asyncio.create_task(rag.apipeline_process_enqueue_documents())
             monitor_task = asyncio.create_task(
                 monitor_progress(progress, task_id, status_file_path, main_processing_task)
             )
-            
+
             await asyncio.gather(main_processing_task, monitor_task)
             progress.update(task_id, completed=chunk_count)
 
@@ -92,8 +91,7 @@ async def main(args):
     """
     log_config_summary()
 
-    # The loader now only returns the documents
-    all_documents = load_documents_from_mongo()
+    all_documents, _ = load_documents_from_mongo()
     if not all_documents:
         log.warning("No documents loaded from MongoDB. Aborting.")
         return
@@ -113,20 +111,18 @@ async def main(args):
     else:
         log.info("No subdomain filter provided. Using all loaded documents.")
         docs_to_process = all_documents
-        
-    log.info("-" * 50)
-    log.info("[bold]Documents to be processed in this build:[/bold]")
-    
+
+    log.info("Documents to be processed in this build:")
+
     subdomain_counts = defaultdict(int)
     for doc in docs_to_process:
         subdomain = get_sanitized_subdomain(doc.metadata.get("url"))
         subdomain_counts[subdomain] += 1
-    
+
     for subdomain, count in sorted(subdomain_counts.items()):
         log.info(f"  - {subdomain}: {count} documents")
-    
-    log.info(f"  - [bold]Total to Process: {len(docs_to_process)} documents[/bold]")
-    log.info("-" * 50)
+
+    log.info(f"Total to Process: {len(docs_to_process)} documents")
 
     success = await build_knowledge_graph(docs_to_process)
 
