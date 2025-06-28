@@ -34,13 +34,13 @@ EMBEDDING_BATCH_SIZE = 16
 EMBEDDING_CONCURRENCY = 1  # Controls number of concurrent embedding jobs
 
 # LLM configuration (e.g., for Ollama server)
-OLLAMA_MODEL_NAME = "mistral"
+OLLAMA_MODEL_NAME = "gemma3n:e4b"
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 16384
+OLLAMA_NUM_CTX = 32768
 OLLAMA_NUM_PREDICT = 4096
 
 # Controls LightRAG's entity extraction feature (0 disables it)
-ENTITY_EXTRACT_MAX_GLEANING = 30
+ENTITY_EXTRACT_MAX_GLEANING = 1
 
 # Rich CLI progress bar formatting
 PROGRESS_COLUMNS = [
