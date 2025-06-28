@@ -30,34 +30,37 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def flatten_documents(docs_by_subdomain: Dict[str, List[Document]]) -> tuple[list[str], list[str]]:
+def flatten_documents(docs_by_subdomain: Dict[str, List[Document]]) -> List[Document]:
     """
-    Flattens a nested dict of subdomain -> docs into two flat lists:
-    - all document texts
-    - all corresponding file paths (URLs).
-    Useful when building a unified knowledge graph.
+    Flattens a nested dict of subdomain -> docs into a single list of Document objects.
     """
-    texts = [doc.page_content for docs in docs_by_subdomain.values() for doc in docs]
-    paths = [doc.metadata.get("url", "source_unknown") for docs in docs_by_subdomain.values() for doc in docs]
-    return texts, paths
+    return [doc for docs in docs_by_subdomain.values() for doc in docs]
 
 
 async def init_rag_instance(
     storage_dir: str,
-    use_entity_extraction: bool = False,
+    vector_only: bool = False,
 ) -> LightRAG:
     """
-    Creates and initializes a LightRAG instance pointing to a specific directory.
-    Optionally enables entity extraction.
+    Creates and initializes a LightRAG instance.
+    If vector_only=True, disables KG (no entity extraction, no graph storage).
+    If vector_only=False, full KG mode with graph storage and entity extraction.
     """
+    # In vector_only mode, we still need an LLM for LightRAG's structure,
+    # but we disable the part that uses it for entity extraction.
     rag = LightRAG(
         working_dir=storage_dir,
         embedding_func=embedding_func,
         llm_model_func=OllamaLLM(),
-        entity_extract_max_gleaning=config.ENTITY_EXTRACT_MAX_GLEANING if use_entity_extraction else 0,
+        entity_extract_max_gleaning=0 if vector_only else config.ENTITY_EXTRACT_MAX_GLEANING,
     )
     await rag.initialize_storages()
-    await initialize_pipeline_status()
+    
+    # KG-specific setup
+    if not vector_only:
+        from lightrag.kg.shared_storage import initialize_pipeline_status
+        await initialize_pipeline_status()
+
     return rag
 
 
@@ -79,7 +82,7 @@ async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]
             try:
                 storage_path = (config.BASE_STORAGE_DIR / subdomain).resolve()
                 storage_path.mkdir(parents=True, exist_ok=True)
-                rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=False)
+                rag = await init_rag_instance(storage_path.as_posix(), vector_only=True)
 
                 log.info(f"Applying structured chunking for '{subdomain}'...")
                 structured_chunks = create_structured_chunks(docs)
@@ -122,7 +125,7 @@ async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Docume
     try:
         storage_path = config.UNIFIED_KG_DIR.resolve()
         storage_path.mkdir(parents=True, exist_ok=True)
-        rag = await init_rag_instance(storage_path.as_posix(), use_entity_extraction=True)
+        rag = await init_rag_instance(storage_path.as_posix(), vector_only=False)
 
         all_docs = flatten_documents(docs_by_subdomain)
         log.info(f"Processing {len(all_docs)} total documents from {len(docs_by_subdomain)} subdomains...")
