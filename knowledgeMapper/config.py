@@ -31,7 +31,7 @@ MONGO_FILES_COLLECTION = "files"
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
 EMBEDDING_DEVICE = "cuda"
 EMBEDDING_BATCH_SIZE = 16
-EMBEDDING_CONCURRENCY = 2  # Controls number of concurrent embedding jobs
+EMBEDDING_CONCURRENCY = 1  # Controls number of concurrent embedding jobs
 
 # LLM configuration (e.g., for Ollama server)
 OLLAMA_MODEL_NAME = "mistral"

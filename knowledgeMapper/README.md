@@ -55,7 +55,8 @@ MODE=vectors poetry run python build_dbs.py --subdomain thws_de --subdomain www_
 ### Check the progress for a specific subdomain
 
 ```bash
-watch -n 5 "jq '(([.[] | select(.status != \"pending\")] | length) as \$processed | (keys | length) as \$total | \"\( \$processed ) / \( \$total ) Dokumente verarbeitet\")' ../RAG_STORAGE/autonomie-im-gesundheitswesen_thws_de/kv_store_doc_status.json"
+jq '([.[] | select(.status != "pending")] | length) as $processed | (length) as $total | "\($processed) / \($total) Dokumente verarbeitet"' \
+"$(find ../RAG_STORAGE -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -n | tail -n1 | cut -d' ' -f2)/kv_store_doc_status.json"
 ```
 
 ---

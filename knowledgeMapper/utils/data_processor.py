@@ -18,21 +18,26 @@ def init_worker():
     """
     sys.stderr = open(os.devnull, "w")
 
+
 def extract_structured_text_from_pdf(pdf_bytes: bytes, url: str) -> str:
     """
-    Extracts content from a PDF and preserves its structure by converting it to HTML,
-    which can then be turned into Markdown.
+    Extracts plain text from a PDF using the simplest method.
+    Returns an empty string if the extracted text is too short or non-existent.
     """
-    full_html = ""
+    full_text = ""
     try:
         with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
             for page in doc:
-                full_html += page.get_text("html")
-        if not full_html.strip():
-            raise ValueError("PDF is valid but contains no extractable text content.")
-        return full_html
+                full_text += page.get_text("text") + "\n"
+        
+        if len(full_text.strip()) < 50:
+            log.warning(f"Extracted text for {url} is too short. Skipping document.")
+            return ""
+
+        return full_text
+
     except Exception as e:
-        log.error(f"Failed to process structured PDF content for url {url}: {e}")
+        log.error(f"Failed to process PDF content for url {url}: {e}")
         return ""
 
 def extract_text_from_ical(ical_bytes: bytes, url: str) -> str:
