@@ -20,7 +20,7 @@ BATCH_SIZE = 16  # reduced for memory stability
 _EMBED_SEMAPHORE = asyncio.Semaphore(2)  # throttle concurrency
 
 # LLM runtime settings ---------------------------------------------------
-OLLAMA_MODEL_NAME = "mistral"
+OLLAMA_MODEL_NAME = "gemma3n:e4b"
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_NUM_CTX = 16384       # 16k tokens (≈4 GB KV)
 OLLAMA_NUM_PREDICT = 4096    # up to 4k tokens of completion
