@@ -64,7 +64,7 @@ You can restore a previously exported database backup into the MongoDB container
    Replace `<BACKUP_FILE_NAME.gz>` with the actual name of your backup file. The `mongodb` is the service name/container name defined in `docker-compose.yml`.
    The `--drop` flag will clear existing collections in the target database before restoring, effectively replacing the content. Remove `--drop` if you want to merge without deleting (be cautious with existing data).
 
-   ```bash
+   ```bashher habe ich aktuell 200GB 
    docker exec -i mongodb mongorestore \
        --username scraper \
        --password password \

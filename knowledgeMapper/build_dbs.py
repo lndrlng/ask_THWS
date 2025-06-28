@@ -86,10 +86,14 @@ async def build_knowledge_graph(docs_to_process: List[Document]):
 
 
 async def main(args):
-    """Main entrypoint: Loads documents, filters, and builds the KG."""
+    """
+    Main entrypoint: Loads documents, filters them, displays the stats for the
+    filtered set, and builds the KG.
+    """
     log_config_summary()
 
-    all_documents, load_stats = load_documents_from_mongo()
+    # The loader now only returns the documents
+    all_documents = load_documents_from_mongo()
     if not all_documents:
         log.warning("No documents loaded from MongoDB. Aborting.")
         return
@@ -109,6 +113,20 @@ async def main(args):
     else:
         log.info("No subdomain filter provided. Using all loaded documents.")
         docs_to_process = all_documents
+        
+    log.info("-" * 50)
+    log.info("[bold]Documents to be processed in this build:[/bold]")
+    
+    subdomain_counts = defaultdict(int)
+    for doc in docs_to_process:
+        subdomain = get_sanitized_subdomain(doc.metadata.get("url"))
+        subdomain_counts[subdomain] += 1
+    
+    for subdomain, count in sorted(subdomain_counts.items()):
+        log.info(f"  - {subdomain}: {count} documents")
+    
+    log.info(f"  - [bold]Total to Process: {len(docs_to_process)} documents[/bold]")
+    log.info("-" * 50)
 
     success = await build_knowledge_graph(docs_to_process)
 
@@ -124,7 +142,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--subdomain",
-        nargs="*",
+        action="append",
         help="Build KG using only documents from one or more specific subdomains.",
     )
     args = parser.parse_args()

@@ -49,7 +49,7 @@ MODE=kg poetry run python build_dbs.py
 You need to replace all `dots` with an `underscore` for the subdomains.
 
 ```bash
-MODE=vectors poetry run python build_dbs.py --subdomain thws_de --subdomain www_thws_de
+MODE=vectors poetry run python build_dbs.py --subdomain fiw_thws_de --subdomain www_thws_de
 ```
 
 ### Check the progress for a specific subdomain
