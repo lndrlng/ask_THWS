@@ -11,8 +11,6 @@ from rich.logging import RichHandler
 from rich.progress import Progress
 
 from langchain.docstore.document import Document
-from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
-from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.lightrag import LightRAG
 
 import config
@@ -20,6 +18,7 @@ from utils.chunker import create_structured_chunks
 from utils.mongo_loader import load_documents_from_mongo
 from utils.subdomain_utils import get_sanitized_subdomain
 from utils.local_models import embedding_func, OllamaLLM
+from utils.debug_utils import log_config_summary
 
 # Setup logging format and output
 logging.basicConfig(
@@ -154,11 +153,11 @@ async def main(args):
     """
     Main entrypoint. Loads documents and dispatches either vector DB or KG build.
     """
+    log_config_summary()
+
     if config.MODE not in ['vectors', 'kg']:
         log.error("Invalid MODE. Use 'vectors' or 'kg'. Example: MODE=vectors python build_dbs.py")
         return
-
-    log.info(f"--- Starting build in '{config.MODE.upper()}' mode ---")
 
     docs_from_mongo = load_documents_from_mongo()
     if not docs_from_mongo:
