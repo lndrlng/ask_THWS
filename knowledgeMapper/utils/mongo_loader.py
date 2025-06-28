@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import concurrent.futures
-from typing import List, Dict, Any, Tuple  
+from typing import List, Dict, Any, Tuple
 
 from pymongo import MongoClient
 from gridfs import GridFS
@@ -14,7 +14,7 @@ from .data_processor import process_document_content, init_worker
 log = logging.getLogger(__name__)
 
 
-def load_documents_from_mongo() -> Tuple[List[Document], Dict[str, int]]: 
+def load_documents_from_mongo() -> Tuple[List[Document], Dict[str, int]]:
     """
     Connects to MongoDB and performs an EFFICIENT HYBRID data load.
 
@@ -29,7 +29,7 @@ def load_documents_from_mongo() -> Tuple[List[Document], Dict[str, int]]:
     db = client[config.MONGO_DB_NAME]
     fs = GridFS(db)
     final_docs = []
-    stats = {"from_cache": 0, "live_processed": 0} 
+    stats = {"from_cache": 0, "live_processed": 0}
 
     lang_filter = {}
     if config.LANGUAGE != "all":
@@ -51,8 +51,8 @@ def load_documents_from_mongo() -> Tuple[List[Document], Dict[str, int]]:
         doc = Document(page_content=doc_data.get("extracted_text", ""), metadata=metadata)
         final_docs.append(doc)
 
-    stats["from_cache"] = len(final_docs) 
-    log.info(f"Loaded {stats['from_cache']} documents from PDF cache.")
+    stats["from_cache"] = len(final_docs)
+    log.info(f"Loaded {stats['from_cache']} preprocessed PDF documents.")
 
     # --- 2. Load Raw HTML and iCal for Processing ---
     log.info("Fetching raw HTML and iCal documents...")

@@ -22,7 +22,7 @@ _EMBED_SEMAPHORE = asyncio.Semaphore(EMBEDDING_CONCURRENCY)
 _hf = HuggingFaceEmbeddings(
     model_name=EMBEDDING_MODEL_NAME,
     encode_kwargs={"normalize_embeddings": True},  # Ensure unit-length vectors
-    model_kwargs={"device": EMBEDDING_DEVICE},     # e.g., "cuda" or "cpu"
+    model_kwargs={"device": EMBEDDING_DEVICE},  # e.g., "cuda" or "cpu"
 )
 
 # Calculate and expose the dimensionality of the embedding space

@@ -1,4 +1,5 @@
 import os
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import asyncio
@@ -10,8 +11,6 @@ from collections import defaultdict
 from typing import List, Dict
 
 from rich.logging import RichHandler
-from rich.progress import Progress
-
 from langchain.docstore.document import Document
 from lightrag.kg.shared_storage import initialize_pipeline_status
 from lightrag.lightrag import LightRAG
@@ -22,31 +21,15 @@ from utils.subdomain_utils import get_sanitized_subdomain
 from utils.local_models import embedding_func, OllamaLLM
 from utils.debug_utils import log_config_summary
 from utils.mongo_loader import load_documents_from_mongo
+from utils.progress_bar import get_kg_progress_bar, monitor_progress
 
-logging.basicConfig(level="INFO", format="%(message)s", datefmt="[%X]", handlers=[RichHandler(rich_tracebacks=True, show_path=False)])
+logging.basicConfig(
+    level="INFO",
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True, show_path=False)],
+)
 log = logging.getLogger(__name__)
-
-
-async def monitor_progress(progress: Progress, task_id, status_file_path: Path, main_task: asyncio.Task):
-    """Watches the doc_status.json file and updates the progress bar, handling file rewrites."""
-    last_processed_count = 0
-    
-    while not main_task.done():
-        await asyncio.sleep(0.5)
-        try:
-            if status_file_path.exists():
-                with open(status_file_path, "r") as f:
-                    status_data = json.load(f)
-                
-                processed_count = sum(1 for item in status_data.values() if item.get("status") == "processed")
-                
-                if processed_count > last_processed_count:
-                    progress.update(task_id, completed=processed_count)
-                    last_processed_count = processed_count
-        except (json.JSONDecodeError, FileNotFoundError):
-            continue
-        except Exception as e:
-            log.error(f"Error in progress monitor: {e}")
 
 
 async def init_rag_instance(storage_dir: str) -> LightRAG:
@@ -61,8 +44,9 @@ async def init_rag_instance(storage_dir: str) -> LightRAG:
     await initialize_pipeline_status()
     return rag
 
+
 async def build_knowledge_graph(docs_to_process: List[Document]):
-    """Builds a single knowledge graph from a given list of documents, with a detailed progress bar."""
+    """Builds a single knowledge graph with the new, enhanced progress bar."""
     log.info(f"--- Building Knowledge Graph from {len(docs_to_process)} documents ---")
     rag = None
     try:
@@ -77,24 +61,18 @@ async def build_knowledge_graph(docs_to_process: List[Document]):
 
         texts = [chunk.page_content for chunk in structured_chunks]
         paths = [chunk.metadata.get("url", "source_unknown") for chunk in structured_chunks]
-
         await rag.apipeline_enqueue_documents(texts, file_paths=paths)
-        
-        progress_columns = [
-            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(),
-            TextColumn("[bold blue]{task.completed}/{task.total} chunks"), TextColumn("•"), TimeElapsedColumn()
-        ]
-        
-        with Progress(*progress_columns) as progress:
-            task_id = progress.add_task("[green]Building KG...", total=chunk_count)
-            
-            status_file_path = storage_path / "kv_store_doc_status.json"
+
+        with get_kg_progress_bar() as progress:
+            task_id = progress.add_task("main_build", total=chunk_count)
+            status_file_path = Path(rag.working_dir) / "kv_store_doc_status.json"
 
             main_processing_task = asyncio.create_task(rag.apipeline_process_enqueue_documents())
-            monitor_task = asyncio.create_task(monitor_progress(progress, task_id, status_file_path, main_processing_task))
+            monitor_task = asyncio.create_task(
+                monitor_progress(progress, task_id, status_file_path, main_processing_task)
+            )
             
             await asyncio.gather(main_processing_task, monitor_task)
-            
             progress.update(task_id, completed=chunk_count)
 
         log.info("[bold green]✅ Unified Knowledge Graph built successfully.[/bold green]")
@@ -106,6 +84,7 @@ async def build_knowledge_graph(docs_to_process: List[Document]):
         if rag:
             await rag.finalize_storages()
 
+
 async def main(args):
     """Main entrypoint: Loads documents, filters, and builds the KG."""
     log_config_summary()
@@ -114,7 +93,7 @@ async def main(args):
     if not all_documents:
         log.warning("No documents loaded from MongoDB. Aborting.")
         return
-    
+
     docs_to_process = []
     if args.subdomain:
         log.info(f"Filtering for subdomains: {args.subdomain}")
@@ -138,8 +117,15 @@ async def main(args):
     else:
         log.warning("❌ Build process failed.")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Build a RAG Knowledge Graph from MongoDB content.")
-    parser.add_argument("--subdomain", nargs='*', help="Build KG using only documents from one or more specific subdomains.")
+    parser = argparse.ArgumentParser(
+        description="Build a RAG Knowledge Graph from MongoDB content."
+    )
+    parser.add_argument(
+        "--subdomain",
+        nargs="*",
+        help="Build KG using only documents from one or more specific subdomains.",
+    )
     args = parser.parse_args()
     asyncio.run(main(args))

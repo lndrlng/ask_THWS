@@ -1,12 +1,5 @@
 import os
 from pathlib import Path
-from rich.progress import (
-    SpinnerColumn,
-    BarColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
 
 # Language selection for filtering documents (used in mongo_loader or processing)
 LANGUAGE = os.getenv("LANGUAGE", "de").lower()  # 'all', 'de', or 'en'
@@ -38,13 +31,3 @@ OLLAMA_NUM_PREDICT = 4096
 
 # Controls LightRAG's entity extraction feature (0 disables it)
 ENTITY_EXTRACT_MAX_GLEANING = 1
-
-# Rich CLI progress bar formatting
-PROGRESS_COLUMNS = [
-    SpinnerColumn(),
-    TextColumn("[progress.description]{task.description}"),
-    BarColumn(),
-    TextColumn("[bold blue]{task.completed}/{task.total}"),
-    TextColumn("• Elapsed:"),
-    TimeElapsedColumn(),
-]
