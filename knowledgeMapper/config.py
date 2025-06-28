@@ -34,7 +34,7 @@ EMBEDDING_BATCH_SIZE = 16
 EMBEDDING_CONCURRENCY = 1  # Controls number of concurrent embedding jobs
 
 # LLM configuration (e.g., for Ollama server)
-OLLAMA_MODEL_NAME = "gemma3n:e4b"
+OLLAMA_MODEL_NAME = "gemma3:4b"
 OLLAMA_HOST = "http://localhost:11434"
 OLLAMA_NUM_CTX = 32768
 OLLAMA_NUM_PREDICT = 4096

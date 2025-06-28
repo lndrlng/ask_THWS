@@ -12,6 +12,7 @@ from rich.progress import Progress
 
 from langchain.docstore.document import Document
 from lightrag.lightrag import LightRAG
+from lightrag.kg.shared_storage import initialize_pipeline_status
 
 import config
 from utils.chunker import create_structured_chunks
@@ -52,15 +53,10 @@ async def init_rag_instance(
         working_dir=storage_dir,
         embedding_func=embedding_func,
         llm_model_func=OllamaLLM(),
-        entity_extract_max_gleaning=0 if vector_only else config.ENTITY_EXTRACT_MAX_GLEANING,
+        entity_extract_max_gleaning=0 if vector_only else 1,
     )
     await rag.initialize_storages()
-    
-    # KG-specific setup
-    if not vector_only:
-        from lightrag.kg.shared_storage import initialize_pipeline_status
-        await initialize_pipeline_status()
-
+    await initialize_pipeline_status()
     return rag
 
 
