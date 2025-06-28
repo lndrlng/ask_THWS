@@ -3,7 +3,7 @@ from typing import Dict
 
 from lightrag import LightRAG
 
-import config 
+import config
 from utils.local_models import embedding_func, OllamaLLM
 
 

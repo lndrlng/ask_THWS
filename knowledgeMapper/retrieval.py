@@ -37,8 +37,8 @@ RELIABLE_SYSTEM_PROMPT_TEMPLATE = """
 
 
 async def prepare_and_execute_retrieval(
-        user_query: str,
-        rag_instance: LightRAG,
+    user_query: str,
+    rag_instance: LightRAG,
 ) -> Dict[str, Union[str, List[Dict[str, Any]]]]:
     """
     Orchestrates a reliable RAG process that returns a separate clean answer
@@ -50,34 +50,22 @@ async def prepare_and_execute_retrieval(
     final_system_prompt = RELIABLE_SYSTEM_PROMPT_TEMPLATE.format(
         current_date=datetime.now().strftime("%d. %B %Y"),
         location="Würzburg/Schweinfurt",
-        user_query=user_query
+        user_query=user_query,
     )
     params = QueryParam(mode=MODE, top_k=7)
 
     citable_answer_text = await rag_instance.aquery(
-        user_query,
-        param=params,
-        system_prompt=final_system_prompt
+        user_query, param=params, system_prompt=final_system_prompt
     )
     print("   - Intermediate citable answer received.")
 
     # --- 2. Retrieve the Full Context for Source Lookup ---
     print("2. Retrieving full context for source mapping...")
-    params_context = QueryParam(
-        mode=MODE,
-        top_k=7,
-        only_need_context=True
-    )
+    params_context = QueryParam(mode=MODE, top_k=7, only_need_context=True)
     context_data_str = await rag_instance.aquery(user_query, param=params_context)
     print("   - Raw context data received.")
-
-
-
 
     print("   - Structured source list created.")
 
     # Return a structured dictionary, perfect for an API endpoint.
-    return {
-        "answer": citable_answer_text,
-        "sources": context_data_str
-    }
+    return {"answer": citable_answer_text, "sources": context_data_str}

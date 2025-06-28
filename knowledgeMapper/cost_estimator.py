@@ -18,8 +18,8 @@ load_dotenv()
 
 MONGO_HOST = os.getenv("MONGO_HOST", "localhost")
 MONGO_PORT = int(os.getenv("MONGO_PORT", 27017))
-MONGO_USER = os.getenv("MONGO_USER","scraper")
-MONGO_PASS = os.getenv("MONGO_PASS","password")
+MONGO_USER = os.getenv("MONGO_USER", "scraper")
+MONGO_PASS = os.getenv("MONGO_PASS", "password")
 MONGO_DB_NAME = "askthws_scraper"
 
 # Tokenizer model (cl100k_base is used by GPT-3.5/4 and many others)
@@ -38,10 +38,10 @@ MODEL_PRICING = {
         "Anthropic Claude 3.5 Sonnet": 3.00,
         "Google Gemini 1.5 Flash": 0.35,
         "Google Gemini 1.5 Pro": 3.50,
-    }
+    },
 }
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 log = logging.getLogger(__name__)
 
 
@@ -59,7 +59,9 @@ def load_and_process_documents() -> List[str]:
 
     log.info("Loading document references...")
     pages_docs = list(db["pages"].find({}, {"text": 1, "url": 1, "type": 1}))
-    files_docs = list(db["files"].find({}, {"gridfs_id": 1, "file_content": 1, "url": 1, "type": 1}))
+    files_docs = list(
+        db["files"].find({}, {"gridfs_id": 1, "file_content": 1, "url": 1, "type": 1})
+    )
     all_docs_raw = pages_docs + files_docs
     log.info(f"{len(all_docs_raw)} document references found.")
 
@@ -78,29 +80,39 @@ def load_and_process_documents() -> List[str]:
             except Exception as e:
                 log.warning(f"Could not load GridFS file for URL {doc.get('url')}: {e}")
                 continue
-        elif "file_content" in doc: # Handles embedded files
+        elif "file_content" in doc:  # Handles embedded files
             # Key for your data processor to find the bytes
             doc_content["pdf_bytes"] = doc["file_content"]
 
         docs_to_process.append(doc_content)
-    
+
     client.close()
 
     log.info("Processing documents into text (this may take a while)...")
     processed_texts = []
     with concurrent.futures.ProcessPoolExecutor(initializer=init_worker) as executor:
-        results = list(tqdm(executor.map(process_document_content, docs_to_process), total=len(docs_to_process), desc="Processing content"))
+        results = list(
+            tqdm(
+                executor.map(process_document_content, docs_to_process),
+                total=len(docs_to_process),
+                desc="Processing content",
+            )
+        )
         for doc in results:
             if doc and doc.page_content:
                 processed_texts.append(doc.page_content)
-    
+
     return processed_texts
 
 
 def calculate_costs(total_tokens: int):
     """Calculates the costs and prints a formatted table."""
     console = Console()
-    table = Table(show_header=True, header_style="bold magenta", title="\nEstimated Costs for Processing the Entire Dataset")
+    table = Table(
+        show_header=True,
+        header_style="bold magenta",
+        title="\nEstimated Costs for Processing the Entire Dataset",
+    )
     table.add_column("Category", style="dim", width=25)
     table.add_column("Model")
     table.add_column("Estimated Cost (USD)")
@@ -120,27 +132,29 @@ def calculate_costs(total_tokens: int):
         table.add_row("Generation (as context)", model, f"${cost:.4f}")
 
     console.print(table)
-    console.print("\n[dim]Note: 'Generation' costs assume the entire text is used as input (context) for a request. Actual costs will depend on usage.[/dim]")
+    console.print(
+        "\n[dim]Note: 'Generation' costs assume the entire text is used as input (context) for a request. Actual costs will depend on usage.[/dim]"
+    )
 
 
 def main():
     """Main function of the script."""
     log.info("Starting the Cost Estimation Tool...")
-    
+
     # 1. Load and process documents
     all_texts = load_and_process_documents()
     if not all_texts:
         log.warning("No text content found to process.")
         return
-        
+
     log.info(f"{len(all_texts)} documents successfully processed into text.")
 
     # 2. Count tokens
     try:
         tokenizer = tiktoken.get_encoding(TOKENIZER_MODEL)
     except Exception:
-        tokenizer = tiktoken.encoding_for_model("gpt-4") # Fallback
-        
+        tokenizer = tiktoken.encoding_for_model("gpt-4")  # Fallback
+
     log.info("Counting tokens for the entire dataset...")
     total_tokens = sum(len(tokenizer.encode(text)) for text in tqdm(all_texts, desc="Tokenizing"))
 
@@ -152,4 +166,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

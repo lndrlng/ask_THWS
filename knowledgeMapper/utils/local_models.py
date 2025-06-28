@@ -28,6 +28,7 @@ _hf = HuggingFaceEmbeddings(
 # Calculate and expose the dimensionality of the embedding space
 EMBED_DIM = len(_hf.embed_query("test"))
 
+
 class AsyncEmbedder:
     """
     Async-compatible, memory-safe wrapper for HuggingFace embedding generation.
@@ -36,6 +37,7 @@ class AsyncEmbedder:
     - `to_thread()` to move blocking code out of the main event loop,
     - torch.no_grad() and empty_cache() to reduce GPU pressure.
     """
+
     embedding_dim: int = EMBED_DIM
 
     async def __call__(self, texts: list[str]) -> list[list[float]]:
@@ -55,9 +57,11 @@ class AsyncEmbedder:
 
 _async_embedder_instance = AsyncEmbedder()
 
+
 async def embedding_wrapper_func(texts: list[str]) -> list[list[float]]:
     """Embedding API used by LightRAG (callable + exposes .embedding_dim)."""
     return await _async_embedder_instance(texts)
+
 
 embedding_wrapper_func.embedding_dim = _async_embedder_instance.embedding_dim
 
@@ -70,6 +74,7 @@ class OllamaLLM:
     Async wrapper around Ollama's local LLM endpoint (`/api/generate`).
     Suitable for fast interaction with locally running models.
     """
+
     async def __call__(
         self,
         prompt: str,
@@ -113,6 +118,7 @@ class OllamaLLM:
 
 class HFEmbedFunc:
     """Legacy alias to maintain compatibility with older imports."""
+
     def __new__(cls, *_, **__):
         return embedding_func
 

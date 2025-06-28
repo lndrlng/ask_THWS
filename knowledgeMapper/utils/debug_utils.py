@@ -11,11 +11,12 @@ import config
 
 log = logging.getLogger(__name__)
 
+
 def get_system_info():
     """Gathers information about the Python, PyTorch, and hardware environment."""
     py_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     torch_version = torch.__version__
-    
+
     # Check for CUDA GPU
     if torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
@@ -23,9 +24,9 @@ def get_system_info():
         device_info = f"[green]✔ CUDA available[/green]\n  GPU: [bold cyan]{gpu_name}[/bold cyan]\n  CUDA Version: [bold cyan]{cuda_version}[/bold cyan]"
     else:
         device_info = "[yellow]⚠ No CUDA GPU found. Using CPU.[/yellow]"
-        
+
     cpu_count = os.cpu_count()
-    
+
     return {
         "Python Version": py_version,
         "PyTorch Version": torch_version,
@@ -33,12 +34,13 @@ def get_system_info():
         "CPU Cores": str(cpu_count),
     }
 
+
 def log_config_summary():
     """
     Logs a detailed summary of the pipeline configuration and system environment
     by printing a Rich Panel directly to the console.
     """
-    console = Console() 
+    console = Console()
 
     system_info = get_system_info()
 
@@ -78,7 +80,14 @@ def log_config_summary():
         llm_text,
         Rule(style="dim"),
         Text("System Environment", style="bold blue"),
-        system_text
+        system_text,
     )
 
-    console.print(Panel(config_group, title="[bold yellow]🚀 Pipeline Configuration[/bold yellow]", border_style="green", expand=False))
+    console.print(
+        Panel(
+            config_group,
+            title="[bold yellow]🚀 Pipeline Configuration[/bold yellow]",
+            border_style="green",
+            expand=False,
+        )
+    )
