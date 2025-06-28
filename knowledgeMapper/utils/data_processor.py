@@ -3,42 +3,19 @@ import sys
 import logging
 from typing import Dict, Any
 
-import fitz  # PyMuPDF
 from markdownify import markdownify as md
 from icalendar import Calendar
 from langchain.docstore.document import Document
 
 log = logging.getLogger(__name__)
 
+
 def init_worker():
     """
-    Worker process initializer:
-    Redirects stderr to null, which suppresses noisy C-library warnings/errors
-    from MuPDF (used by PyMuPDF) that would otherwise clutter the logs.
+    Worker process initializer. Suppresses noisy C-library warnings.
     """
     sys.stderr = open(os.devnull, "w")
 
-
-def extract_structured_text_from_pdf(pdf_bytes: bytes, url: str) -> str:
-    """
-    Extracts plain text from a PDF using the simplest method.
-    Returns an empty string if the extracted text is too short or non-existent.
-    """
-    full_text = ""
-    try:
-        with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
-            for page in doc:
-                full_text += page.get_text("text") + "\n"
-        
-        if len(full_text.strip()) < 50:
-            log.warning(f"Extracted text for {url} is too short. Skipping document.")
-            return ""
-
-        return full_text
-
-    except Exception as e:
-        log.error(f"Failed to process PDF content for url {url}: {e}")
-        return ""
 
 def extract_text_from_ical(ical_bytes: bytes, url: str) -> str:
     """
@@ -48,13 +25,13 @@ def extract_text_from_ical(ical_bytes: bytes, url: str) -> str:
     all_events_text = []
     try:
         cal = Calendar.from_ical(ical_bytes)
-        for event in cal.walk('VEVENT'):
+        for event in cal.walk("VEVENT"):
             event_text = []
-            summary = event.get('summary')
-            description = event.get('description')
-            start = event.get('dtstart')
-            end = event.get('dtend')
-            location = event.get('location')
+            summary = event.get("summary")
+            description = event.get("description")
+            start = event.get("dtstart")
+            end = event.get("dtend")
+            location = event.get("location")
 
             if summary:
                 event_text.append(f"### Ereignis: {summary}")
@@ -66,33 +43,29 @@ def extract_text_from_ical(ical_bytes: bytes, url: str) -> str:
                 event_text.append(f"- **Ort:** {location}")
             if description:
                 event_text.append(f"\n**Beschreibung:**\n{description}\n")
-            
+
             all_events_text.append("\n".join(event_text))
         return "\n---\n".join(all_events_text)
     except Exception as e:
         log.error(f"Failed to parse iCal file for url {url}: {e}")
         return ""
 
+
 def process_document_content(doc_data: Dict[str, Any]) -> Document | None:
     """
-    Main content processing function that converts various document types
-    into clean, structured Markdown.
+    Main content processing function that now ONLY handles HTML and iCal files.
+    PDFs are loaded from a pre-processed cache.
     """
     metadata = doc_data.get("metadata", {})
     page_content = doc_data.get("page_content", "")
     doc_type = metadata.get("type")
     url = metadata.get("url", "unknown")
 
-    if doc_type == "pdf":
-        pdf_bytes = doc_data.get("pdf_bytes")
-        if pdf_bytes:
-            page_content = extract_structured_text_from_pdf(pdf_bytes, url)
-    
-    if page_content and (doc_type == "html" or doc_type == "pdf"):
+    if page_content and doc_type == "html":
         try:
             page_content = md(page_content, heading_style="ATX").strip()
         except Exception as e:
-            log.error(f"Failed to convert content to Markdown for url {url}: {e}")
+            log.error(f"Failed to convert HTML content to Markdown for url {url}: {e}")
             page_content = ""
 
     elif doc_type == "ical":

@@ -8,15 +8,11 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-# Application mode: either 'vectors' or 'kg'
-MODE = os.getenv("MODE", "vectors").lower()
-
 # Language selection for filtering documents (used in mongo_loader or processing)
 LANGUAGE = os.getenv("LANGUAGE", "de").lower()  # 'all', 'de', or 'en'
 
 # Directory for all vector/graph storage
 BASE_STORAGE_DIR = Path("../RAG_STORAGE")
-UNIFIED_KG_DIR = BASE_STORAGE_DIR / "_UNIFIED_KG"
 
 # MongoDB connection config
 MONGO_HOST = os.getenv("MONGO_HOST", "localhost")

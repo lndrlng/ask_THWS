@@ -1,9 +1,11 @@
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # Avoids excessive parallelism warnings from tokenizer libs
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import asyncio
 import logging
 import argparse
+import json
+from pathlib import Path
 from collections import defaultdict
 from typing import List, Dict
 
@@ -11,187 +13,133 @@ from rich.logging import RichHandler
 from rich.progress import Progress
 
 from langchain.docstore.document import Document
-from lightrag.lightrag import LightRAG
 from lightrag.kg.shared_storage import initialize_pipeline_status
+from lightrag.lightrag import LightRAG
 
 import config
 from utils.chunker import create_structured_chunks
-from utils.mongo_loader import load_documents_from_mongo
 from utils.subdomain_utils import get_sanitized_subdomain
 from utils.local_models import embedding_func, OllamaLLM
 from utils.debug_utils import log_config_summary
+from utils.mongo_loader import load_documents_from_mongo
 
-# Setup logging format and output
-logging.basicConfig(
-    level="INFO",
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True, show_path=False)],
-)
+logging.basicConfig(level="INFO", format="%(message)s", datefmt="[%X]", handlers=[RichHandler(rich_tracebacks=True, show_path=False)])
 log = logging.getLogger(__name__)
 
 
-def flatten_documents(docs_by_subdomain: Dict[str, List[Document]]) -> List[Document]:
-    """
-    Flattens a nested dict of subdomain -> docs into a single list of Document objects.
-    """
-    return [doc for docs in docs_by_subdomain.values() for doc in docs]
+async def monitor_progress(progress: Progress, task_id, status_file_path: Path, main_task: asyncio.Task):
+    """Watches the doc_status.json file and updates the progress bar, handling file rewrites."""
+    last_processed_count = 0
+    
+    while not main_task.done():
+        await asyncio.sleep(0.5)
+        try:
+            if status_file_path.exists():
+                with open(status_file_path, "r") as f:
+                    status_data = json.load(f)
+                
+                processed_count = sum(1 for item in status_data.values() if item.get("status") == "processed")
+                
+                if processed_count > last_processed_count:
+                    progress.update(task_id, completed=processed_count)
+                    last_processed_count = processed_count
+        except (json.JSONDecodeError, FileNotFoundError):
+            continue
+        except Exception as e:
+            log.error(f"Error in progress monitor: {e}")
 
 
-async def init_rag_instance(
-    storage_dir: str,
-    vector_only: bool = False,
-) -> LightRAG:
-    """
-    Creates and initializes a LightRAG instance.
-    If vector_only=True, disables KG (no entity extraction, no graph storage).
-    If vector_only=False, full KG mode with graph storage and entity extraction.
-    """
-    # In vector_only mode, we still need an LLM for LightRAG's structure,
-    # but we disable the part that uses it for entity extraction.
+async def init_rag_instance(storage_dir: str) -> LightRAG:
+    """Creates and initializes a LightRAG instance for building a Knowledge Graph."""
     rag = LightRAG(
         working_dir=storage_dir,
         embedding_func=embedding_func,
         llm_model_func=OllamaLLM(),
-        entity_extract_max_gleaning=0 if vector_only else 1,
+        entity_extract_max_gleaning=config.ENTITY_EXTRACT_MAX_GLEANING,
     )
     await rag.initialize_storages()
     await initialize_pipeline_status()
     return rag
 
-
-async def build_separated_vector_dbs(docs_by_subdomain: Dict[str, List[Document]]):
-    """
-    Builds one vector database per subdomain using structured chunking.
-    """
-    log.info(f"--- Running in VECTOR mode: Creating {len(docs_by_subdomain)} separated vector databases ---")
-    successful, failed = 0, 0
-
-    with Progress(*config.PROGRESS_COLUMNS) as progress:
-        task_id = progress.add_task("[bold green]Vector DB Progress", total=len(docs_by_subdomain))
-
-        for subdomain, docs in sorted(docs_by_subdomain.items()):
-            progress.update(task_id, description=f"Processing: [cyan]{subdomain}")
-            rag = None
-            start = asyncio.get_event_loop().time()
-
-            try:
-                storage_path = (config.BASE_STORAGE_DIR / subdomain).resolve()
-                storage_path.mkdir(parents=True, exist_ok=True)
-                rag = await init_rag_instance(storage_path.as_posix(), vector_only=True)
-
-                log.info(f"Applying structured chunking for '{subdomain}'...")
-                structured_chunks = create_structured_chunks(docs)
-                log.info(f"Split {len(docs)} documents into {len(structured_chunks)} structured chunks.")
-
-                texts = [chunk.page_content for chunk in structured_chunks]
-                paths = [chunk.metadata.get("url", "source_unknown") for chunk in structured_chunks]
-                
-                await rag.apipeline_enqueue_documents(texts, file_paths=paths)
-                await rag.apipeline_process_enqueue_documents()
-
-                chunk_count = len(structured_chunks)
-                elapsed = asyncio.get_event_loop().time() - start
-
-                log.info(
-                    f"[bold green]✅ Finished '{subdomain}' — "
-                    f"{len(docs)} docs → {chunk_count} chunks in {elapsed:.2f}s\n"
-                )
-                successful += 1
-
-            except Exception as e:
-                log.exception(f"❌ FAILED to build vector DB for '{subdomain}': {e}")
-                failed += 1
-
-            finally:
-                if rag:
-                    await rag.finalize_storages()
-                progress.update(task_id, advance=1)
-
-    return successful, failed
-
-
-async def build_unified_knowledge_graph(docs_by_subdomain: Dict[str, List[Document]]):
-    """
-    Builds a single knowledge graph from all documents using structured chunking.
-    """
-    log.info("--- Running in KG mode: Creating unified knowledge graph ---")
+async def build_knowledge_graph(docs_to_process: List[Document]):
+    """Builds a single knowledge graph from a given list of documents, with a detailed progress bar."""
+    log.info(f"--- Building Knowledge Graph from {len(docs_to_process)} documents ---")
     rag = None
-
     try:
-        storage_path = config.UNIFIED_KG_DIR.resolve()
+        storage_path = config.BASE_STORAGE_DIR.resolve()
         storage_path.mkdir(parents=True, exist_ok=True)
-        rag = await init_rag_instance(storage_path.as_posix(), vector_only=False)
+        rag = await init_rag_instance(storage_path.as_posix())
 
-        all_docs = flatten_documents(docs_by_subdomain)
-        log.info(f"Processing {len(all_docs)} total documents from {len(docs_by_subdomain)} subdomains...")
-
-        log.info("Applying structured chunking for unified KG...")
-        structured_chunks = create_structured_chunks(all_docs)
-        log.info(f"Split {len(all_docs)} documents into {len(structured_chunks)} structured chunks.")
+        log.info("Applying structured chunking...")
+        structured_chunks = create_structured_chunks(docs_to_process)
+        chunk_count = len(structured_chunks)
+        log.info(f"Split documents into {chunk_count} structured chunks.")
 
         texts = [chunk.page_content for chunk in structured_chunks]
         paths = [chunk.metadata.get("url", "source_unknown") for chunk in structured_chunks]
 
         await rag.apipeline_enqueue_documents(texts, file_paths=paths)
-        await rag.apipeline_process_enqueue_documents()
+        
+        progress_columns = [
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(),
+            TextColumn("[bold blue]{task.completed}/{task.total} chunks"), TextColumn("•"), TimeElapsedColumn()
+        ]
+        
+        with Progress(*progress_columns) as progress:
+            task_id = progress.add_task("[green]Building KG...", total=chunk_count)
+            
+            status_file_path = storage_path / "kv_store_doc_status.json"
 
-        log.info("[bold green]✅ Unified Knowledge Graph built successfully.")
-        return 1, 0
+            main_processing_task = asyncio.create_task(rag.apipeline_process_enqueue_documents())
+            monitor_task = asyncio.create_task(monitor_progress(progress, task_id, status_file_path, main_processing_task))
+            
+            await asyncio.gather(main_processing_task, monitor_task)
+            
+            progress.update(task_id, completed=chunk_count)
 
+        log.info("[bold green]✅ Unified Knowledge Graph built successfully.[/bold green]")
+        return True
     except Exception as e:
-        log.exception(f"❌ FAILED to build unified knowledge graph: {e}")
-        return 0, 1
-
+        log.exception(f"❌ FAILED to build knowledge graph: {e}")
+        return False
     finally:
         if rag:
             await rag.finalize_storages()
 
-
 async def main(args):
-    """
-    Main entrypoint. Loads documents and dispatches either vector DB or KG build.
-    """
+    """Main entrypoint: Loads documents, filters, and builds the KG."""
     log_config_summary()
 
-    if config.MODE not in ['vectors', 'kg']:
-        log.error("Invalid MODE. Use 'vectors' or 'kg'. Example: MODE=vectors python build_dbs.py")
-        return
-
-    docs_from_mongo = load_documents_from_mongo()
-    if not docs_from_mongo:
+    all_documents, load_stats = load_documents_from_mongo()
+    if not all_documents:
         log.warning("No documents loaded from MongoDB. Aborting.")
         return
-
-    docs_by_subdomain: Dict[str, List[Document]] = defaultdict(list)
-    for doc in docs_from_mongo:
-        url = doc.metadata.get("url")
-        subdomain = get_sanitized_subdomain(url)
-        docs_by_subdomain[subdomain].append(doc)
-
+    
+    docs_to_process = []
     if args.subdomain:
-        filtered = {sd: docs_by_subdomain[sd] for sd in args.subdomain if sd in docs_by_subdomain}
-        missing = set(args.subdomain) - set(filtered.keys())
-        for m in missing:
-            log.warning(f"Subdomain '{m}' not found.")
-        if not filtered:
-            log.error("None of the requested subdomains were found. Aborting.")
+        log.info(f"Filtering for subdomains: {args.subdomain}")
+        selected_subdomains = set(args.subdomain)
+        for doc in all_documents:
+            url = doc.metadata.get("url")
+            subdomain = get_sanitized_subdomain(url)
+            if subdomain in selected_subdomains:
+                docs_to_process.append(doc)
+        if not docs_to_process:
+            log.error("None of the specified subdomains were found. Aborting.")
             return
-        docs_by_subdomain = filtered
-        log.info(f"Filtering to {list(docs_by_subdomain.keys())}")
-
-    if config.MODE == 'vectors':
-        success, fail = await build_separated_vector_dbs(docs_by_subdomain)
     else:
-        success, fail = await build_unified_knowledge_graph(docs_by_subdomain)
+        log.info("No subdomain filter provided. Using all loaded documents.")
+        docs_to_process = all_documents
 
-    log.info(f"✅ {success} build(s) succeeded.")
-    if fail > 0:
-        log.warning(f"❌ {fail} build(s) failed.")
+    success = await build_knowledge_graph(docs_to_process)
 
+    if success:
+        log.info("✅ Build process completed successfully.")
+    else:
+        log.warning("❌ Build process failed.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Build RAG databases from MongoDB.")
-    parser.add_argument("--subdomain", action="append", type=str, help="Process only one specific subdomain.", default=None)
+    parser = argparse.ArgumentParser(description="Build a RAG Knowledge Graph from MongoDB content.")
+    parser.add_argument("--subdomain", nargs='*', help="Build KG using only documents from one or more specific subdomains.")
     args = parser.parse_args()
     asyncio.run(main(args))

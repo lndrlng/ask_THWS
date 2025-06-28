@@ -2,118 +2,107 @@ import os
 import sys
 import logging
 import concurrent.futures
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple  
 
 from pymongo import MongoClient
 from gridfs import GridFS
 from langchain.docstore.document import Document
 
-import config  
+import config
 from .data_processor import process_document_content, init_worker
-
 
 log = logging.getLogger(__name__)
 
 
-def pre_process_and_load_content(mongo_doc: Dict, fs: GridFS) -> Dict | None:
+def load_documents_from_mongo() -> Tuple[List[Document], Dict[str, int]]: 
     """
-    Prepares a single document by fetching its content from GridFS if necessary.
-    """
-    doc_type = mongo_doc.get("type")
-    # Accept HTML, PDF, or iCal
-    if not (mongo_doc.get("text") or mongo_doc.get("gridfs_id") or mongo_doc.get("file_content")):
-        return None
+    Connects to MongoDB and performs an EFFICIENT HYBRID data load.
 
-    page_content = ""
-    file_bytes = None
-
-    # HTML: just take the text
-    if doc_type == "html":
-        page_content = mongo_doc.get("text", "")
-    # PDF or iCal: try to load file content from GridFS or field
-    elif doc_type in {"pdf", "ical"}:
-        if mongo_doc.get("gridfs_id"):
-            try:
-                gridfs_file = fs.get(mongo_doc["gridfs_id"])
-                file_bytes = gridfs_file.read()
-            except Exception as e:
-                log.warning(f"Could not read GridFS file for url {mongo_doc.get('url')}: {e}")
-        elif mongo_doc.get("file_content"):
-            file_bytes = mongo_doc.get("file_content")
-
-    # If no content, try to fallback to plain text
-    if not page_content and not file_bytes and mongo_doc.get("text"):
-        page_content = mongo_doc.get("text")
-
-    # Build unified metadata
-    metadata = {
-        "source_db": "mongodb",
-        "mongo_id": str(mongo_doc.get("_id")),
-        "url": mongo_doc.get("url", "unknown_url"),
-        "title": mongo_doc.get("title", ""),
-        "type": mongo_doc.get("type", "unknown"),
-        "date_scraped": mongo_doc.get("date_scraped"),
-        "lang": str(mongo_doc.get("lang", "unknown")),
-    }
-
-    # Pick key for file bytes based on doc_type for downstream logic
-    result = {
-        "page_content": page_content,
-        "pdf_bytes" if doc_type == "pdf" else "ical_bytes" if doc_type == "ical" else "file_bytes": file_bytes,
-        "metadata": metadata,
-    }
-    # Remove file_bytes key if None (avoid confusing process_document_content)
-    if not file_bytes:
-        if "pdf_bytes" in result: result.pop("pdf_bytes")
-        if "ical_bytes" in result: result.pop("ical_bytes")
-        if "file_bytes" in result: result.pop("file_bytes")
-    return result
-
-
-def load_documents_from_mongo() -> List[Document]:
-    """
-    Connects to MongoDB using settings from config.py, pre-loads all data,
-    and uses a process pool to call the external processing function.
+    Returns:
+        A tuple containing:
+        - A list of all processed Document objects.
+        - A dictionary with statistics about the loaded documents.
     """
     client = MongoClient(
         f"mongodb://{config.MONGO_USER}:{config.MONGO_PASS}@{config.MONGO_HOST}:{config.MONGO_PORT}/{config.MONGO_DB_NAME}?authSource=admin"
     )
     db = client[config.MONGO_DB_NAME]
     fs = GridFS(db)
+    final_docs = []
+    stats = {"from_cache": 0, "live_processed": 0} 
 
-    log.info("Fetching document list from MongoDB...")
-    all_mongo_docs = list(db[config.MONGO_PAGES_COLLECTION].find())
-    all_mongo_docs.extend(list(db[config.MONGO_FILES_COLLECTION].find({"type": {"$in": ["pdf", "ical"]}})))
-    log.info(f"Found {len(all_mongo_docs)} total document references.")
+    lang_filter = {}
+    if config.LANGUAGE != "all":
+        log.info(f"Filtering all queries for language: '{config.LANGUAGE}'")
+        lang_filter = {"lang": config.LANGUAGE}
 
-    log.info("Pre-loading raw content from GridFS...")
-    docs_to_process = []
-    for doc in all_mongo_docs:
-        processed_doc = pre_process_and_load_content(doc, fs)
-        if processed_doc:
-            docs_to_process.append(processed_doc)
+    # --- 1. Load Pre-processed PDFs from Cache ---
+    log.info(
+        f"Loading pre-processed PDF data from '{config.MONGO_EXTRACTED_CONTENT_COLLECTION}'..."
+    )
+    extracted_collection = db[config.MONGO_EXTRACTED_CONTENT_COLLECTION]
+    pdf_filter = {}
+    if config.LANGUAGE != "all":
+        pdf_filter = {"source_metadata.lang": config.LANGUAGE}
+
+    for doc_data in extracted_collection.find(pdf_filter):
+        metadata = doc_data.get("source_metadata", {})
+        metadata["url"] = doc_data.get("source_url")
+        doc = Document(page_content=doc_data.get("extracted_text", ""), metadata=metadata)
+        final_docs.append(doc)
+
+    stats["from_cache"] = len(final_docs) 
+    log.info(f"Loaded {stats['from_cache']} documents from PDF cache.")
+
+    # --- 2. Load Raw HTML and iCal for Processing ---
+    log.info("Fetching raw HTML and iCal documents...")
+    html_docs_raw = list(db[config.MONGO_PAGES_COLLECTION].find(lang_filter))
+    ical_filter = {"type": "ical", **lang_filter}
+    ical_docs_raw = list(db[config.MONGO_FILES_COLLECTION].find(ical_filter))
+
+    docs_to_process_live = []
+    for doc in html_docs_raw:
+        docs_to_process_live.append(
+            {
+                "page_content": doc.get("text", ""),
+                "metadata": {
+                    "type": "html",
+                    "url": doc.get("url"),
+                    "lang": doc.get("lang"),
+                    "title": doc.get("title"),
+                },
+            }
+        )
+    for doc in ical_docs_raw:
+        ical_bytes = (
+            fs.get(doc["gridfs_id"]).read() if doc.get("gridfs_id") else doc.get("file_content")
+        )
+        if ical_bytes:
+            docs_to_process_live.append(
+                {
+                    "ical_bytes": ical_bytes,
+                    "metadata": {
+                        "type": "ical",
+                        "url": doc.get("url"),
+                        "lang": doc.get("lang"),
+                        "title": doc.get("title"),
+                    },
+                }
+            )
     client.close()
-    log.info(f"Prepared {len(docs_to_process)} valid documents for processing.")
 
-    # Language filter
-    if hasattr(config, "LANGUAGE") and config.LANGUAGE != "all":
-        docs_to_process = [
-            doc for doc in docs_to_process
-            if doc.get("metadata", {}).get("lang", "unknown").lower() == config.LANGUAGE
-        ]
-        log.info(f"Filtered to language '{config.LANGUAGE}': {len(docs_to_process)} remain.")
+    # --- 3. Process Raw Docs in Parallel ---
+    if docs_to_process_live:
+        log.info(f"Processing {len(docs_to_process_live)} HTML/iCal documents in parallel...")
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=os.cpu_count(), initializer=init_worker
+        ) as executor:
+            live_results = executor.map(process_document_content, docs_to_process_live)
+            processed_live_docs = [doc for doc in live_results if doc is not None]
+            final_docs.extend(processed_live_docs)
+            stats["live_processed"] = len(processed_live_docs)  # Record the count
+            log.info(f"Successfully processed {stats['live_processed']} HTML/iCal documents.")
 
-    if not docs_to_process:
-        return []
+    log.info(f"Total documents loaded and ready for indexing: {len(final_docs)}")
 
-    log.info("Dispatching processing to worker pool...")
-
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=os.cpu_count(),
-        initializer=init_worker
-    ) as executor:
-        results = executor.map(process_document_content, docs_to_process)
-        langchain_docs = [doc for doc in results if doc is not None]
-
-    log.info(f"Successfully loaded and processed {len(langchain_docs)} documents in parallel.")
-    return langchain_docs
+    return final_docs, stats

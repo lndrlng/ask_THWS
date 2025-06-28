@@ -45,8 +45,7 @@ def log_config_summary():
     system_info = get_system_info()
 
     pipeline_text = Text.from_markup(
-        f"""[bold]Mode:[/bold] [yellow]{config.MODE.upper()}[/yellow]
-[bold]Language:[/bold] [yellow]{config.LANGUAGE}[/yellow]
+        f"""[bold]Language:[/bold] [yellow]{config.LANGUAGE}[/yellow]
 [bold]Storage Path:[/bold] [dim]{config.BASE_STORAGE_DIR}[/dim]"""
     )
 
