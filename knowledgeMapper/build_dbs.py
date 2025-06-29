@@ -38,7 +38,6 @@ async def init_rag_instance(storage_dir: str) -> LightRAG:
         embedding_func=embedding_func,
         llm_model_func=OllamaLLM(),
         entity_extract_max_gleaning=config.ENTITY_EXTRACT_MAX_GLEANING,
-        entity_extract_context_window=4096,
     )
     await rag.initialize_storages()
     await initialize_pipeline_status()
@@ -92,7 +91,7 @@ async def main(args):
     """
     log_config_summary()
 
-    all_documents, load_stats = load_documents_from_mongo()
+    all_documents, _ = load_documents_from_mongo()
     if not all_documents:
         log.warning("No documents loaded from MongoDB. Aborting.")
         return
@@ -114,12 +113,15 @@ async def main(args):
         docs_to_process = all_documents
 
     log.info("Documents to be processed in this build:")
+
     subdomain_counts = defaultdict(int)
     for doc in docs_to_process:
         subdomain = get_sanitized_subdomain(doc.metadata.get("url"))
         subdomain_counts[subdomain] += 1
+
     for subdomain, count in sorted(subdomain_counts.items()):
         log.info(f"  - {subdomain}: {count} documents")
+
     log.info(f"Total to Process: {len(docs_to_process)} documents")
 
     success = await build_knowledge_graph(docs_to_process)
