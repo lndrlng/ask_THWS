@@ -10,9 +10,9 @@ from rich.progress import (
     SpinnerColumn,
     TextColumn,
     TimeElapsedColumn,
-    TimeRemainingColumn,
 )
 from rich.text import Text
+from rich.pretty import Pretty
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +27,36 @@ class TimePerItemColumn(ProgressColumn):
 
         time_per_item = task.elapsed / task.completed
         return Text(f"Ø {round(time_per_item)}s", style="cyan")
+
+
+class EstimatedTimeRemainingColumn(ProgressColumn):
+    """Renders the estimated time remaining based on time per item."""
+
+    def render(self, task: "Task") -> Text:
+        """Calculate and render the estimated time remaining."""
+        if (
+            task.total is None
+            or task.completed is None
+            or task.elapsed is None
+            or task.completed == 0
+        ):
+            return Text("ETA -", style="cyan")
+
+        remaining_items = task.total - task.completed
+        if remaining_items <= 0:
+            return Text("ETA 0s", style="cyan")
+
+        time_per_item = task.elapsed / task.completed
+        estimated_remaining_time = time_per_item * remaining_items
+
+        if estimated_remaining_time < 60:
+            return Text(f"ETA {round(estimated_remaining_time)}s", style="cyan")
+        elif estimated_remaining_time < 3600:
+            minutes = estimated_remaining_time / 60
+            return Text(f"ETA {round(minutes)}m", style="cyan")
+        else:
+            hours = estimated_remaining_time / 3600
+            return Text(f"ETA {round(hours)}h", style="cyan")
 
 
 async def monitor_progress(
@@ -44,7 +74,8 @@ async def monitor_progress(
                     1 for item in status_data.values() if item.get("status") == "processed"
                 )
                 if processed_count > last_processed_count:
-                    progress.update(task_id, completed=processed_count)
+                    total_items = len(status_data)
+                    progress.update(task_id, completed=processed_count, total=total_items)
                     last_processed_count = processed_count
         except (json.JSONDecodeError, FileNotFoundError):
             continue
@@ -64,5 +95,5 @@ def get_kg_progress_bar() -> Progress:
         TextColumn("•"),
         TimeElapsedColumn(),
         TextColumn("•"),
-        TimeRemainingColumn(),
+        EstimatedTimeRemainingColumn(),
     )
