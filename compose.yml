@@ -1,4 +1,19 @@
+version: '3.8'
+
 services:
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j-kg
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    environment:
+      NEO4J_AUTH: neo4j/kg123lol!1
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_plugins:/plugins
+
   qdrant:
     image: qdrant/qdrant
     container_name: qdrant
@@ -8,4 +23,7 @@ services:
       - qdrant_data:/qdrant/storage
 
 volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_plugins:
   qdrant_data:
