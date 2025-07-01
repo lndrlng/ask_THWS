@@ -1,136 +1,154 @@
+import time
+import torch
+import subprocess
 import atexit
 import os
 import signal
-import subprocess
-import time
-import warnings
-
-import requests
-import torch
 import uvicorn
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
-from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
+from typing import Dict, Any
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+# --- Custom Module Imports (adapted for new local_models.py) ---
+from knowledgeMapper.local_models import (
+    HFEmbedFunc,
+    OllamaLLM,
+    EMBEDDING_MODEL_NAME,
+    OLLAMA_MODEL_NAME,
 
-# --- Config ---
-COLLECTION_NAME = "thws_data2_chunks"
-QDRANT_URL = "http://localhost:6333"
-EMBED_MODEL_NAME = "BAAI/bge-m3"
-# OLLAMA_MODEL = "gemma:7b"
-# OLLAMA_MODEL = "zephyr"
-OLLAMA_MODEL = "mixtral"
-TOP_K = 5
-
-# --- Load Embedding Model ---
-if torch.cuda.is_available():
-    device = "cuda"
-elif torch.backends.mps.is_available() and torch.backends.mps.is_built():
-    device = "mps"
-else:
-    device = "cpu"
-print(f"🔥 Using device: {device}")
-embedder = SentenceTransformer(EMBED_MODEL_NAME, device=device)
-
-# --- Init Qdrant ---
-client = QdrantClient(url=QDRANT_URL)
-
-# --- Launch Ollama Server ---
-ollama_process = subprocess.Popen(
-    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
 )
+# Import the updated retrieval logic
+from knowledgeMapper.retrieval import (prepare_and_execute_retrieval, MODE)
+
+# --- LightRAG Library Imports ---
+import lightrag
+from lightrag import LightRAG
+from lightrag.kg.shared_storage import initialize_pipeline_status
+
+# --- Device Info ---
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"🔥 Using device: {device}")
 
 
-# Ensure Ollama server stops when FastAPI stops
-def shutdown_ollama():
-    print("🛑 Stopping Ollama server...")
-    if os.name == "nt":
-        ollama_process.terminate()
-    else:
-        os.killpg(os.getpgid(ollama_process.pid), signal.SIGTERM)
+# --- Lifespan to load all models and initialize LightRAG ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handles startup events for the FastAPI application."""
+    print("🚀 Server starting up...")
+    print("🧠 Initializing LightRAG framework...")
+    app.state.rag = LightRAG(
+        working_dir="./rag_storage",
+        embedding_func=HFEmbedFunc(),
+        llm_model_func=OllamaLLM(),
+        enable_llm_cache=False,
+    )
+
+    await app.state.rag.initialize_storages()
+    print("✅ LightRAG storages initialized.")
+    await initialize_pipeline_status()
+    print("✅ LightRAG pipeline status initialized.")
+    print("✅ Server is ready to accept requests.")
+    yield
+    print("🔌 Server shutting down.")
 
 
-atexit.register(shutdown_ollama)
-
-# --- FastAPI ---
-app = FastAPI()
+# --- FastAPI App Initialization ---
+app = FastAPI(
+    title="THWS KG-RAG API (Final Architecture)",
+    description="Ein API-Server, der die stabile `aquery`-Methode mit einem intelligenten Prompt für maximale Antwortqualität und Transparenz verwendet.",
+    version="18.0.3_debug",  # Version bumped for debug
+    lifespan=lifespan
+)
 
 
 class Question(BaseModel):
     query: str
 
 
-@app.get("/metadata")
-def get_metadata():
-    commit_hash = subprocess.getoutput("git rev-parse HEAD")
-    return {
-        "model": OLLAMA_MODEL,
-        "embedding_model": EMBED_MODEL_NAME,
-        "commit_hash": commit_hash,
-        "device": device,
-    }
+# --- Ollama Background Server Management ---
+print("🚓 Starting Ollama server in the background...")
+ollama_process = subprocess.Popen(
+    ["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    preexec_fn=os.setsid if os.name != 'nt' else None
+)
 
 
+@atexit.register
+def shutdown_ollama():
+    """Function to gracefully shut down the Ollama server process."""
+    print("Shutting down Ollama server...")
+    if ollama_process:
+        try:
+            if os.name == 'nt':
+                ollama_process.terminate()
+            else:
+                os.killpg(os.getpgid(ollama_process.pid), signal.SIGTERM)
+            ollama_process.wait(timeout=5)
+            print("🚓 Ollama server stopped successfully.")
+        except Exception as e:
+            print(f"Could not stop Ollama server gracefully: {e}")
+
+
+# --- API Endpoints ---
 @app.post("/ask")
-def ask_question(data: Question):
+async def ask(data: Question, request: Request):
+    """
+    Implements a controlled query pipeline by delegating to the retrieval module.
+    """
     start_time = time.time()
-    query = data.query
+    print(f"\n--- New Request ---")
+    print(f"Received German query: '{data.query}'")
+    try:
+        rag: LightRAG = request.app.state.rag
+        # Instantiate the LLM for this request. It's a lightweight wrapper.
+        llm_instance = OllamaLLM()
 
-    # --- Embed Query ---
-    query_vec = embedder.encode(query, device=device)
+        # Delegate the entire logic to the retrieval function
+        final_answer = await prepare_and_execute_retrieval(
+            user_query=data.query,
+            rag_instance=rag,
+        )
 
-    # --- Search Qdrant ---
-    search_results = client.search(
-        collection_name=COLLECTION_NAME,
-        query_vector=query_vec.tolist(),
-        limit=TOP_K,
-        with_payload=True,
-    )
+        duration = round(time.time() - start_time, 2)
+        print(f"--- Request completed in {duration} seconds. ---")
 
-    # --- Deduplicate by Source ---
-    unique_chunks = {}
-    for res in search_results:
-        src = res.payload["source"]
-        if src not in unique_chunks:
-            unique_chunks[src] = res
+        return {
+            "question": data.query,
+            "answer": final_answer,
+            "mode": "controlled_aquery_pipeline",
+            "duration_seconds": duration,
+        }
+    except Exception as e:
+        print(f"ERROR: An unexpected error occurred: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal server error. Details: {e}")
 
-    context = "\n\n".join(res.payload["text"] for res in unique_chunks.values())
 
-    # --- Prompt ---
-    prompt = f"""
-Du bist ein hilfreicher Assistent der Hochschule THWS.
-Beantworte die folgende Frage basierend auf dem gegebenen Kontext.
-Antworte ausschließlich auf Deutsch und fasse dich klar und präzise.
-Wenn du es nicht weißt, sag "Ich weiß es leider nicht."
+@app.get("/")
+def read_root():
+    """Root endpoint providing basic information about the API."""
+    return {"message": "Welcome to the THWS KG-RAG API (Final Architecture)."}
 
-Kontext:
-{context}
 
-Frage:
-{query}
+@app.get("/metadata")
+def metadata(request: Request):
+    """Provides metadata about the running service."""
+    rag: LightRAG = request.app.state.rag
+    retriever_info = rag.vector_storage
 
-Antwort:
-"""
-
-    # --- Call Ollama ---
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
-    )
-
-    answer = response.json().get("response", "").strip()
-    calc_time = round(time.time() - start_time, 2)
+    from knowledgeMapper.local_models import EMBEDDING_MODEL_NAME, OLLAMA_MODEL_NAME
 
     return {
-        "question": query,
-        "answer": answer,
-        "sources": list(unique_chunks.keys()),
-        "time_seconds": calc_time,
+        "embedding_model": EMBEDDING_MODEL_NAME,
+        "llm_model": OLLAMA_MODEL_NAME,
+        "device": device,
+        "retrieval_mode": MODE,
     }
 
 
-# --- Run with: python api_server.py ---
+# --- Run FastAPI Server ---
 if __name__ == "__main__":
+    print("Starting FastAPI server...")
     uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=False)
