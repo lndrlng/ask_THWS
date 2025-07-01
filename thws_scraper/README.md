@@ -59,31 +59,15 @@ The project includes a script to export the scraper's database (`askthws_scraper
 
 You can restore a previously exported database backup into the MongoDB container.
 
-1. **Ensure Credentials are Available:**
-
-   The restore command will also need `MONGO_USER` and `MONGO_PASS`. If you are in a new terminal session, you might need to export them from your `.env` file again:
-
-   ```bash
-   # Ensure variables are available in your current shell
-   export $(grep -v '^#' .env | awk -F= '{print $1"="$2}')
-   ```
-
-   *(Note: This `awk` method is a common way to source .env; adjust if your .env values have complex characters or ensure they are properly quoted in the file).*
-
 1. **Run the Restore Command:**
 
    Replace `<BACKUP_FILE_NAME.gz>` with the actual name of your backup file. The `mongodb` is the service name/container name defined in `docker-compose.yml`.
    The `--drop` flag will clear existing collections in the target database before restoring, effectively replacing the content. Remove `--drop` if you want to merge without deleting (be cautious with existing data).
 
-   ```bash
-   # Make sure MONGO_USER and MONGO_PASS are exported in your current shell
-   # Example:
-   # export MONGO_USER=your_mongo_root_user
-   # export MONGO_PASS=your_mongo_root_password
-
+   ```bashher habe ich aktuell 200GB 
    docker exec -i mongodb mongorestore \
-       --username "$MONGO_USER" \
-       --password "$MONGO_PASS" \
+       --username scraper \
+       --password password \
        --authenticationDatabase "admin" \
        --archive \
        --gzip \
@@ -91,3 +75,4 @@ You can restore a previously exported database backup into the MongoDB container
    ```
 
    This command streams the backup file into the `mongorestore` command running inside the `mongodb` container. The database will be restored under its original name (`askthws_scraper`).
+   

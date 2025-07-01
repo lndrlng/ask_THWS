@@ -9,3 +9,8 @@ cachecluster
 **crawls
 **result
 **.gz
+
+cachecluster
+.idea
+**RAG_STORAGE
+**.graphml

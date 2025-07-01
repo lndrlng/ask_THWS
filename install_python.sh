@@ -9,6 +9,7 @@ OPENSSL_DIR=$PREFIX/openssl
 LIBFFI_DIR=$PREFIX/libffi
 BZIP2_DIR=$PREFIX/bzip2
 SQLITE_DIR=$PREFIX/sqlite
+LZMA_DIR=$PREFIX/xz
 
 mkdir -p "$TMP" "$PREFIX"
 
@@ -58,23 +59,14 @@ check_header "bzlib.h" "$BZIP2_DIR" "bzip2" || {
     wget -nc https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
     tar -xf bzip2-1.0.8.tar.gz && cd bzip2-1.0.8
     make -j"$(nproc)" && make install PREFIX="$BZIP2_DIR"
-
     make clean
-
-    # Build the shared library
     mkdir -p "$BZIP2_DIR/lib"
     make -f Makefile-libbz2_so
-
-    # Copy all matching .so* files into the lib dir
     cp -av libbz2.so.* "$BZIP2_DIR/lib/"
-
-    # Make the symlink
     SO_BZ2=$(ls -1 "$BZIP2_DIR/lib"/libbz2.so.* | sort | tail -n1)
     ln -sf "$SO_BZ2" "$BZIP2_DIR/lib/libbz2.so"
-
     mkdir -p "$BZIP2_DIR/include"
     cp bzlib.h "$BZIP2_DIR/include"
-
     cd "$TMP" && rm -rf bzip2-1.0.8
     check_header "bzlib.h" "$BZIP2_DIR" "bzip2" || {
         echo "❌ bzip2 header missing after build"
@@ -97,10 +89,27 @@ check_header "sqlite3.h" "$SQLITE_DIR" "SQLite3" || {
     }
 }
 
+# -------------- LZMA (xz) ------------------
+check_header "lzma.h" "$LZMA_DIR" "LZMA (xz)" || {
+    echo "⬇️  Building LZMA (xz)..."
+    cd "$TMP"
+    # xz is the reference implementation of the LZMA format
+    wget -nc https://github.com/tukaani-project/xz/releases/download/v5.4.6/xz-5.4.6.tar.gz
+    tar -xf xz-5.4.6.tar.gz && cd xz-5.4.6
+    ./configure --prefix="$LZMA_DIR"
+    make -j"$(nproc)" && make install
+    cd "$TMP" && rm -rf xz-5.4.6
+    check_header "lzma.h" "$LZMA_DIR" "LZMA (xz)" || {
+        echo "❌ LZMA header missing after build"
+        exit 1
+    }
+}
+
+
 # ---------- env for pyenv ----------
-export CPPFLAGS="-I$OPENSSL_DIR/include -I$LIBFFI_DIR/include -I$BZIP2_DIR/include -I$SQLITE_DIR/include"
-export LDFLAGS="-L$OPENSSL_DIR/lib -L$LIBFFI_DIR/lib -L$BZIP2_DIR/lib -L$SQLITE_DIR/lib"
-export LD_LIBRARY_PATH="$OPENSSL_DIR/lib:$LIBFFI_DIR/lib:$BZIP2_DIR/lib:$SQLITE_DIR/lib:$LD_LIBRARY_PATH"
+export CPPFLAGS="-I$OPENSSL_DIR/include -I$LIBFFI_DIR/include -I$BZIP2_DIR/include -I$SQLITE_DIR/include -I$LZMA_DIR/include"
+export LDFLAGS="-L$OPENSSL_DIR/lib -L$LIBFFI_DIR/lib -L$BZIP2_DIR/lib -L$SQLITE_DIR/lib -L$LZMA_DIR/lib"
+export LD_LIBRARY_PATH="$OPENSSL_DIR/lib:$LIBFFI_DIR/lib:$BZIP2_DIR/lib:$SQLITE_DIR/lib:$LZMA_DIR/lib:$LD_LIBRARY_PATH"
 export PYTHON_CONFIGURE_OPTS="--with-openssl=$OPENSSL_DIR"
 
 # ---------- pyenv ----------
@@ -139,6 +148,6 @@ verify_module "ssl" "import ssl; print(ssl.OPENSSL_VERSION.split()[1])"
 verify_module "bz2" "import bz2; print(bz2.BZ2Compressor)"
 verify_module "ctypes" "import ctypes; print(ctypes.sizeof(ctypes.c_void_p))"
 verify_module "sqlite3" "import sqlite3; print(sqlite3.sqlite_version)"
-
+verify_module "lzma" "import lzma; print(lzma.LZMACompressor)"
 
 echo "✅ Module check complete."
