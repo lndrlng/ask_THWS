@@ -3,6 +3,7 @@
 .idea
 __pycache__
 *.json
+cachecluster
 *jsonl
 **.scrapy
 **crawls

@@ -10,9 +10,10 @@ nav:
       - Server: dev-tools/server.md
       - Jq: dev-tools/jq.md
   - Tests:
-      - Testfragen: tests/fragen.md
       - Erster Test: tests/first_results.md
+      - Testfragen: tests/fragen.md
   - Research:
       - Scraping: research/scraping.md
       - Data Quality: research/data_quality.md
       - Vectordb: research/vector_database.md
+      
