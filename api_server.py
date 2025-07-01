@@ -17,9 +17,8 @@ from knowledgeMapper.local_models import (
     EMBEDDING_MODEL_NAME,
     OLLAMA_MODEL_NAME,
 
-)
-# Import the updated retrieval logic
-from knowledgeMapper.retrieval import (prepare_and_execute_retrieval, MODE)
+# --- Launch Ollama Server ---
+ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 # --- LightRAG Library Imports ---
 import lightrag

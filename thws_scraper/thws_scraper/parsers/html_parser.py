@@ -1,126 +1,261 @@
+import logging
 from datetime import datetime
 from typing import List, Optional, Tuple
 from urllib.parse import urljoin
+from zoneinfo import ZoneInfo
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
+from lxml.html.clean import Cleaner
 from scrapy.http import Response
 
 from ..items import RawPageItem
 from ..utils.date import date_extractor
-from ..utils.lang import extract_lang_from_url
-from ..utils.text import clean_text
+from ..utils.lang import detect_lang_from_content, extract_lang_from_url
+
+module_logger = logging.getLogger(__name__)
 
 
-def parse_html(response: Response) -> Optional[Tuple[List[RawPageItem], List[str]]]:
+def deobfuscate_text(text: str) -> str:
     """
-    1) Parse the raw DOM for any ARIA-based accordions and extract all Q&A pairs.
-    2) If none found, pick the subtree with the most text (text-density heuristic).
-    3) Clean & wrap in RawPageItem(s), plus list of embedded .pdf/.ics links.
+    Replaces common email obfuscation patterns in a block of text.
     """
-    # parse the full HTML
-    soup = BeautifulSoup(response.text, "lxml")
+    if not text:
+        return ""
+    return text.replace("[at]", "@").replace(" [@] ", "@").replace(" [at] ", "@")
 
-    # pick a top-level container
-    container = soup.find("main") or soup.find("article") or soup.body or soup
 
-    # look for accordion groups first (generic via ARIA role)
-    faqs: List[Tuple[str, str]] = []
-    for group in container.select('div[role="tablist"]'):
-        # each <section> is one Q&A
-        for section in group.select("section"):
-            header = section.select_one('[role="button"]')
-            # ARIA panel or fallback to Bootstrap collapse
-            panel = section.select_one('[role="tabpanel"]') or section.select_one(
-                "div.collapse"
-            )
-            if header and panel:
-                q = header.get_text(strip=True)
-                a = clean_text(panel.get_text(separator="\n", strip=True))
-                faqs.append((q, a))
+def _clean_html_fragment_for_storage(html_string: str) -> str:
+    """
+    Cleans an HTML fragment string using lxml.html.clean.Cleaner
+    and then removes all class and id attributes.
+    Removes script, style, comments, and common non-content boilerplate tags.
+    """
+    if not html_string:
+        return ""
 
-    items: List[RawPageItem] = []
-    if faqs:
-        # build one RawPageItem per Q&A
-        for _idx, (q, a) in enumerate(faqs, start=1):
-            qa_text = f"{q}\n\n{a}"
-            item = RawPageItem(
-                url=response.url,
-                type="html",
-                title=q,
-                text=qa_text,
-                date_scraped=datetime.utcnow().isoformat(),
-                date_updated=None,
-                status=response.status,
-                lang=extract_lang_from_url(response.url),
-            )
-            items.append(item)
-    else:
-        # choose the child with the most text, or fall back to container itself
-        children = container.find_all(recursive=False)
-        if children:
-            best = max(children, key=lambda el: len(el.get_text(strip=True)))
-        else:
-            best = container
+    soup_for_comment_removal = BeautifulSoup(html_string, "lxml")
+    for comment in soup_for_comment_removal.find_all(string=lambda text: isinstance(text, Comment)):
+        comment.extract()
+    partially_cleaned_html = str(soup_for_comment_removal)
 
-        # extract & clean
-        raw = best.get_text(separator="\n", strip=True)
-        text = clean_text(raw)
+    cleaner = Cleaner(
+        scripts=True,
+        javascript=True,
+        comments=True,
+        style=True,
+        inline_style=True,
+        links=True,
+        meta=False,
+        page_structure=False,
+        processing_instructions=True,
+        embedded=True,
+        frames=True,
+        forms=True,
+        annoying_tags=True,
+        remove_tags=[
+            "noscript",
+            "header",
+            "footer",
+            "nav",
+            "dialog",
+            "menu",
+        ],
+        kill_tags=["img", "audio", "video", "svg"],
+        remove_unknown_tags=False,
+        safe_attrs_only=False,
+    )
 
-        # drop empty pages or obvious 404s (soft or hard)
-        soft_error_skip = [
-            "diese seite existiert nicht",
-            "this page does not exist",
-            "seite nicht gefunden",
-            "not found",
-            "404",
-            "sorry, there is no translation for this news-article.",
-            (
-                "studierende melden sich mit ihrer k-nummer als benutzername "
-                "am e-learning system an."
-            ),
-            (
-                "falls sie die seitenadresse manuell in ihren browser eingegeben haben,"
-                " kontrollieren sie bitte die korrekte schreibweise."
-            ),
-            "aktuell keine einträge vorhanden",
-            "sorry, there are no translated news-articles in this archive period",
-        ]
-
-        if not text or any(msg in text.lower() for msg in soft_error_skip):
-            return None
-
-        # Title: prefer <h1>, fall back to <title>
-        h1 = soup.select_one("h1")
-        title = (
-            h1.get_text(strip=True)
-            if h1
-            else response.css("title::text").get("").strip()
+    try:
+        cleaned_html_lxml = cleaner.clean_html(partially_cleaned_html)
+    except Exception as e:
+        module_logger.warning(
+            f"lxml.html.clean.Cleaner failed: {e}. Falling back to basic BS4 comment removal.",
+            extra={
+                "error_details": str(e),
+                "event_type": "html_cleaning_error",
+            },
         )
+        cleaned_html_lxml = partially_cleaned_html
 
-        # Extract date_updated
-        html = response.text
-        date_updated = date_extractor(html)
+    final_soup = BeautifulSoup(cleaned_html_lxml, "lxml")
 
-        lang = extract_lang_from_url(response.url)
+    # This preserves the text content (like emails and phone numbers) while removing the hyperlink itself.
+    for a_tag in final_soup.find_all("a"):
+        a_tag.unwrap()
 
-        item = RawPageItem(
-            url=response.url,
-            type="html",
-            title=title,
-            text=text,
-            date_scraped=datetime.utcnow().isoformat(),
-            date_updated=date_updated,
-            status=response.status,
-            lang=lang,
+    for tag in final_soup.find_all(True):
+        for attr_to_remove in ["class", "id", "style"]:
+            if attr_to_remove in tag.attrs:
+                del tag.attrs[attr_to_remove]
+        on_event_attrs = [attr for attr in tag.attrs if attr.lower().startswith("on")]
+        for attr in on_event_attrs:
+            del tag.attrs[attr]
+
+    return str(final_soup)
+
+
+def extract_metadata(soup_full_page: BeautifulSoup) -> dict:
+    """Extracts common metadata from the full page soup."""
+    metadata = {
+        "meta_description": None,
+        "meta_keywords": None,
+        "og_title": None,
+        "og_description": None,
+        "og_type": None,
+        "og_url": None,
+        "article_published_time": None,
+        "article_modified_time": None,
+    }
+
+    def get_meta_content(attrs_dict):
+        tag = soup_full_page.find("meta", attrs=attrs_dict)
+        return tag["content"].strip() if tag and tag.get("content") else None
+
+    metadata["meta_description"] = get_meta_content({"name": "description"})
+    metadata["meta_keywords"] = get_meta_content({"name": "keywords"})
+    metadata["og_title"] = get_meta_content({"property": "og:title"})
+    metadata["og_description"] = get_meta_content({"property": "og:description"})
+    metadata["og_type"] = get_meta_content({"property": "og:type"})
+    metadata["og_url"] = get_meta_content({"property": "og:url"})
+    metadata["article_published_time"] = get_meta_content({"property": "article:published_time"})
+    metadata["article_modified_time"] = get_meta_content({"property": "article:modified_time"})
+    return metadata
+
+
+def _extract_raw_content(soup: BeautifulSoup, response_text: str, url: str) -> Tuple[Optional[str], Optional[str], str]:
+    """
+    Finds the main content by looking for common semantic tags like <main>
+    or divs with id='content'. Falls back to the entire body.
+    Readability is no longer used.
+    """
+    page_title = None  # Title is finalized later from the <title> tag
+    main_content_tag = None
+    strategy_used = "N/A"
+
+    # Prioritized list of selectors for the main content
+    selectors = [
+        "main",
+        "div[role='main']",
+        "div#content",
+        "div#main",
+        "div.content",
+        "div.main",
+        "article",
+    ]
+
+    for selector in selectors:
+        main_content_tag = soup.select_one(selector)
+        if main_content_tag:
+            strategy_used = f"Selector: '{selector}'"
+            break
+
+    # If no specific container is found, fall back to the whole body
+    if not main_content_tag:
+        main_content_tag = soup.body
+        strategy_used = "<body> tag fallback"
+
+    raw_main_html = str(main_content_tag) if main_content_tag else ""
+
+    return raw_main_html, page_title, strategy_used
+
+
+def _finalize_title(current_title: Optional[str], soup: BeautifulSoup) -> str:
+    """Finds the best possible title if one hasn't been found yet."""
+    title_tag = soup.select_one("title")
+    if title_tag and title_tag.get_text(strip=True):
+        return title_tag.get_text(strip=True)
+
+    return "Untitled Page"
+
+
+def parse_html(response: Response, soft_error_strings: List[str], tz: ZoneInfo) -> Optional[Tuple[List[RawPageItem], List[str]]]:
+    """
+    Main coordinator function for parsing HTML pages.
+    """
+    module_logger.debug("Starting HTML parsing.", extra={"event_type": "html_parsing_started", "url": response.url})
+    soup_full_page = BeautifulSoup(response.text, "lxml")
+
+    # 1. Extract main content
+    raw_main_html, page_title, strategy_used = _extract_raw_content(soup_full_page, response.text, response.url)
+
+    if not raw_main_html or not raw_main_html.strip():
+        module_logger.error(
+            "All strategies failed to extract any main HTML content.",
+            extra={"event_type": "html_extraction_failed", "url": response.url},
         )
-        items.append(item)
+        return None
 
-    # Extract and follow embedded .pdf and .ics links
-    embedded_links: List[str] = []
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        if href.lower().endswith((".pdf", ".ics")):
-            abs_url = urljoin(response.url, href)
-            embedded_links.append(abs_url)
+    # 2. Clean the extracted HTML
+    cleaned_main_html = _clean_html_fragment_for_storage(raw_main_html)
 
-    return items, embedded_links
+    # 3. Deobfuscate emails in the cleaned text
+    cleaned_main_html = deobfuscate_text(cleaned_main_html)
+
+    # 4. Validate the cleaned content
+    plain_text_from_cleaned_main = BeautifulSoup(cleaned_main_html, "lxml").get_text(strip=True).lower()
+
+    if not plain_text_from_cleaned_main:
+        details = {"strategy_used": strategy_used, "raw_html_before_cleaning": raw_main_html}
+        module_logger.info(
+            "Skipped HTML: Content is empty after cleaning.",
+            extra={
+                "event_type": "page_skipped_html",
+                "reason": "empty_content_after_cleaning",
+                "url": response.url,
+                "details": details,
+            },
+        )
+        return None
+
+    matched_errors = [s for s in soft_error_strings if s in plain_text_from_cleaned_main]
+    if matched_errors:
+        details = {"strategy_used": strategy_used, "soft_errors_matched": matched_errors}
+        module_logger.info(
+            "Skipped HTML: Found soft error string(s) in content.",
+            extra={
+                "event_type": "page_skipped_html",
+                "reason": "soft_error_after_cleaning",
+                "url": response.url,
+                "details": details,
+            },
+        )
+        return None
+
+    # 5. Finalize page details
+    final_title = _finalize_title(page_title, soup_full_page)
+    lang = extract_lang_from_url(response.url)
+    if lang == "unknown":
+        text_for_lang_detect = BeautifulSoup(cleaned_main_html, "lxml").get_text(separator=" ", strip=True)
+        if text_for_lang_detect:
+            lang = detect_lang_from_content(text_for_lang_detect)
+
+    # 6. Create the Scrapy Item
+    item = RawPageItem(
+        url=response.url,
+        type="html",
+        title=final_title.replace("\x00", ""),
+        text=cleaned_main_html.replace("\x00", ""),
+        date_scraped=datetime.now(tz).isoformat(),
+        date_updated=date_extractor(response.text),
+        status=response.status,
+        lang=lang,
+        metadata_extracted=extract_metadata(soup_full_page),
+    )
+
+    # 7. Extract embedded links
+    embedded_links = [urljoin(response.url, a_tag.get("href")) for a_tag in soup_full_page.find_all("a", href=True) if a_tag.get("href", "").lower().endswith((".pdf", ".ics"))]
+
+    details = {
+        "strategy_used": strategy_used,
+        "item_title": final_title,
+        "text_length": len(cleaned_main_html),
+    }
+    module_logger.info(
+        "Successfully parsed HTML page",
+        extra={
+            "event_type": "html_parsed_successfully",
+            "url": response.url,
+            "details": details,
+        },
+    )
+    return [item], list(set(embedded_links))

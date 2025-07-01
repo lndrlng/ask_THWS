@@ -43,6 +43,4 @@ def make_json_serializable(obj: dict) -> dict:
     Convert all datetime values in the given dictionary to ISO 8601 strings.
     Leaves other values untouched. Useful before JSON serialization.
     """
-    return {
-        k: (v.isoformat() if isinstance(v, datetime) else v) for k, v in obj.items()
-    }
+    return {k: (v.isoformat() if isinstance(v, datetime) else v) for k, v in obj.items()}

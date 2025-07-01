@@ -9,10 +9,10 @@ build-scraper VERSION:
 fmt:
     pre-commit run --all-files
 
-# compresses the data as tar.xz
+# compresses the data as .xz
 compress FILE:
-    tar -cf "{{without_extension(FILE)}}.tar.xz" \
-        -I "xz -9 --threads=0" \
+    tar -cf "{{FILE}}.xz" \
+        -I "pixz -9" \
         "{{FILE}}"
 
 # Shows the csv as nice table in the cli

@@ -20,6 +20,7 @@
         pkgs.jq
         pkgs.isort
         pkgs.pre-commit
+        pkgs.pixz
 
         # System libraries needed by PyMuPDF
         pkgs.mupdf

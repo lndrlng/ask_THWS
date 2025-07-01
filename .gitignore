@@ -1,5 +1,6 @@
 .direnv
 .venv
+.idea
 __pycache__
 *.json
 cachecluster
@@ -7,3 +8,4 @@ cachecluster
 **.scrapy
 **crawls
 **result
+**.gz

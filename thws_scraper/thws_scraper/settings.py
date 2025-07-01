@@ -7,19 +7,89 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import os
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+tz_name = os.getenv("APP_TIMEZONE", "Europe/Berlin")
+APP_TZ = ZoneInfo(tz_name)
+print(f"INFO: Using timezone: {tz_name}")
+
+RESULTS_DIR = Path(__file__).resolve().parent.parent / "result"
+RESULTS_DIR.mkdir(exist_ok=True)
+timestamp = datetime.now(APP_TZ).strftime("%Y%m%d_%H%M%S")
+LOG_FILE_PATH = RESULTS_DIR / f"scrapy_log_{timestamp}.jsonl"
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": "%(asctime)s %(levelname)s %(name)s %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "level": "INFO",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": str(LOG_FILE_PATH),
+            "formatter": "json",
+            "level": "INFO",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "scrapy": {"propagate": True},
+        "thws": {"propagate": True},
+        "thws_scraper": {"propagate": True},
+    },
+}
+
+
 # ##################################################
 # Custom values; might be configureable via env tbd
 # ##################################################
 
-# Size of the chunks
-CHUNK_SIZE = 1000
-
-# Overlapping of the chunks
-CHUNK_OVERLAP = 100
-
 ENABLE_FILE_LOGGING = True
-
 EXPORT_CSV_STATS = True
+
+MONGO_HOST = os.getenv("MONGO_HOST")
+MONGO_PORT = os.getenv("MONGO_PORT")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
+MONGO_USER = os.getenv("MONGO_USER")
+MONGO_PASS = os.getenv("MONGO_PASS")
+
+MONGO_PAGES_COLLECTION = "pages"
+MONGO_FILES_COLLECTION = "files"
+
+SOFT_ERROR_STRINGS = [
+    "diese seite existiert nicht",
+    "this page does not exist",
+    "seite nicht gefunden",
+    "not found",
+    "404",
+    "sorry, there is no translation for this news-article.",
+    "studierende melden sich mit ihrer k-nummer als benutzername am e-learning system an.",
+    ("falls sie die seitenadresse manuell in ihren browser eingegeben haben," "kontrollieren sie bitte die korrekte schreibweise."),
+    "aktuell keine einträge vorhanden",
+    "sorry, there are no translated news-articles in this archive period",
+]
+
+IGNORED_URL_PATTERNS_LIST = [
+    "tx_fhwsvideo_frontend",
+    "/videos/",
+    "/wp-content/uploads/",
+    "/login/",
+]
 
 # ##################################################
 
@@ -32,7 +102,7 @@ NEWSPIDER_MODULE = "thws_scraper.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "thws-scraper-bot/0.3.3"
+USER_AGENT = "thws-scraper-bot/0.4.0"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -70,7 +140,7 @@ TELNETCONSOLE_ENABLED = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     # default priority is 550
-    "scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware": None,  # disable the built-in # noqa: E501
+    "scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware": None,  # disable the built-in
     "thws_scraper.middlewares.RobotsBypassMiddleware": 100,  # Enable the custom one
     "thws_scraper.middlewares.ThwsErrorMiddleware": 550,
 }
@@ -85,12 +155,7 @@ DOWNLOADER_MIDDLEWARES = {
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 ITEM_PIPELINES = {
-    # JSON Ouptut
-    "thws_scraper.pipelines.RawOutputPipeline": 100,  # write raw pages first
-    "thws_scraper.pipelines.ChunkingOutputPipeline": 200,  # then split & emit chunks
-    # Postgres Output
-    "thws_scraper.pipelines.RawPostgresPipeline": 100,  # write raw pages first
-    "thws_scraper.pipelines.ChunkingPostgresPipeline": 200,  # then split & emit chunks
+    "thws_scraper.pipelines.MongoPipeline": 100,
 }
 
 
@@ -133,13 +198,6 @@ ITEM_PIPELINES = {
 # (Optional) Respect HTTP headers like Cache-Control / Expires:
 # HTTPCACHE_POLICY = "scrapy.extensions.httpcache.RFC2616Policy"
 
-# Set settings whose default value is deprecated to a future-proof value
-TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
-FEED_EXPORT_ENCODING = "utf-8"
-
-# How verbose the logs are (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-LOG_LEVEL = "INFO"
-
 # Turn on the retry middleware
 RETRY_ENABLED = True
 
@@ -163,3 +221,13 @@ DOWNLOAD_TIMEOUT = 60
 
 # Default allowed length > 2083, 0 to disable it
 URLLENGTH_LIMIT = 0
+
+
+import logging  # noqa 402
+import logging.config  # noqa 402
+
+from scrapy.utils.log import configure_logging  # noqa 402
+
+configure_logging()
+logging.root.handlers.clear()
+logging.config.dictConfig(LOGGING)

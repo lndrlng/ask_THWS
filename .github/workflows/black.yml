@@ -7,48 +7,17 @@ on:
     branches: [main]
 
 jobs:
-  check-black:
-    name: Black formatting
+  pre-commit-checks:
+    name: Pre-commit Hooks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install Black
-        run: pip install black==25.1.0
-      - name: Check code formatting with Black
-        run: black --check --verbose .
+        uses: actions/checkout@v4
 
-  check-isort:
-    name: isort import sorting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install isort
-        run: pip install isort==5.12.0
-      - name: Check import order with isort
-        run: isort --check-only --profile black .
 
-  check-flake8:
-    name: Flake8 linting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install flake8 + plugins
-        run: |
-          pip install flake8==6.1.0 flake8-bugbear
-      - name: Run flake8
-        run: flake8 .
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
