@@ -5,14 +5,15 @@ theme:
 nav:
   - Home: index.md
   - Developer Tools:
-      - Black: dev-tools/black.md
-      - Commitizen: dev-tools/commitizen.md
+      - Precommit Hooks: dev-tools/precommit.md
       - Python: dev-tools/python.md
       - Server: dev-tools/server.md
+      - Jq: dev-tools/jq.md
   - Tests:
-      - Testfragen: tests/fragen.md
       - Erster Test: tests/first_results.md
+      - Testfragen: tests/fragen.md
   - Research:
       - Scraping: research/scraping.md
       - Data Quality: research/data_quality.md
       - Vectordb: research/vector_database.md
+      

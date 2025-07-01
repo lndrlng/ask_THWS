@@ -1,6 +1,3 @@
-# File: api_server.py
-# DEBUGGING VERSION: Hardcoding environment variables to test Neo4j connection.
-
 import time
 import torch
 import subprocess
@@ -12,13 +9,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import Dict, Any
-
-# ==============================================================================
-# TEMPORARY DEBUGGING STEP
-# We are setting the environment variables directly in the code to bypass any
-# potential issues with the .env file.
-#
-
 
 # --- Custom Module Imports (adapted for new local_models.py) ---
 from knowledgeMapper.local_models import (

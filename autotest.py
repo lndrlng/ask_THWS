@@ -1,10 +1,11 @@
-import requests
 import re
 import time
 import os
 # import ast # <--- No longer needed if we don't parse
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Union
+
+import requests
 
 MARKDOWN_FILE = "docs/tests/fragen.md"
 API_URL = "http://localhost:8000/ask"

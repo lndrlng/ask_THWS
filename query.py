@@ -1,8 +1,9 @@
+import warnings
+
+import requests
 import torch
 from qdrant_client import QdrantClient
 from sentence_transformers import SentenceTransformer
-import requests
-import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -10,9 +11,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 COLLECTION_NAME = "thws_data_chunks"
 QDRANT_URL = "http://localhost:6333"
 EMBED_MODEL_NAME = "BAAI/bge-m3"
-OLLAMA_MODEL = "gemma:7b"  # beste ergebnisse
+# OLLAMA_MODEL = "gemma:7b"  # schnell ergebnisse
 # OLLAMA_MODEL = "zephyr"
-# OLLAMA_MODEL = "mixtral"
+OLLAMA_MODEL = "mixtral"  # beste ergebnisse
 TOP_K = 5
 
 # --- Load Embedding Model with CUDA ---
