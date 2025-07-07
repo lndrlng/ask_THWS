@@ -44,13 +44,12 @@ RELIABLE_SYSTEM_PROMPT_TEMPLATE = """
 
 # NEU: Prompt für die Query Expansion
 QUERY_EXPANSION_PROMPT = """
-Als Experte für Suchanfragen: Die folgende 'NUTZERFRAGE' wurde gestellt. Generiere 1-2 alternative Formulierungen oder verwandte Schlüsselbegriffe, die ein Nutzer für die gleiche Anfrage verwenden könnte und das auf ENGLISCH! Trenne die Begriffe und Phrasen durch Kommas. Konzentriere dich auf prägnante Keywords und kurze Phrasen. Gib NUR die erweiterten Begriffe zurück, keine zusätzlichen Erklärungen oder Einleitungen.
-Generiere Nur in ENGLISCH!
-NUTZERFRAGE: {user_query}
+Du bist Expert*in für Suchanfragen. Gib zu folgender Frage 1–2 alternative Formulierungen oder verwandte Stichwörter in DEUTSCH an. Trenne die Stichwörter mit Kommas. Gib nur die Stichwörter zurück, keine Erklärungen.
 
-Erweiterte Begriffe:
+FRAGE: {user_query}
+
+Stichwörter:
 """
-
 
 async def prepare_and_execute_retrieval(
         user_query: str,
@@ -70,6 +69,8 @@ async def prepare_and_execute_retrieval(
     )
     print("1. Enriching Query...")
     enriched_query = await rag_instance.aquery(user_query, param=params_bypass, system_prompt=QUERY_EXPANSION_PROMPT)
+    print("Enriched Query Result:", enriched_query)
+
     print("2. Retrieving full context for source mapping...")
 
     context_data_str = await rag_instance.aquery(user_query, param=params_context)

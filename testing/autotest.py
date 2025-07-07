@@ -6,7 +6,9 @@ import os
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Union
 
-MARKDOWN_FILE = "docs/tests/fragen.md"
+
+
+MARKDOWN_FILE = "../docs/tests/fragen.md"
 API_URL = "http://localhost:8000/ask"
 METADATA_URL = "http://localhost:8000/metadata"
 

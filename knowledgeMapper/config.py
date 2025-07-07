@@ -18,7 +18,7 @@ MONGO_FILES_COLLECTION = "files"
 MONGO_EXTRACTED_CONTENT_COLLECTION = "extracted_content"
 
 # Embedding model settings
-EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
+EMBEDDING_MODEL_NAME = "aari1995/German_Semantic_V3"
 EMBEDDING_DEVICE = "cpu"
 EMBEDDING_BATCH_SIZE = 16
 EMBEDDING_CONCURRENCY = 1  # Controls number of concurrent embedding jobs
