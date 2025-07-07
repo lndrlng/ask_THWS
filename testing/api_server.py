@@ -18,10 +18,13 @@ from typing import Dict, Any
 # We are setting the environment variables directly in the code to bypass any
 # potential issues with the .env file.
 #
+import sys
+import os
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # --- Custom Module Imports (adapted for new local_models.py) ---
-from knowledgeMapper.local_models import (
+from knowledgeMapper.utils.local_models import (
     HFEmbedFunc,
     OllamaLLM,
     EMBEDDING_MODEL_NAME,
@@ -48,7 +51,7 @@ async def lifespan(app: FastAPI):
     print("🚀 Server starting up...")
     print("🧠 Initializing LightRAG framework...")
     app.state.rag = LightRAG(
-        working_dir="./rag_storage",
+        working_dir="../RAG_STORAGE",
         embedding_func=HFEmbedFunc(),
         llm_model_func=OllamaLLM(),
         enable_llm_cache=False,
@@ -147,8 +150,6 @@ def metadata(request: Request):
     """Provides metadata about the running service."""
     rag: LightRAG = request.app.state.rag
     retriever_info = rag.vector_storage
-
-    from knowledgeMapper.local_models import EMBEDDING_MODEL_NAME, OLLAMA_MODEL_NAME
 
     return {
         "embedding_model": EMBEDDING_MODEL_NAME,

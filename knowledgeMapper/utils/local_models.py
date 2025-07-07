@@ -4,7 +4,7 @@ import requests
 import torch
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from config import (
+from knowledgeMapper.config import (
     EMBEDDING_MODEL_NAME,
     EMBEDDING_DEVICE,
     EMBEDDING_BATCH_SIZE,

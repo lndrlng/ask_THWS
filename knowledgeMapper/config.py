@@ -19,14 +19,14 @@ MONGO_EXTRACTED_CONTENT_COLLECTION = "extracted_content"
 
 # Embedding model settings
 EMBEDDING_MODEL_NAME = "BAAI/bge-m3"
-EMBEDDING_DEVICE = "cuda"
+EMBEDDING_DEVICE = "cpu"
 EMBEDDING_BATCH_SIZE = 16
 EMBEDDING_CONCURRENCY = 1  # Controls number of concurrent embedding jobs
 
 # LLM configuration (e.g., for Ollama server)
 OLLAMA_MODEL_NAME = "gemma3:4b"
 OLLAMA_HOST = "http://localhost:11434"
-OLLAMA_NUM_CTX = 32768
+OLLAMA_NUM_CTX = 16384
 OLLAMA_NUM_PREDICT = 4096
 
 # Controls LightRAG's entity extraction feature (0 disables it)

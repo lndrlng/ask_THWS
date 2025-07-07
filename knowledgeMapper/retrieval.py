@@ -44,8 +44,8 @@ RELIABLE_SYSTEM_PROMPT_TEMPLATE = """
 
 # NEU: Prompt für die Query Expansion
 QUERY_EXPANSION_PROMPT = """
-Als Experte für Suchanfragen: Die folgende 'NUTZERFRAGE' wurde gestellt. Generiere 3-5 alternative Formulierungen oder verwandte Schlüsselbegriffe, die ein Nutzer für die gleiche Anfrage verwenden könnte. Trenne die Begriffe und Phrasen durch Kommas. Konzentriere dich auf prägnante Keywords und kurze Phrasen. Gib NUR die erweiterten Begriffe zurück, keine zusätzlichen Erklärungen oder Einleitungen.
-
+Als Experte für Suchanfragen: Die folgende 'NUTZERFRAGE' wurde gestellt. Generiere 1-2 alternative Formulierungen oder verwandte Schlüsselbegriffe, die ein Nutzer für die gleiche Anfrage verwenden könnte und das auf ENGLISCH! Trenne die Begriffe und Phrasen durch Kommas. Konzentriere dich auf prägnante Keywords und kurze Phrasen. Gib NUR die erweiterten Begriffe zurück, keine zusätzlichen Erklärungen oder Einleitungen.
+Generiere Nur in ENGLISCH!
 NUTZERFRAGE: {user_query}
 
 Erweiterte Begriffe:
